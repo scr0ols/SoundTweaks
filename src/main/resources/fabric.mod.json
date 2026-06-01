@@ -1,0 +1,35 @@
+{
+	"schemaVersion": 1,
+	"id": "soundtweaks",
+	"version": "${version}",
+	"name": "SoundTweaks",
+	"description": "Controlo de volume por som — silencia, amplifica ou ajusta individualmente qualquer som do jogo.",
+	"authors": [
+		"scr0ols"
+	],
+	"contact": {},
+	"license": "CC0-1.0",
+	"icon": "assets/soundtweaks/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.scr0ols.soundtweaks.SoundTweaks"
+		],
+		"client": [
+			"com.scr0ols.soundtweaks.client.SoundTweaksClient"
+		]
+	},
+	"mixins": [
+		"soundtweaks.mixins.json",
+		{
+			"config": "soundtweaks.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.2",
+		"minecraft": "~26.1.2",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
