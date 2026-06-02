@@ -6,6 +6,8 @@ import net.fabricmc.loader.api.FabricLoader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import net.minecraft.util.Mth;
+
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
@@ -57,8 +59,8 @@ public class PresetConfig {
             .resolve("soundtweaks_presets");
 
     private static final List<Preset> presets       = new CopyOnWriteArrayList<>();
-    private static final Set<String>  activeNames   = new LinkedHashSet<>();
-    private static final List<String> favoriteNames = new ArrayList<>();
+    private static final Set<String>  activeNames   = Collections.synchronizedSet(new LinkedHashSet<>());
+    private static final List<String> favoriteNames = new CopyOnWriteArrayList<>();
     private static volatile long      lastSaveRequest = 0;
 
     // ── Leitura ───────────────────────────────────────────────────────────────
@@ -315,7 +317,10 @@ public class PresetConfig {
 
     private static void readFloatMap(JsonObject src, Map<String, Float> dst) {
         if (src == null) return;
-        src.entrySet().forEach(e -> dst.put(e.getKey(), e.getValue().getAsFloat()));
+        src.entrySet().forEach(e -> {
+            float v = e.getValue().getAsFloat();
+            if (Float.isFinite(v)) dst.put(e.getKey(), Mth.clamp(v, 0f, 2f));
+        });
     }
 
     private static JsonObject toJsonObject(Map<String, Float> map) {

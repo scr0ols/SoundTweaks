@@ -21,9 +21,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class SoundEngineMixin {
 
     /**
-     * Interceta getVolume() em play() para discovery.
-     * A modificação de volume já é aplicada por AbstractSoundInstanceMixin
-     * quando este método chama soundInstance.getVolume() internamente.
+     * Redirect em play() — necessário para que AbstractSoundInstanceMixin possa
+     * aplicar o multiplicador de volume. O discovery é feito lá, não aqui,
+     * para evitar addDiscovered() duplo por cada som reproduzido.
      */
     @Redirect(
         method = "play",
@@ -31,8 +31,6 @@ public class SoundEngineMixin {
                  target = "Lnet/minecraft/client/resources/sounds/SoundInstance;getVolume()F")
     )
     private float redirectGetVolume(SoundInstance soundInstance) {
-        var id = soundInstance.getIdentifier();
-        if (id != null) SoundRegistry.addDiscovered(id.toString());
         return soundInstance.getVolume();
     }
 
