@@ -43,3 +43,7 @@ replay_*.log
 
 PLANO_ORGANIZACAO_SONS.md
 GIT_RESTRUCTURE_PLAN.md
+
+# dados do utilizador (presets de teste, configs pessoais)
+
+presets/
