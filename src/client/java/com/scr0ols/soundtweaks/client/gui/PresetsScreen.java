@@ -39,7 +39,7 @@ public class PresetsScreen extends Screen {
     // ── Edit overlay ──────────────────────────────────────────────────────────
     private enum EditMode { NONE, COLOR, RENAME, SHORTCUT }
     private EditMode editMode = EditMode.NONE;
-    @Nullable private String editingPresetId = null;
+    @Nullable private PresetConfig.Preset editingPreset = null;
 
     // Widgets de renomeação (usados quando editMode == RENAME)
     private EditBox renameBox;
@@ -180,12 +180,10 @@ public class PresetsScreen extends Screen {
         this.colorHexBox.setTextColor(0xFFFFFFFF);
         this.colorHexBox.visible = false;
         this.colorHexBox.setResponder(hex -> {
-            if (editingPresetId == null) return;
-            PresetConfig.Preset pp = findPreset(editingPresetId);
-            if (pp == null) return;
+            if (editingPreset == null) return;
             try {
                 int rgb = Integer.parseUnsignedInt(hex.trim(), 16);
-                pp.customColor = 0xFF000000 | (rgb & 0xFFFFFF);
+                editingPreset.customColor = 0xFF000000 | (rgb & 0xFFFFFF);
                 PresetConfig.markDirty();
             } catch (NumberFormatException ignored) {}
         });
@@ -205,10 +203,9 @@ public class PresetsScreen extends Screen {
 
         // Restaurar apenas os que precisam
         if (creating) setCreateWidgetsVisible(true);
-        if (editingPresetId != null && editMode == EditMode.RENAME) setRenameWidgetsVisible(true);
-        if (editingPresetId != null && editMode == EditMode.COLOR) {
-            PresetConfig.Preset pp = findPreset(editingPresetId);
-            if (pp != null && pp.colorIndex == PresetConfig.CUSTOM_COLOR_INDEX)
+        if (editingPreset != null && editMode == EditMode.RENAME) setRenameWidgetsVisible(true);
+        if (editingPreset != null && editMode == EditMode.COLOR) {
+            if (editingPreset.colorIndex == PresetConfig.CUSTOM_COLOR_INDEX)
                 colorHexBox.visible = true;
         }
 
@@ -230,13 +227,13 @@ public class PresetsScreen extends Screen {
         }
 
         // Edit overlay
-        if (editingPresetId != null) {
+        if (editingPreset != null) {
             renderEditOverlay(graphics, mouseX, mouseY, a);
         }
     }
 
     private void renderEditOverlay(GuiGraphicsExtractor g, int mouseX, int mouseY, float a) {
-        PresetConfig.Preset preset = findPreset(editingPresetId);
+        PresetConfig.Preset preset = editingPreset;
         if (preset == null) { closeEditOverlay(); return; }
 
         g.fill(0, 0, this.width, this.height, 0xBB000000);
@@ -396,8 +393,7 @@ public class PresetsScreen extends Screen {
                 lastCapturedTrigger != 0 ? 0xFF88FF88 : 0xFF555555);
 
         // Valor actualmente guardado no preset
-        PresetConfig.Preset preset = findPreset(editingPresetId);
-        String savedLabel = (preset != null) ? keyDisplayLabel(preset) : "---";
+        String savedLabel = (editingPreset != null) ? keyDisplayLabel(editingPreset) : "---";
         boolean hasSaved  = !savedLabel.equals("---");
         String savedLine  = hasSaved ? "[" + savedLabel + "]" : "[blank]";
         g.centeredText(this.font, savedLine, cx2, contentY + 34,
@@ -428,7 +424,7 @@ public class PresetsScreen extends Screen {
         int key = event.key();
 
         // Edit overlay activo
-        if (editingPresetId != null) {
+        if (editingPreset != null) {
             if (editMode == EditMode.SHORTCUT) {
                 handleShortcutKey(key);
                 return true;
@@ -440,17 +436,17 @@ public class PresetsScreen extends Screen {
                 if (key == GLFW.GLFW_KEY_ESCAPE) {
                     closeEditOverlay(); return true;
                 }
-                return super.keyPressed(event); // passa para renameBox focada
+                return super.keyPressed(event);
             }
             if (editMode == EditMode.COLOR && this.getFocused() == colorHexBox) {
                 if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER
                         || key == GLFW.GLFW_KEY_ESCAPE) {
                     this.setFocused(null); return true;
                 }
-                return super.keyPressed(event); // passar teclas para a EditBox
+                return super.keyPressed(event);
             }
             if (key == GLFW.GLFW_KEY_ESCAPE) { closeEditOverlay(); return true; }
-            return true; // bloquear outros
+            return true;
         }
 
         // Create overlay activo
@@ -466,7 +462,7 @@ public class PresetsScreen extends Screen {
 
     @Override
     public boolean keyReleased(KeyEvent event) {
-        if (editingPresetId != null && editMode == EditMode.SHORTCUT) {
+        if (editingPreset != null && editMode == EditMode.SHORTCUT) {
             captureHeldKeys.remove(event.key());
             return true;
         }
@@ -481,9 +477,14 @@ public class PresetsScreen extends Screen {
         }
         if (key == GLFW.GLFW_KEY_BACKSPACE) {
             resetShortcutCapture();
-            setShortcut(editingPresetId, 0, 0, 0); // limpar também o shortcut guardado
+            if (editingPreset != null) {
+                editingPreset.shortcutKey      = 0;
+                editingPreset.shortcutHeldKey  = 0;
+                editingPreset.shortcutHeldKey2 = 0;
+                PresetConfig.markDirty();
+            }
             presetList.refresh();
-            return; // ficar no modo de captura
+            return;
         }
         if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) {
             if (lastCapturedTrigger != 0) confirmShortcut();
@@ -501,6 +502,7 @@ public class PresetsScreen extends Screen {
     }
 
     private void confirmShortcut() {
+        if (editingPreset == null) return;
         int h1 = 0, h2 = 0;
         if (lastHeldAtTrigger.size() == 1) {
             h1 = lastHeldAtTrigger.get(0);
@@ -508,28 +510,18 @@ public class PresetsScreen extends Screen {
             h1 = lastHeldAtTrigger.get(lastHeldAtTrigger.size() - 2);
             h2 = lastHeldAtTrigger.get(lastHeldAtTrigger.size() - 1);
         }
-        setShortcut(editingPresetId, lastCapturedTrigger & 0xFFFF, h1, h2);
+        editingPreset.shortcutKey      = lastCapturedTrigger & 0xFFFF;
+        editingPreset.shortcutHeldKey  = h1;
+        editingPreset.shortcutHeldKey2 = h2;
+        PresetConfig.markDirty();
         resetShortcutCapture();
         presetList.refresh();
-        // Não fecha o overlay — o "Saved:" actualiza; fechar com ESC ou Done
     }
 
     private void resetShortcutCapture() {
         captureHeldKeys.clear();
         lastHeldAtTrigger.clear();
         lastCapturedTrigger = 0;
-    }
-
-    private void setShortcut(String presetId, int triggerKey, int heldKey, int heldKey2) {
-        for (PresetConfig.Preset p : PresetConfig.getPresets()) {
-            if (p.id.equals(presetId)) {
-                p.shortcutKey      = triggerKey;
-                p.shortcutHeldKey  = heldKey;
-                p.shortcutHeldKey2 = heldKey2;
-                PresetConfig.markDirty();
-                break;
-            }
-        }
     }
 
     // ── Mouse ─────────────────────────────────────────────────────────────────
@@ -539,7 +531,7 @@ public class PresetsScreen extends Screen {
         double mx = event.x(), my = event.y();
 
         // Edit overlay — intercepção total
-        if (editingPresetId != null) {
+        if (editingPreset != null) {
             int px = editPanelX(), py = editPanelY();
 
             // Botão Done
@@ -568,7 +560,7 @@ public class PresetsScreen extends Screen {
                     colorHexBox.mouseClicked(event, false);
                     return true;
                 }
-                handleColorGridClick(mx, my, px, py);
+                handleColorGridClick(mx, my, px, py, editingPreset);
             } else if (editMode == EditMode.RENAME) {
                 if (renameConfirmBtn.mouseClicked(event, false)) return true;
                 if (renameCancelBtn.mouseClicked(event, false))  return true;
@@ -604,15 +596,13 @@ public class PresetsScreen extends Screen {
             case 1 -> setEditMode(EditMode.RENAME);
             case 2 -> setEditMode(EditMode.SHORTCUT);
             case 3 -> {
-                // Navegar para PresetEditorScreen
-                PresetConfig.Preset p = findPreset(editingPresetId);
-                if (p != null) this.minecraft.setScreen(new PresetEditorScreen(this, p));
+                if (editingPreset != null)
+                    this.minecraft.setScreen(new PresetEditorScreen(this, editingPreset));
             }
         }
     }
 
-    private void handleColorGridClick(double mx, double my, int px, int py) {
-        PresetConfig.Preset preset = findPreset(editingPresetId);
+    private void handleColorGridClick(double mx, double my, int px, int py, PresetConfig.Preset preset) {
         if (preset == null) return;
 
         int tabBottom = py + 28 + 18;
@@ -653,8 +643,8 @@ public class PresetsScreen extends Screen {
 
     // ── Edit overlay: abrir / fechar / trocar modo ────────────────────────────
 
-    void openEditOverlay(String presetId) {
-        this.editingPresetId = presetId;
+    void openEditOverlay(PresetConfig.Preset preset) {
+        this.editingPreset = preset;
         setEditMode(EditMode.COLOR);
     }
 
@@ -663,9 +653,8 @@ public class PresetsScreen extends Screen {
         setRenameWidgetsVisible(false);
 
         if (mode == EditMode.RENAME) {
-            PresetConfig.Preset p = findPreset(editingPresetId);
-            if (p != null) {
-                renameBox.setValue(p.name);
+            if (editingPreset != null) {
+                renameBox.setValue(editingPreset.name);
                 setRenameWidgetsVisible(true);
                 this.setFocused(renameBox);
                 renameBox.setFocused(true);
@@ -680,8 +669,8 @@ public class PresetsScreen extends Screen {
     }
 
     private void closeEditOverlay() {
-        this.editingPresetId = null;
-        this.editMode        = EditMode.NONE;
+        this.editingPreset = null;
+        this.editMode      = EditMode.NONE;
         setRenameWidgetsVisible(false);
         this.setFocused(null);
         presetList.refresh();
@@ -715,24 +704,14 @@ public class PresetsScreen extends Screen {
     // ── Renomear (dentro do edit overlay) ────────────────────────────────────
 
     private void confirmRename() {
-        if (editingPresetId != null) {
+        if (editingPreset != null) {
             String name = renameBox.getValue().trim();
             if (!name.isEmpty()) {
-                PresetConfig.renamePreset(editingPresetId, name);
+                PresetConfig.renamePreset(editingPreset.name, name);
+                // editingPreset.name foi actualizado em PresetConfig.renamePreset()
                 presetList.refresh();
-                // Não fecha o overlay — apenas guarda; fechar com ESC ou Done
             }
         }
-    }
-
-    // ── Utilitários ───────────────────────────────────────────────────────────
-
-    @Nullable
-    private PresetConfig.Preset findPreset(String id) {
-        if (id == null) return null;
-        for (PresetConfig.Preset p : PresetConfig.getPresets())
-            if (p.id.equals(id)) return p;
-        return null;
     }
 
     @Override
@@ -781,8 +760,8 @@ public class PresetsScreen extends Screen {
             @Override
             public void extractContent(GuiGraphicsExtractor g, int mouseX, int mouseY,
                                        boolean hovered, float a) {
-                boolean active = PresetConfig.isActive(preset.id);
-                boolean fav    = PresetConfig.isFavorite(preset.id);
+                boolean active = PresetConfig.isActive(preset.name);
+                boolean fav    = PresetConfig.isFavorite(preset.name);
                 int rW = rowW();
                 int pc = preset.argbColor();
 
@@ -850,7 +829,7 @@ public class PresetsScreen extends Screen {
             @Override
             public boolean mouseClicked(MouseButtonEvent event, boolean consumed) {
                 if (consumed) return false;
-                if (PresetsScreen.this.creating || PresetsScreen.this.editingPresetId != null)
+                if (PresetsScreen.this.creating || PresetsScreen.this.editingPreset != null)
                     return false;
 
                 PresetListWidget.this.setSelected(this);
@@ -859,7 +838,7 @@ public class PresetsScreen extends Screen {
                 // [X] apagar
                 int dx = delX();
                 if (mx >= dx && mx < dx + 14 && my >= getY() + 7 && my < getY() + 21) {
-                    PresetConfig.deletePreset(preset.id);
+                    PresetConfig.deletePreset(preset.name);
                     PresetListWidget.this.removeEntry(this);
                     return true;
                 }
@@ -867,21 +846,20 @@ public class PresetsScreen extends Screen {
                 // [Edit ▼] — abrir overlay de edição
                 int ex = editBtnX();
                 if (mx >= ex && mx < ex + 52 && my >= getY() + 7 && my < getY() + 21) {
-                    PresetsScreen.this.openEditOverlay(preset.id);
+                    PresetsScreen.this.openEditOverlay(preset);
                     return true;
                 }
 
                 // [★] favorito
                 int sx = starX();
                 if (mx >= sx && mx < sx + 14 && my >= getY() + 7 && my < getY() + 21) {
-                    PresetConfig.setFavorite(preset.id, !PresetConfig.isFavorite(preset.id));
+                    PresetConfig.setFavorite(preset.name, !PresetConfig.isFavorite(preset.name));
                     return true;
                 }
 
-                // Zona ON/OFF (getX() até +44: texto ON/OFF + quadrado de cor) → toggle
-                // Resto da linha (nome) → apenas selecciona, sem toggle
+                // Zona ON/OFF (getX() até +44) → toggle
                 if (mx < getX() + 44) {
-                    PresetConfig.setActive(preset.id, !PresetConfig.isActive(preset.id));
+                    PresetConfig.setActive(preset.name, !PresetConfig.isActive(preset.name));
                 }
                 return true;
             }
