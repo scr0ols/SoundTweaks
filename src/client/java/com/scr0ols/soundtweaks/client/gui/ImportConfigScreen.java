@@ -1,8 +1,7 @@
 package com.scr0ols.soundtweaks.client.gui;
 
-import com.scr0ols.soundtweaks.BlockConfig;
 import com.scr0ols.soundtweaks.PresetConfig;
-import com.scr0ols.soundtweaks.SoundConfig;
+import com.scr0ols.soundtweaks.VolumeConfig;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -132,8 +131,8 @@ public class ImportConfigScreen extends Screen {
         int result;
         switch (type) {
             case PRESETS -> result = PresetConfig.importFrom(path);
-            case SOUNDS  -> result = SoundConfig.importFrom(path);
-            case BLOCKS  -> result = BlockConfig.importFrom(path);
+            case SOUNDS  -> result = VolumeConfig.SOUNDS.importFrom(path);
+            case BLOCKS  -> result = VolumeConfig.BLOCKS.importFrom(path);
             default      -> result = -1;
         }
 

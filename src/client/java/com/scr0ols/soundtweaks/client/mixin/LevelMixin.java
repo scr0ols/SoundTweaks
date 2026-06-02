@@ -42,6 +42,11 @@ public abstract class LevelMixin {
         String id = blockId.toString();
         if (!MissingBlockRegistry.contains(id)) return;
 
+        // Blocos com GROUP_PREFIX (note_block, jukebox) têm o seu volume controlado
+        // via cascade → SoundConfig → AbstractSoundInstanceMixin. Se os interceptarmos
+        // aqui também, o multiplicador seria aplicado duas vezes. Deixamos passar.
+        if (MissingBlockRegistry.GROUP_PREFIXES.containsKey(id)) return;
+
         float multiplier = VolumeResolver.getEffectiveBlockVolume(id);
         if (multiplier == 1.0f) return; // sem alteração, deixar passar
 

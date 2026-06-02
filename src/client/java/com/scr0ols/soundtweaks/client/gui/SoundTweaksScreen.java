@@ -3,9 +3,9 @@ package com.scr0ols.soundtweaks.client.gui;
 import com.scr0ols.soundtweaks.MissingBlockRegistry;
 import com.scr0ols.soundtweaks.PresetConfig;
 import com.scr0ols.soundtweaks.SoundCategory;
-import com.scr0ols.soundtweaks.SoundConfig;
-import com.scr0ols.soundtweaks.BlockConfig;
 import com.scr0ols.soundtweaks.SoundRegistry;
+import com.scr0ols.soundtweaks.VolumeConfig;
+import com.scr0ols.soundtweaks.VolumeResolver;
 import com.scr0ols.soundtweaks.client.SoundDisplayHelper;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
@@ -54,7 +54,9 @@ public class SoundTweaksScreen extends Screen {
     private Button          viewToggleButton;
     private Button          muteSoundsBtn;
     private Button          presetsBtn;
-    private boolean         muteSoundsActive = false;
+    // Static para persistir entre aberturas — o estado real está no VolumeResolver,
+    // mas usamos este flag para saber o que o botão "fez" (o que está para desmutar)
+    private static boolean  muteSoundsActive = false;
 
     private FilterDropdown categoryDropdown;
     private FilterDropdown objectDropdown;
@@ -78,7 +80,6 @@ public class SoundTweaksScreen extends Screen {
         int cw = contentW();
 
         // ── Linha 1 (Y=4): [speaker] [Simple/Detail View] [Presets ▶/◄] ... título ...
-        this.muteSoundsActive = false;
         this.muteSoundsBtn = Button.builder(Component.empty(), btn -> toggleMuteVisible())
                 .bounds(4, 4, 20, 14).build();
         this.muteSoundsBtn.setTooltip(Tooltip.create(Component.literal(
@@ -163,9 +164,9 @@ public class SoundTweaksScreen extends Screen {
                     java.nio.file.Path src = java.nio.file.Path.of(selected);
                     String fname = src.getFileName().toString().toLowerCase();
                     if (fname.contains("block")) {
-                        BlockConfig.importFrom(src);
+                        VolumeConfig.BLOCKS.importFrom(src);
                     } else {
-                        SoundConfig.importFrom(src);
+                        VolumeConfig.SOUNDS.importFrom(src);
                     }
                     refreshList();
                 }
@@ -210,6 +211,16 @@ public class SoundTweaksScreen extends Screen {
             refreshList();
         }
         if (this.soundList != null) this.soundList.setScrollAmount(savedScroll);
+        syncMuteState();
+    }
+
+    /** Sincroniza o ícone do botão mute com o estado real do VolumeResolver. */
+    private void syncMuteState() {
+        List<String> sounds = getFilteredSounds();
+        List<String> blocks = getFilteredBlocks();
+        muteSoundsActive = (!sounds.isEmpty() || !blocks.isEmpty())
+                && sounds.stream().allMatch(VolumeResolver::isSoundMuted)
+                && blocks.stream().allMatch(VolumeResolver::isBlockMuted);
     }
 
     // ── Rendering ─────────────────────────────────────────────────────────────
@@ -285,7 +296,7 @@ public class SoundTweaksScreen extends Screen {
         for (PresetConfig.Preset preset : favs) {
             if (y + PRESET_H > availableBottom) break;
 
-            boolean active = PresetConfig.isActive(preset.id);
+            boolean active = PresetConfig.isActive(preset.name);
             int     color  = preset.argbColor();
             boolean hov    = mouseX >= sideX + 1 && mouseX < this.width - 1
                     && mouseY >= y && mouseY < y + PRESET_H;
@@ -322,9 +333,8 @@ public class SoundTweaksScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean consumed) {
-        // Widgets (incluindo botão Manage) têm prioridade — processados primeiro
-        if (super.mouseClicked(event, consumed)) return true;
-
+        // Dropdowns têm prioridade: a popup sobrepõe-se ao soundList (y=46+)
+        // e o super.mouseClicked passaria o clique ao soundList antes do dropdown
         if (this.categoryDropdown.mouseClicked(event)) {
             if (this.categoryDropdown.isOpen()) this.objectDropdown.close();
             return true;
@@ -334,7 +344,7 @@ public class SoundTweaksScreen extends Screen {
             return true;
         }
 
-        // Cliques manuais na sidebar (cabeçalho + preset toggles) — depois dos widgets
+        if (super.mouseClicked(event, consumed)) return true;
         if (handleSidebarClick(event)) return true;
 
         return false;
@@ -362,7 +372,7 @@ public class SoundTweaksScreen extends Screen {
         for (PresetConfig.Preset preset : favs) {
             if (y + PRESET_H > availableBottom) break;
             if (my >= y && my < y + PRESET_H) {
-                PresetConfig.setActive(preset.id, !PresetConfig.isActive(preset.id));
+                PresetConfig.setActive(preset.name, !PresetConfig.isActive(preset.name));
                 return true;
             }
             y += PRESET_H + 1;
@@ -522,11 +532,15 @@ public class SoundTweaksScreen extends Screen {
 
     private void toggleMuteVisible() {
         muteSoundsActive = !muteSoundsActive;
-        float vol = muteSoundsActive ? 0.0f : 1.0f;
-        for (String id : getFilteredSounds())
-            com.scr0ols.soundtweaks.SoundConfig.setVolume(id, vol);
-        for (String id : getFilteredBlocks())
-            com.scr0ols.soundtweaks.BlockConfig.setVolume(id, vol);
+        // Usa o mute layer volátil do VolumeResolver — prioridade absoluta sobre presets e
+        // config base, sem corromper nenhuma configuração persistida.
+        if (muteSoundsActive) {
+            for (String id : getFilteredSounds()) VolumeResolver.muteSound(id);
+            for (String id : getFilteredBlocks()) VolumeResolver.muteBlock(id);
+        } else {
+            for (String id : getFilteredSounds()) VolumeResolver.unmuteSound(id);
+            for (String id : getFilteredBlocks()) VolumeResolver.unmuteBlock(id);
+        }
         refreshList();
     }
 

@@ -6,6 +6,8 @@ import net.fabricmc.loader.api.FabricLoader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import net.minecraft.util.Mth;
+
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
@@ -15,28 +17,12 @@ public class PresetConfig {
     public static final int CUSTOM_COLOR_INDEX = 18;
 
     public static final int[] PRESET_COLORS = {
-        0xFF555566, // 0  cinzento
-        0xFF993333, // 1  vermelho
-        0xFF336633, // 2  verde escuro
-        0xFF2255AA, // 3  azul
-        0xFF886622, // 4  dourado
-        0xFF7733AA, // 5  roxo
-        0xFF227788, // 6  ciano
-        0xFFCC5522, // 7  laranja
-        0xFF996688, // 8  rosa
-        0xFF44AA55, // 9  verde claro
-        0xFF2277AA, // 10 azul claro
-        0xFFAA9933, // 11 amarelo torrado
-        0xFF884444, // 12 bordô
-        0xFF337755, // 13 verde azulado
-        0xFF553366, // 14 índigo
-        0xFF888844, // 15 verde musgo
-        0xFFAA4488, // 16 magenta
-        0xFF445533  // 17 verde oliva
+        0xFF555566, 0xFF993333, 0xFF336633, 0xFF2255AA, 0xFF886622, 0xFF7733AA,
+        0xFF227788, 0xFFCC5522, 0xFF996688, 0xFF44AA55, 0xFF2277AA, 0xFFAA9933,
+        0xFF884444, 0xFF337755, 0xFF553366, 0xFF888844, 0xFFAA4488, 0xFF445533
     };
 
     public static class Preset {
-        public final String id;
         public String name;
         public int    colorIndex;
         public int    customColor;
@@ -46,15 +32,15 @@ public class PresetConfig {
         public final Map<String, Float> sounds;
         public final Map<String, Float> blocks;
 
-        public Preset(String id, String name) {
-            this.id            = id;
-            this.name          = name;
-            this.colorIndex    = 0;
-            this.shortcutKey   = 0;
+        public Preset(String name) {
+            this.name             = name;
+            this.colorIndex       = 0;
+            this.customColor      = 0;
+            this.shortcutKey      = 0;
             this.shortcutHeldKey  = 0;
             this.shortcutHeldKey2 = 0;
-            this.sounds        = new LinkedHashMap<>();
-            this.blocks        = new LinkedHashMap<>();
+            this.sounds           = new LinkedHashMap<>();
+            this.blocks           = new LinkedHashMap<>();
         }
 
         public int argbColor() {
@@ -67,75 +53,76 @@ public class PresetConfig {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    /** Ficheiro master: lista de UUIDs + estado active/favorite. */
     private static final Path CONFIG_FILE = FabricLoader.getInstance().getConfigDir()
             .resolve("soundtweaks_presets.json");
-
-    /** Pasta com um ficheiro JSON por preset. */
-    private static final Path PRESETS_DIR = FabricLoader.getInstance().getConfigDir()
+    private static final Path LEGACY_DIR  = FabricLoader.getInstance().getConfigDir()
             .resolve("soundtweaks_presets");
 
-    private static final List<Preset> presets         = new CopyOnWriteArrayList<>();
-    private static final Set<String>  activePresetIds = new LinkedHashSet<>();
-    private static final List<String> favoriteIds     = new ArrayList<>();
+    private static final List<Preset> presets       = new CopyOnWriteArrayList<>();
+    private static final Set<String>  activeNames   = Collections.synchronizedSet(new LinkedHashSet<>());
+    private static final List<String> favoriteNames = new CopyOnWriteArrayList<>();
     private static volatile long      lastSaveRequest = 0;
 
     // ── Leitura ───────────────────────────────────────────────────────────────
 
     public static List<Preset> getPresets() { return Collections.unmodifiableList(presets); }
 
-    public static boolean isActive(String presetId)   { return activePresetIds.contains(presetId); }
-    public static boolean isFavorite(String presetId) { return favoriteIds.contains(presetId); }
+    public static boolean isActive(String name)   { return activeNames.contains(name); }
+    public static boolean isFavorite(String name) { return favoriteNames.contains(name); }
 
     public static List<Preset> getActivePresets() {
         List<Preset> result = new ArrayList<>();
-        for (Preset p : presets) if (activePresetIds.contains(p.id)) result.add(p);
+        for (Preset p : presets) if (activeNames.contains(p.name)) result.add(p);
         return result;
     }
 
     public static List<Preset> getFavoritePresets() {
-        return favoriteIds.stream()
-                .map(id -> presets.stream().filter(p -> p.id.equals(id)).findFirst().orElse(null))
+        return favoriteNames.stream()
+                .map(n -> presets.stream().filter(p -> p.name.equals(n)).findFirst().orElse(null))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
     // ── Mutação ───────────────────────────────────────────────────────────────
 
-    public static void setActive(String presetId, boolean active) {
-        if (active) activePresetIds.add(presetId);
-        else        activePresetIds.remove(presetId);
+    public static void setActive(String name, boolean active) {
+        if (active) activeNames.add(name);
+        else        activeNames.remove(name);
         markDirty();
     }
 
-    public static void setFavorite(String presetId, boolean favorite) {
-        if (favorite) { if (!favoriteIds.contains(presetId)) favoriteIds.add(presetId); }
-        else          { favoriteIds.remove(presetId); }
+    public static void setFavorite(String name, boolean favorite) {
+        if (favorite) { if (!favoriteNames.contains(name)) favoriteNames.add(name); }
+        else          { favoriteNames.remove(name); }
         markDirty();
     }
 
     public static Preset createFromCurrentConfig(String name) {
-        Preset p = new Preset(UUID.randomUUID().toString(), name);
-        SoundConfig.getAll().forEach((id, vol) -> { if (vol != 1.0f) p.sounds.put(id, vol); });
-        BlockConfig.getAll().forEach((id, vol) -> { if (vol != 1.0f) p.blocks.put(id, vol); });
+        String unique = uniqueName(name);
+        Preset p = new Preset(unique);
+        VolumeConfig.SOUNDS.getAll().forEach((id, vol) -> { if (vol != 1.0f) p.sounds.put(id, vol); });
+        VolumeConfig.BLOCKS.getAll().forEach((id, vol) -> { if (vol != 1.0f) p.blocks.put(id, vol); });
         presets.add(p);
         markDirty();
         return p;
     }
 
-    public static void deletePreset(String presetId) {
-        presets.removeIf(p -> p.id.equals(presetId));
-        activePresetIds.remove(presetId);
-        favoriteIds.remove(presetId);
-        try { Files.deleteIfExists(PRESETS_DIR.resolve(presetId + ".json")); }
-        catch (IOException e) { SoundTweaks.LOGGER.error("SoundTweaks: erro ao apagar preset {}", presetId, e); }
+    public static void deletePreset(String name) {
+        presets.removeIf(p -> p.name.equals(name));
+        activeNames.remove(name);
+        favoriteNames.remove(name);
         markDirty();
     }
 
-    public static void renamePreset(String presetId, String newName) {
+    public static void renamePreset(String oldName, String newName) {
+        if (newName.isBlank() || oldName.equals(newName)) return;
+        String unique = uniqueName(newName);
         for (Preset p : presets) {
-            if (p.id.equals(presetId)) { p.name = newName.isBlank() ? p.name : newName.trim(); break; }
+            if (p.name.equals(oldName)) { p.name = unique; break; }
         }
+        if (activeNames.remove(oldName))  activeNames.add(unique);
+        int fi = favoriteNames.indexOf(oldName);
+        if (fi >= 0) favoriteNames.set(fi, unique);
         markDirty();
     }
 
@@ -157,136 +144,133 @@ public class PresetConfig {
             if (root == null) return;
 
             presets.clear();
-            activePresetIds.clear();
-            favoriteIds.clear();
+            activeNames.clear();
+            favoriteNames.clear();
 
             JsonArray activeArr = root.getAsJsonArray("activePresets");
-            if (activeArr != null) activeArr.forEach(el -> activePresetIds.add(el.getAsString()));
+            if (activeArr != null) activeArr.forEach(el -> activeNames.add(el.getAsString()));
 
             JsonArray favArr = root.getAsJsonArray("favoritePresets");
-            if (favArr != null) favArr.forEach(el -> favoriteIds.add(el.getAsString()));
+            if (favArr != null) favArr.forEach(el -> favoriteNames.add(el.getAsString()));
 
             JsonArray presetsArr = root.getAsJsonArray("presets");
-            if (presetsArr != null) {
-                boolean needsMigration = false;
-                for (JsonElement el : presetsArr) {
-                    if (el.isJsonPrimitive()) {
-                        // Novo formato: UUID string → carregar ficheiro individual
-                        String id = el.getAsString();
-                        Preset p = loadPresetFile(id);
-                        if (p != null) presets.add(p);
-                    } else if (el.isJsonObject()) {
-                        // Formato antigo: objecto inline → migrar para ficheiro individual
-                        Preset p = parsePresetObject(el.getAsJsonObject());
-                        presets.add(p);
-                        savePresetFile(p);
-                        needsMigration = true;
-                    }
-                }
-                if (needsMigration) {
-                    SoundTweaks.LOGGER.info("SoundTweaks: presets migrados para formato de ficheiros individuais");
-                    save(); // reescrever master com UUIDs em vez de objectos
-                }
+            if (presetsArr == null) return;
+
+            boolean isLegacyFormat = false;
+            for (JsonElement el : presetsArr) {
+                if (el.isJsonPrimitive()) { isLegacyFormat = true; break; }
             }
 
-            SoundTweaks.LOGGER.info("SoundTweaks: {} presets carregados ({} favoritos)",
-                    presets.size(), favoriteIds.size());
+            if (isLegacyFormat) {
+                migrateFromLegacy(presetsArr, activeArr, favArr);
+            } else {
+                for (JsonElement el : presetsArr) {
+                    if (!el.isJsonObject()) continue;
+                    Preset p = parsePreset(el.getAsJsonObject());
+                    if (p != null) presets.add(p);
+                }
+                SoundTweaks.LOGGER.info("SoundTweaks: {} presets carregados", presets.size());
+            }
         } catch (IOException e) {
             SoundTweaks.LOGGER.error("SoundTweaks: erro ao carregar presets", e);
         }
     }
 
+    private static void migrateFromLegacy(JsonArray presetsArr, JsonArray activeArr, JsonArray favArr) {
+        Map<String, String> uuidToName = new LinkedHashMap<>();
+        for (JsonElement el : presetsArr) {
+            if (el.isJsonPrimitive()) {
+                String uuid = el.getAsString();
+                Path file = LEGACY_DIR.resolve(uuid + ".json");
+                if (!Files.exists(file)) continue;
+                try {
+                    JsonObject obj = GSON.fromJson(Files.readString(file), JsonObject.class);
+                    Preset p = parsePreset(obj);
+                    if (p != null) { presets.add(p); uuidToName.put(uuid, p.name); }
+                } catch (Exception e) {
+                    SoundTweaks.LOGGER.error("SoundTweaks: erro ao migrar preset {}", uuid, e);
+                }
+            } else if (el.isJsonObject()) {
+                Preset p = parsePreset(el.getAsJsonObject());
+                if (p != null) presets.add(p);
+            }
+        }
+        activeNames.clear();
+        if (activeArr != null)
+            for (JsonElement el : activeArr) {
+                String n = uuidToName.get(el.getAsString());
+                if (n != null) activeNames.add(n);
+            }
+        favoriteNames.clear();
+        if (favArr != null)
+            for (JsonElement el : favArr) {
+                String n = uuidToName.get(el.getAsString());
+                if (n != null && !favoriteNames.contains(n)) favoriteNames.add(n);
+            }
+        SoundTweaks.LOGGER.info("SoundTweaks: {} presets migrados do formato antigo", presets.size());
+        save();
+    }
+
     public static void save() {
         try {
-            Files.createDirectories(PRESETS_DIR);
-
             JsonObject root = new JsonObject();
-
             JsonArray presetsArr = new JsonArray();
-            for (Preset p : presets) {
-                presetsArr.add(p.id);
-                savePresetFile(p);
-            }
+            for (Preset p : presets) presetsArr.add(serializePreset(p));
             root.add("presets", presetsArr);
-
             JsonArray activeArr = new JsonArray();
-            activePresetIds.forEach(activeArr::add);
+            activeNames.forEach(activeArr::add);
             root.add("activePresets", activeArr);
-
             JsonArray favArr = new JsonArray();
-            favoriteIds.forEach(favArr::add);
+            favoriteNames.forEach(favArr::add);
             root.add("favoritePresets", favArr);
-
             Files.writeString(CONFIG_FILE, GSON.toJson(root));
         } catch (IOException e) {
             SoundTweaks.LOGGER.error("SoundTweaks: erro ao guardar presets", e);
         }
     }
 
-    // ── Import de ficheiro externo ────────────────────────────────────────────
+    // ── Import ────────────────────────────────────────────────────────────────
 
-    /**
-     * Importa presets de um ficheiro de partilha.
-     *
-     * Formato suportado (simples, sem UUID):
-     *   - Array de presets: [{name, colorIndex, sounds, blocks}, ...]
-     *   - Objecto único:    {name, colorIndex, sounds, blocks}
-     *   - Formato antigo (pack): {presets: [{...}, ...]}
-     *
-     * Um novo UUID é sempre gerado — nunca há conflitos por UUID duplicado.
-     * Atalhos de teclado não são importados (são específicos de cada máquina).
-     *
-     * @return número de presets adicionados, ou -1 em caso de erro
-     */
     public static int importFrom(Path file) {
         try {
-            String json = Files.readString(file);
-            JsonElement root = JsonParser.parseString(json);
-
+            JsonElement root = JsonParser.parseString(Files.readString(file));
             List<JsonObject> toImport = new ArrayList<>();
+
             if (root.isJsonArray()) {
-                root.getAsJsonArray().forEach(el -> {
-                    if (el.isJsonObject()) toImport.add(el.getAsJsonObject());
-                });
+                root.getAsJsonArray().forEach(el -> { if (el.isJsonObject()) toImport.add(el.getAsJsonObject()); });
             } else if (root.isJsonObject()) {
                 JsonObject obj = root.getAsJsonObject();
                 if (obj.has("presets") && obj.get("presets").isJsonArray()) {
-                    // Formato pack ou formato antigo com array "presets"
-                    obj.getAsJsonArray("presets").forEach(el -> {
-                        if (el.isJsonObject()) toImport.add(el.getAsJsonObject());
-                    });
+                    for (JsonElement el : obj.getAsJsonArray("presets")) {
+                        if (el.isJsonObject()) {
+                            toImport.add(el.getAsJsonObject());
+                        } else if (el.isJsonPrimitive()) {
+                            Path pfile = LEGACY_DIR.resolve(el.getAsString() + ".json");
+                            if (Files.exists(pfile))
+                                try { toImport.add(GSON.fromJson(Files.readString(pfile), JsonObject.class)); }
+                                catch (Exception ignored) {}
+                        }
+                    }
                 } else if (obj.has("name")) {
-                    // Objecto de preset único
                     toImport.add(obj);
                 }
             }
 
-            if (toImport.isEmpty()) {
-                SoundTweaks.LOGGER.warn("SoundTweaks: nenhum preset encontrado em {}", file);
-                return 0;
-            }
-
+            if (toImport.isEmpty()) return 0;
             int added = 0;
             for (JsonObject obj : toImport) {
-                String newId = UUID.randomUUID().toString();
-                String name  = obj.has("name") ? obj.get("name").getAsString() : "Imported Preset";
-
-                Preset p = new Preset(newId, name);
+                String name = obj.has("name") ? obj.get("name").getAsString() : "Imported Preset";
+                name = uniqueName(name);
+                Preset p = new Preset(name);
                 if (obj.has("colorIndex"))  p.colorIndex  = obj.get("colorIndex").getAsInt();
                 if (obj.has("customColor")) p.customColor = obj.get("customColor").getAsInt();
-                // Atalhos não importados — são específicos de cada máquina
                 readFloatMap(obj.getAsJsonObject("sounds"), p.sounds);
                 readFloatMap(obj.getAsJsonObject("blocks"), p.blocks);
-
                 presets.add(p);
-                activePresetIds.add(newId);
-                SoundTweaks.LOGGER.info("SoundTweaks: preset importado '{}' (id={}) com {} sons e {} blocos",
-                        name, newId, p.sounds.size(), p.blocks.size());
+                activeNames.add(name);
                 added++;
             }
-
             if (added > 0) save();
-            SoundTweaks.LOGGER.info("SoundTweaks: {} presets importados de {}", added, file);
             return added;
         } catch (Exception e) {
             SoundTweaks.LOGGER.error("SoundTweaks: erro ao importar presets de {}", file, e);
@@ -296,51 +280,47 @@ public class PresetConfig {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private static Preset loadPresetFile(String id) {
-        Path file = PRESETS_DIR.resolve(id + ".json");
-        if (!Files.exists(file)) {
-            SoundTweaks.LOGGER.warn("SoundTweaks: ficheiro de preset não encontrado: {}", file);
-            return null;
-        }
-        try {
-            JsonObject obj = GSON.fromJson(Files.readString(file), JsonObject.class);
-            return parsePresetObject(obj);
-        } catch (Exception e) {
-            SoundTweaks.LOGGER.error("SoundTweaks: erro ao carregar preset {}", id, e);
-            return null;
-        }
+    private static String uniqueName(String base) {
+        Set<String> names = new HashSet<>();
+        for (Preset p : presets) names.add(p.name);
+        if (!names.contains(base)) return base;
+        int suffix = 2;
+        while (names.contains(base + " (" + suffix + ")")) suffix++;
+        return base + " (" + suffix + ")";
     }
 
-    private static Preset parsePresetObject(JsonObject obj) {
-        Preset p = new Preset(obj.get("id").getAsString(), obj.get("name").getAsString());
-        if (obj.has("colorIndex"))       p.colorIndex      = obj.get("colorIndex").getAsInt();
-        if (obj.has("customColor"))      p.customColor     = obj.get("customColor").getAsInt();
-        if (obj.has("shortcutKey"))      p.shortcutKey     = obj.get("shortcutKey").getAsInt();
-        if (obj.has("shortcutHeldKey"))  p.shortcutHeldKey = obj.get("shortcutHeldKey").getAsInt();
+    private static Preset parsePreset(JsonObject obj) {
+        if (obj == null || !obj.has("name")) return null;
+        Preset p = new Preset(obj.get("name").getAsString());
+        if (obj.has("colorIndex"))       p.colorIndex       = obj.get("colorIndex").getAsInt();
+        if (obj.has("customColor"))      p.customColor      = obj.get("customColor").getAsInt();
+        if (obj.has("shortcutKey"))      p.shortcutKey      = obj.get("shortcutKey").getAsInt();
+        if (obj.has("shortcutHeldKey"))  p.shortcutHeldKey  = obj.get("shortcutHeldKey").getAsInt();
         if (obj.has("shortcutHeldKey2")) p.shortcutHeldKey2 = obj.get("shortcutHeldKey2").getAsInt();
         readFloatMap(obj.getAsJsonObject("sounds"), p.sounds);
         readFloatMap(obj.getAsJsonObject("blocks"), p.blocks);
         return p;
     }
 
-    private static void savePresetFile(Preset p) throws IOException {
-        Files.createDirectories(PRESETS_DIR);
+    private static JsonObject serializePreset(Preset p) {
         JsonObject obj = new JsonObject();
-        obj.addProperty("id",            p.id);
-        obj.addProperty("name",          p.name);
-        obj.addProperty("colorIndex",    p.colorIndex);
+        obj.addProperty("name",           p.name);
+        obj.addProperty("colorIndex",     p.colorIndex);
         if (p.customColor != 0) obj.addProperty("customColor", p.customColor);
         obj.addProperty("shortcutKey",      p.shortcutKey);
         obj.addProperty("shortcutHeldKey",  p.shortcutHeldKey);
         obj.addProperty("shortcutHeldKey2", p.shortcutHeldKey2);
         obj.add("sounds", toJsonObject(p.sounds));
         obj.add("blocks", toJsonObject(p.blocks));
-        Files.writeString(PRESETS_DIR.resolve(p.id + ".json"), GSON.toJson(obj));
+        return obj;
     }
 
     private static void readFloatMap(JsonObject src, Map<String, Float> dst) {
         if (src == null) return;
-        src.entrySet().forEach(e -> dst.put(e.getKey(), e.getValue().getAsFloat()));
+        src.entrySet().forEach(e -> {
+            float v = e.getValue().getAsFloat();
+            if (Float.isFinite(v)) dst.put(e.getKey(), Mth.clamp(v, 0f, 2f));
+        });
     }
 
     private static JsonObject toJsonObject(Map<String, Float> map) {
