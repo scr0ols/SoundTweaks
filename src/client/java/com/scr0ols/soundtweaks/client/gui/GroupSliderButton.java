@@ -1,6 +1,8 @@
 package com.scr0ols.soundtweaks.client.gui;
 
-import com.scr0ols.soundtweaks.SoundConfig;
+import com.scr0ols.soundtweaks.PresetConfig;
+import com.scr0ols.soundtweaks.VolumeConfig;
+import com.scr0ols.soundtweaks.VolumeResolver;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
@@ -19,16 +21,21 @@ public class GroupSliderButton extends AbstractSliderButton {
 
     @Override
     protected void updateMessage() {
-        int percent = (int)(this.value * 100);
-        this.setMessage(Component.literal(percent + "%"));
+        this.setMessage(Component.literal((int)(this.value * 100) + "%"));
     }
 
     @Override
     protected void applyValue() {
         float vol = (float) this.value;
-        for (String id : childSoundIds) {
-            SoundConfig.setVolume(id, vol);
+        for (String id : childSoundIds) VolumeConfig.SOUNDS.setVolume(id, vol);
+        List<PresetConfig.Preset> actives = PresetConfig.getActivePresets();
+        for (PresetConfig.Preset p : actives) {
+            for (String id : childSoundIds) {
+                if (vol >= 1.0f) p.sounds.remove(id);
+                else             p.sounds.put(id, vol);
+            }
         }
+        if (!actives.isEmpty()) PresetConfig.markDirty();
     }
 
     public void setSliderValue(double newValue) {
@@ -37,11 +44,10 @@ public class GroupSliderButton extends AbstractSliderButton {
         this.updateMessage();
     }
 
-    /** Recalcula o valor mostrado com base no mínimo dos filhos actuais. */
     public void refreshFromChildren() {
         float min = 1.0f;
         for (String id : childSoundIds) {
-            float v = SoundConfig.getVolume(id);
+            float v = Math.min(VolumeConfig.SOUNDS.getVolume(id), 1.0f);
             if (v < min) min = v;
         }
         this.value = min;

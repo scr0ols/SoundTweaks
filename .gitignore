@@ -38,3 +38,12 @@ hs_err_*.log
 replay_*.log
 *.hprof
 *.jfr
+
+# docs internos (notas de sessão, planos)
+
+PLANO_ORGANIZACAO_SONS.md
+GIT_RESTRUCTURE_PLAN.md
+
+# dados do utilizador (presets de teste, configs pessoais)
+
+presets/
