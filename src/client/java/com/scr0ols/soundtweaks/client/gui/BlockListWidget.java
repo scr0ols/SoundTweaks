@@ -1,7 +1,8 @@
 package com.scr0ols.soundtweaks.client.gui;
 
-import com.scr0ols.soundtweaks.BlockConfig;
 import com.scr0ols.soundtweaks.MissingBlockRegistry;
+import com.scr0ols.soundtweaks.VolumeConfig;
+import com.scr0ols.soundtweaks.VolumeResolver;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSelectionList;
@@ -40,7 +41,7 @@ public class BlockListWidget extends AbstractSelectionList<BlockListWidget.Block
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         BlockEntry selected = this.getSelected();
         if (selected != null) {
-            float current = BlockConfig.getVolume(selected.blockId);
+            float current = VolumeResolver.getEffectiveBlockVolume(selected.blockId);
             float newVal = Mth.clamp(current + (float)(scrollY * 0.05), 0.0f, 1.0f);
             selected.slider.setSliderValue(newVal);
             return true;
@@ -91,7 +92,7 @@ public class BlockListWidget extends AbstractSelectionList<BlockListWidget.Block
             this.lastClickTime = now;
 
             if (isDoubleClick) {
-                float current = BlockConfig.getVolume(this.blockId);
+                float current = VolumeResolver.getEffectiveBlockVolume(this.blockId);
                 float newVal = (current >= 1.0f) ? 0.0f : 1.0f;
                 this.slider.setSliderValue(newVal);
                 return true;

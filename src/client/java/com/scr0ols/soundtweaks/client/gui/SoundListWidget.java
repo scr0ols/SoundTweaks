@@ -1,9 +1,9 @@
 package com.scr0ols.soundtweaks.client.gui;
 
-import com.scr0ols.soundtweaks.BlockConfig;
 import com.scr0ols.soundtweaks.MissingBlockRegistry;
-import com.scr0ols.soundtweaks.SoundConfig;
 import com.scr0ols.soundtweaks.SoundRegistry;
+import com.scr0ols.soundtweaks.VolumeConfig;
+import com.scr0ols.soundtweaks.VolumeResolver;
 import com.scr0ols.soundtweaks.client.SoundDisplayHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -33,36 +33,26 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
         super(minecraft, width, height, y, itemHeight);
     }
 
-    /**
-     * Repopula a lista com sons e blocos.
-     * @param detailed  true = vista detalhada (grupos + filhos); false = vista simples (só grupos)
-     */
     public void updateList(List<String> sounds, List<String> blockIds, boolean detailed) {
         this.clearEntries();
 
-        // Calcular grupos entre os sons filtrados
         Map<String, List<String>> groupMap = SoundRegistry.getGroups(sounds);
         Set<String> groupedIds = new HashSet<>();
         groupMap.values().forEach(groupedIds::addAll);
 
-        // Cada "slot" agrupa a entrada principal + eventuais filhos (só em detailed)
-        // Object[]: {String sortKey, BaseEntry primary, List<BaseEntry> children}
         List<Object[]> slots = new ArrayList<>();
 
-        // Grupos
         for (Map.Entry<String, List<String>> e : groupMap.entrySet()) {
             GroupEntry ge = new GroupEntry(e.getKey(), e.getValue());
             List<BaseEntry> children = new ArrayList<>();
             if (detailed) {
-                List<String> sortedChildren = new ArrayList<>(e.getValue());
-                sortedChildren.sort(Comparator.comparing(
-                        SoundDisplayHelper::getDisplayName, String.CASE_INSENSITIVE_ORDER));
-                for (String id : sortedChildren) children.add(new SoundEntry(id, true));
+                List<String> sorted = new ArrayList<>(e.getValue());
+                sorted.sort(Comparator.comparing(SoundDisplayHelper::getDisplayName, String.CASE_INSENSITIVE_ORDER));
+                for (String id : sorted) children.add(new SoundEntry(id, true));
             }
             slots.add(new Object[]{ ge.getDisplayName().toLowerCase(), ge, children });
         }
 
-        // Sons sem grupo
         for (String id : sounds) {
             if (!groupedIds.contains(id)) {
                 SoundEntry se = new SoundEntry(id, false);
@@ -70,16 +60,13 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
             }
         }
 
-        // Blocos
         for (String blockId : blockIds) {
             BlockEntry be = new BlockEntry(blockId);
             slots.add(new Object[]{ be.getDisplayName().toLowerCase(), be, new ArrayList<>() });
         }
 
-        // Ordenar: entradas numéricas (ex: "11", "13") depois do Z
         slots.sort((a, b) -> {
-            String ka = (String) a[0];
-            String kb = (String) b[0];
+            String ka = (String) a[0], kb = (String) b[0];
             boolean aD = !ka.isEmpty() && Character.isDigit(ka.charAt(0));
             boolean bD = !kb.isEmpty() && Character.isDigit(kb.charAt(0));
             if (aD != bD) return aD ? 1 : -1;
@@ -97,18 +84,12 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
         this.lastJumpIndex  = -1;
     }
 
-    public void updateList(List<String> sounds, List<String> blockIds) {
-        updateList(sounds, blockIds, false);
-    }
-
-    public void updateList(List<String> sounds) {
-        updateList(sounds, List.of(), false);
-    }
+    public void updateList(List<String> sounds, List<String> blockIds) { updateList(sounds, blockIds, false); }
+    public void updateList(List<String> sounds)                        { updateList(sounds, List.of(), false); }
 
     public boolean jumpToLetter(char c) {
         char upper = Character.toUpperCase(c);
         var entries = this.children();
-
         List<Integer> matches = new ArrayList<>();
         for (int i = 0; i < entries.size(); i++) {
             BaseEntry entry = entries.get(i);
@@ -117,16 +98,10 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
             if (!name.isEmpty() && Character.toUpperCase(name.charAt(0)) == upper) matches.add(i);
         }
         if (matches.isEmpty()) return false;
-
-        int nextMatchPos;
-        if (upper != lastJumpLetter) {
-            nextMatchPos = 0;
-        } else {
-            int cur = matches.indexOf(lastJumpIndex);
-            nextMatchPos = (cur + 1) % matches.size();
-        }
-
-        int targetIndex = matches.get(nextMatchPos);
+        int nextPos;
+        if (upper != lastJumpLetter) nextPos = 0;
+        else { int cur = matches.indexOf(lastJumpIndex); nextPos = (cur + 1) % matches.size(); }
+        int targetIndex = matches.get(nextPos);
         lastJumpLetter = upper;
         lastJumpIndex  = targetIndex;
         this.setSelected(entries.get(targetIndex));
@@ -135,9 +110,7 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
     }
 
     @Override public int getRowWidth() { return this.width - 20; }
-
-    @Override
-    protected int scrollBarX() { return this.getX() + this.width - 6; }
+    @Override protected int scrollBarX() { return this.getX() + this.width - 6; }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
@@ -152,17 +125,11 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
     @Override
     public void updateWidgetNarration(NarrationElementOutput output) {}
 
-    // =========================================================================
-    // Utilitário de cor por volume
-    // =========================================================================
-
     static int volumeColor(float volume) {
         return volume <= 0.0f ? 0xFFFF4444 : 0xFFFFFFFF;
     }
 
-    // =========================================================================
-    // BaseEntry
-    // =========================================================================
+    // ── BaseEntry ─────────────────────────────────────────────────────────────
 
     public abstract static class BaseEntry extends AbstractSelectionList.Entry<BaseEntry> {
         public abstract String getDisplayName();
@@ -171,14 +138,12 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
         public void updateNarration(NarrationElementOutput o) {}
     }
 
-    // =========================================================================
-    // GroupEntry — entrada mestre que controla um grupo de sons
-    // =========================================================================
+    // ── GroupEntry ────────────────────────────────────────────────────────────
 
     public class GroupEntry extends BaseEntry {
 
-        private final List<String> children;
-        private final String       displayName;
+        private final List<String>   children;
+        private final String         displayName;
         private final GroupSliderButton slider;
         private long lastClickTime = 0;
         private static final long DOUBLE_CLICK_MS = 300;
@@ -186,7 +151,8 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
         public GroupEntry(String groupKey, List<String> children) {
             this.children    = children;
             this.displayName = SoundDisplayHelper.getObjectName("x:" + groupKey + ".x");
-            float minVol = children.stream().map(SoundConfig::getVolume)
+            float minVol = children.stream()
+                    .map(id -> Math.min(VolumeResolver.getEffectiveVolume(id), 1.0f))
                     .min(Float::compare).orElse(1.0f);
             this.slider = new GroupSliderButton(children, 0, 0, 90, 14, minVol);
         }
@@ -195,31 +161,29 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
 
         @Override
         public void adjustVolume(float delta) {
-            float cur = children.stream().map(SoundConfig::getVolume)
+            float cur = children.stream()
+                    .map(id -> Math.min(VolumeResolver.getEffectiveVolume(id), 1.0f))
                     .min(Float::compare).orElse(1.0f);
             slider.setSliderValue(Mth.clamp(cur + delta, 0.0f, 1.0f));
         }
 
         @Override
-        public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY,
-                                   boolean hovered, float a) {
+        public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hov, float a) {
             int rowW = SoundListWidget.this.getRowWidth();
-            // Fundo subtil para distinguir grupos
-            if (SoundListWidget.this.getSelected() == this) {
-                graphics.fill(getX(), getY(), getX() + rowW, getY() + 20, 0x556688FF);
-            } else {
-                graphics.fill(getX(), getY(), getX() + rowW, getY() + 20, 0x22AAAAFF);
-            }
+            if (SoundListWidget.this.getSelected() == this)
+                g.fill(getX(), getY(), getX() + rowW, getY() + 20, 0x556688FF);
+            else
+                g.fill(getX(), getY(), getX() + rowW, getY() + 20, 0x22AAAAFF);
 
-            float vol = children.stream().map(SoundConfig::getVolume)
+            slider.refreshFromChildren();
+            float vol = children.stream()
+                    .map(id -> Math.min(VolumeResolver.getEffectiveVolume(id), 1.0f))
                     .min(Float::compare).orElse(1.0f);
-            // Prefixo "* " indica que é um grupo
-            graphics.text(SoundListWidget.this.minecraft.font,
+            g.text(SoundListWidget.this.minecraft.font,
                     "* " + displayName, getX() + 4, getY() + 5, volumeColor(vol));
-
             slider.setX(getX() + rowW - 94);
             slider.setY(getY() + 3);
-            slider.extractRenderState(graphics, mouseX, mouseY, a);
+            slider.extractRenderState(g, mx, my, a);
         }
 
         @Override
@@ -229,7 +193,8 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
             boolean dbl = (now - lastClickTime) < DOUBLE_CLICK_MS;
             lastClickTime = now;
             if (dbl) {
-                float cur = children.stream().map(SoundConfig::getVolume)
+                float cur = children.stream()
+                        .map(id -> Math.min(VolumeResolver.getEffectiveVolume(id), 1.0f))
                         .min(Float::compare).orElse(1.0f);
                 slider.setSliderValue(cur >= 1.0f ? 0.0f : 1.0f);
                 return true;
@@ -237,20 +202,11 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
             return slider.mouseClicked(event, consumed);
         }
 
-        @Override
-        public boolean mouseDragged(MouseButtonEvent event, double dX, double dY) {
-            return slider.mouseDragged(event, dX, dY);
-        }
-
-        @Override
-        public boolean mouseReleased(MouseButtonEvent event) {
-            return slider.mouseReleased(event);
-        }
+        @Override public boolean mouseDragged(MouseButtonEvent e, double dX, double dY) { return slider.mouseDragged(e, dX, dY); }
+        @Override public boolean mouseReleased(MouseButtonEvent e) { return slider.mouseReleased(e); }
     }
 
-    // =========================================================================
-    // SoundEntry — linha de som individual
-    // =========================================================================
+    // ── SoundEntry ────────────────────────────────────────────────────────────
 
     public class SoundEntry extends BaseEntry {
 
@@ -274,25 +230,24 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
 
         @Override
         public void adjustVolume(float delta) {
-            float newVal = Mth.clamp(SoundConfig.getVolume(soundId) + delta, 0.0f, 1.0f);
-            slider.setSliderValue(newVal);
+            float cur = Math.min(VolumeResolver.getEffectiveVolume(soundId), 1.0f);
+            slider.setSliderValue(Mth.clamp(cur + delta, 0.0f, 1.0f));
         }
 
         @Override
-        public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY,
-                                   boolean hovered, float a) {
+        public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hov, float a) {
             int indent = indented ? 12 : 0;
             int rowW   = SoundListWidget.this.getRowWidth();
-            if (SoundListWidget.this.getSelected() == this) {
-                graphics.fill(getX() + indent, getY(),
-                        getX() + rowW, getY() + 20, 0x44FFFFFF);
-            }
-            slider.syncFromConfig(); // mantém coerência quando o grupo sobrescreve o filho
-            graphics.text(SoundListWidget.this.minecraft.font, displayName,
-                    getX() + 4 + indent, getY() + 5, volumeColor(SoundConfig.getVolume(soundId)));
+            if (SoundListWidget.this.getSelected() == this)
+                g.fill(getX() + indent, getY(), getX() + rowW, getY() + 20, 0x44FFFFFF);
+
+            slider.syncFromConfig();
+            float vol = Math.min(VolumeResolver.getEffectiveVolume(soundId), 1.0f);
+            g.text(SoundListWidget.this.minecraft.font, displayName,
+                    getX() + 4 + indent, getY() + 5, volumeColor(vol));
             slider.setX(getX() + rowW - 94);
             slider.setY(getY() + 3);
-            slider.extractRenderState(graphics, mouseX, mouseY, a);
+            slider.extractRenderState(g, mx, my, a);
         }
 
         @Override
@@ -302,25 +257,18 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
             boolean dbl = (now - lastClickTime) < DOUBLE_CLICK_MS;
             lastClickTime = now;
             if (dbl) {
-                float newVal = (SoundConfig.getVolume(soundId) >= 1.0f) ? 0.0f : 1.0f;
-                slider.setSliderValue(newVal);
+                float cur = Math.min(VolumeResolver.getEffectiveVolume(soundId), 1.0f);
+                slider.setSliderValue(cur >= 1.0f ? 0.0f : 1.0f);
                 return true;
             }
             return slider.mouseClicked(event, consumed);
         }
 
-        @Override
-        public boolean mouseDragged(MouseButtonEvent event, double dX, double dY) {
-            return slider.mouseDragged(event, dX, dY);
-        }
-
-        @Override
-        public boolean mouseReleased(MouseButtonEvent event) { return slider.mouseReleased(event); }
+        @Override public boolean mouseDragged(MouseButtonEvent e, double dX, double dY) { return slider.mouseDragged(e, dX, dY); }
+        @Override public boolean mouseReleased(MouseButtonEvent e) { return slider.mouseReleased(e); }
     }
 
-    // =========================================================================
-    // BlockEntry — linha de bloco sem evento (BlockConfig)
-    // =========================================================================
+    // ── BlockEntry ────────────────────────────────────────────────────────────
 
     public class BlockEntry extends BaseEntry {
 
@@ -340,22 +288,22 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
 
         @Override
         public void adjustVolume(float delta) {
-            float newVal = Mth.clamp(BlockConfig.getVolume(blockId) + delta, 0.0f, 1.0f);
-            slider.setSliderValue(newVal);
+            float cur = Math.min(VolumeResolver.getEffectiveBlockVolume(blockId), 1.0f);
+            slider.setSliderValue(Mth.clamp(cur + delta, 0.0f, 1.0f));
         }
 
         @Override
-        public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY,
-                                   boolean hovered, float a) {
+        public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hov, float a) {
             int rowW = SoundListWidget.this.getRowWidth();
-            if (SoundListWidget.this.getSelected() == this) {
-                graphics.fill(getX(), getY(), getX() + rowW, getY() + 20, 0x44FFFFFF);
-            }
-            graphics.text(SoundListWidget.this.minecraft.font, displayName,
-                    getX() + 4, getY() + 5, volumeColor(BlockConfig.getVolume(blockId)));
+            if (SoundListWidget.this.getSelected() == this)
+                g.fill(getX(), getY(), getX() + rowW, getY() + 20, 0x44FFFFFF);
+
+            float vol = Math.min(VolumeResolver.getEffectiveBlockVolume(blockId), 1.0f);
+            g.text(SoundListWidget.this.minecraft.font, displayName,
+                    getX() + 4, getY() + 5, volumeColor(vol));
             slider.setX(getX() + rowW - 94);
             slider.setY(getY() + 3);
-            slider.extractRenderState(graphics, mouseX, mouseY, a);
+            slider.extractRenderState(g, mx, my, a);
         }
 
         @Override
@@ -365,25 +313,18 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
             boolean dbl = (now - lastClickTime) < DOUBLE_CLICK_MS;
             lastClickTime = now;
             if (dbl) {
-                float newVal = (BlockConfig.getVolume(blockId) >= 1.0f) ? 0.0f : 1.0f;
-                slider.setSliderValue(newVal);
+                float cur = Math.min(VolumeResolver.getEffectiveBlockVolume(blockId), 1.0f);
+                slider.setSliderValue(cur >= 1.0f ? 0.0f : 1.0f);
                 return true;
             }
             return slider.mouseClicked(event, consumed);
         }
 
-        @Override
-        public boolean mouseDragged(MouseButtonEvent event, double dX, double dY) {
-            return slider.mouseDragged(event, dX, dY);
-        }
-
-        @Override
-        public boolean mouseReleased(MouseButtonEvent event) { return slider.mouseReleased(event); }
+        @Override public boolean mouseDragged(MouseButtonEvent e, double dX, double dY) { return slider.mouseDragged(e, dX, dY); }
+        @Override public boolean mouseReleased(MouseButtonEvent e) { return slider.mouseReleased(e); }
     }
 
-    // =========================================================================
-    // DividerEntry — separador visual não seleccionável
-    // =========================================================================
+    // ── DividerEntry ──────────────────────────────────────────────────────────
 
     public static class DividerEntry extends BaseEntry {
         @Override public String  getDisplayName()     { return ""; }
@@ -391,14 +332,13 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
         @Override public boolean isSelectable()        { return false; }
 
         @Override
-        public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY,
-                                   boolean hovered, float a) {
+        public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hov, float a) {
             int midY = getY() + 10;
-            graphics.fill(getX() + 4, midY, getX() + 180, midY + 1, 0xFF555555);
+            g.fill(getX() + 4, midY, getX() + 180, midY + 1, 0xFF555555);
         }
 
-        @Override public boolean mouseClicked(MouseButtonEvent e, boolean c)  { return false; }
+        @Override public boolean mouseClicked(MouseButtonEvent e, boolean c)         { return false; }
         @Override public boolean mouseDragged(MouseButtonEvent e, double x, double y) { return false; }
-        @Override public boolean mouseReleased(MouseButtonEvent e) { return false; }
+        @Override public boolean mouseReleased(MouseButtonEvent e)                    { return false; }
     }
 }
