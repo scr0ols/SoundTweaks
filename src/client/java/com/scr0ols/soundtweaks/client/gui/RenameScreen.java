@@ -31,7 +31,7 @@ public class RenameScreen extends Screen {
 
         this.nameBox = new EditBox(this.font, cx, cy, 220, 20, Component.empty());
         this.nameBox.setValue(currentName);
-        this.nameBox.setMaxLength(64);
+        this.nameBox.setMaxLength(50);
         this.addRenderableWidget(this.nameBox);
         this.setFocused(this.nameBox);
         this.nameBox.setFocused(true);
