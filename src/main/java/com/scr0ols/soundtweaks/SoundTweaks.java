@@ -19,6 +19,6 @@ public class SoundTweaks implements ModInitializer {
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
 
-		LOGGER.info("Hello Fabric world!");
+		LOGGER.info("SoundTweaks {} loaded", "1.0.0");
 	}
 }
