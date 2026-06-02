@@ -10,6 +10,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -835,11 +836,21 @@ public class PresetsScreen extends Screen {
                 PresetListWidget.this.setSelected(this);
                 double mx = event.x(), my = event.y();
 
-                // [X] apagar
+                // [X] apagar — pede confirmação antes de eliminar
                 int dx = delX();
                 if (mx >= dx && mx < dx + 14 && my >= getY() + 7 && my < getY() + 21) {
-                    PresetConfig.deletePreset(preset.name);
-                    PresetListWidget.this.removeEntry(this);
+                    PresetListWidget.PresetRow self = this;
+                    PresetListWidget.this.minecraft.setScreen(new ConfirmScreen(
+                        confirmed -> {
+                            if (confirmed) {
+                                PresetConfig.deletePreset(preset.name);
+                                PresetListWidget.this.removeEntry(self);
+                            }
+                            PresetListWidget.this.minecraft.setScreen(PresetsScreen.this);
+                        },
+                        Component.literal("Apagar preset?"),
+                        Component.literal("\"" + preset.name + "\" será eliminado permanentemente.")
+                    ));
                     return true;
                 }
 
