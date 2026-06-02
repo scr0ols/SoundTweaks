@@ -47,7 +47,7 @@ public class GroupSliderButton extends AbstractSliderButton {
     public void refreshFromChildren() {
         float min = 1.0f;
         for (String id : childSoundIds) {
-            float v = Math.min(VolumeResolver.getEffectiveVolume(id), 1.0f);
+            float v = Math.min(VolumeConfig.SOUNDS.getVolume(id), 1.0f);
             if (v < min) min = v;
         }
         this.value = min;

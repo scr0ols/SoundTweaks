@@ -15,7 +15,7 @@ public class SoundSliderButton extends AbstractSliderButton {
 
     public SoundSliderButton(String soundId, int x, int y, int width, int height) {
         super(x, y, width, height, Component.empty(),
-              Math.min(VolumeResolver.getEffectiveVolume(soundId), 1.0));
+              Math.min(VolumeConfig.SOUNDS.getVolume(soundId), 1.0));
         this.soundId = soundId;
         this.updateMessage();
     }
@@ -44,9 +44,9 @@ public class SoundSliderButton extends AbstractSliderButton {
     }
 
     public void syncFromConfig() {
-        float effective = Math.min(VolumeResolver.getEffectiveVolume(this.soundId), 1.0f);
-        if (Math.abs((float) this.value - effective) > 0.001f) {
-            this.value = effective;
+        float base = Math.min(VolumeConfig.SOUNDS.getVolume(this.soundId), 1.0f);
+        if (Math.abs((float) this.value - base) > 0.001f) {
+            this.value = base;
             this.updateMessage();
         }
     }
