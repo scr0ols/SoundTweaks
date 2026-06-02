@@ -10,9 +10,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Interceta getVolume() em AbstractSoundInstance (classe pai de SimpleSoundInstance,
- * EntityBoundSoundInstance, etc.) — afecta play() inicial, tick() de actualização,
- * e qualquer outro contexto que leia o volume.
+ * Interceta getVolume() em AbstractSoundInstance — cobre o path de play() inicial.
+ * Em 26.1.2, sons de entidades são SimpleSoundInstance (não TickableSoundInstance)
+ * e passam sempre por play() → este inject aplica-se a todos os sons.
  */
 @Mixin(AbstractSoundInstance.class)
 public class AbstractSoundInstanceMixin {
