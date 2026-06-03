@@ -17,12 +17,12 @@ public class PresetConfig {
     public static final int CUSTOM_COLOR_INDEX = 18;
 
     public static final int[] PRESET_COLORS = {
-        // Jewel Tones — linha 1: Rubi, Ametista, Safira, Esmeralda, Âmbar, Jade
-        0xFFC0392B, 0xFF8E44AD, 0xFF2980B9, 0xFF16A085, 0xFFD35400, 0xFF27AE60,
-        // linha 2: Coral, Lavanda, Azul Royal, Turquesa, Laranja, Menta
-        0xFFE74C3C, 0xFF9B59B6, 0xFF3498DB, 0xFF1ABC9C, 0xFFE67E22, 0xFF2ECC71,
-        // linha 3: Borgonha, Índigo, Azul Noite, Cereja, Floresta, Ouro
-        0xFF922B21, 0xFF6C3483, 0xFF154360, 0xFFA93226, 0xFF117A65, 0xFFB7950B
+        // Retro Game — linha 1: Vermelho, Dourado, Verde Néon, Azul Vivo, Roxo, Azul Elétrico
+        0xFFE84118, 0xFFFBC531, 0xFF4CD137, 0xFF0097E6, 0xFF8C7AE6, 0xFF00A8FF,
+        // linha 2: Ocre, Lime, Denim, Tijolo, Azul Marinho, Noite
+        0xFFE1B12C, 0xFF44BD32, 0xFF487EB0, 0xFFC23616, 0xFF273C75, 0xFF192A56,
+        // linha 3: Laranja, Burnt, Petróleo, Orquídea, Lavanda, Violeta
+        0xFFF79F1F, 0xFFEE5A24, 0xFF1289A7, 0xFFD980FA, 0xFF9980FA, 0xFF5758BB
     };
 
     public static class Preset {
