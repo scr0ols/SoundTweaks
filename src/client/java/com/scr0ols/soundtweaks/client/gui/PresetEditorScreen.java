@@ -261,10 +261,14 @@ public class PresetEditorScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
         int rgb = preset.argbColor() & 0x00FFFFFF;
-        // Fundo desenhado ANTES do super para não tapar a lista
-        graphics.fill(0, 0, this.width, this.height, 0xFF1A1A22);
-        // Header colorido nos primeiros 66px (semi-transparente sobre o fundo neutro)
-        graphics.fill(0, 0, this.width, 66, (rgb & 0x00FFFFFF) | 0x99000000);
+        // Tint muitíssimo subtil da cor do preset sobre o fundo standard do Minecraft (8% opacidade)
+        // Escurece os canais a metade para não explodir com cores saturadas
+        int tintR = (rgb >> 16) & 0xFF, tintG = (rgb >> 8) & 0xFF, tintB = rgb & 0xFF;
+        int dampedRgb = ((tintR / 2) << 16) | ((tintG / 2) << 8) | (tintB / 2);
+        graphics.fill(0, 0, this.width, this.height, dampedRgb | 0x15000000);
+
+        // Header colorido sólido (primeiros 24px) com a cor do preset
+        graphics.fill(0, 0, this.width, 24, rgb | 0xCC000000);
 
         super.extractRenderState(graphics, mouseX, mouseY, a);
 
@@ -565,14 +569,18 @@ public class PresetEditorScreen extends Screen {
             public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hov, float a) {
                 int rowW = SoundEntryList.this.getRowWidth();
                 boolean sel = SoundEntryList.this.getSelected() == this;
+                int pc = PresetEditorScreen.this.preset.argbColor() & 0x00FFFFFF;
+
                 if (hasOverride()) {
-                    // Acento lateral laranja + fundo muito subtil
+                    // Acento lateral laranja + fundo subtil
                     g.fill(getX(), getY(), getX() + 3, getY() + 20, 0xFFFF9944);
                     g.fill(getX(), getY(), getX() + rowW, getY() + 20, 0x18FFAA44);
                 } else if (sel) {
-                    // Outline de selecção sem fill
-                    g.fill(getX(), getY(),      getX() + rowW, getY() + 1,      0x88AAAAFF);
-                    g.fill(getX(), getY() + 19, getX() + rowW, getY() + 20,     0x88AAAAFF);
+                    // Fundo com a cor do preset (como o ecrã geral usa azul para seleção)
+                    g.fill(getX(), getY(), getX() + rowW, getY() + 20, pc | 0x55000000);
+                } else {
+                    // Tint subtil da cor do preset (igual ao GroupEntry do ecrã geral mas com cor do preset)
+                    g.fill(getX(), getY(), getX() + rowW, getY() + 20, pc | 0x22000000);
                 }
 
                 float vol = minChildVol();
