@@ -235,6 +235,7 @@ class PresetSoundList extends AbstractSelectionList<PresetSoundList.BaseRow> {
                 g.fill(getX(), getY(), getX() + rowW, getY() + PresetSoundList.this.rowItemHeight, pc | 0x22000000);
             }
 
+            slider.syncDisplay();
             float vol = minChildVol();
             int col = vol <= 0f ? 0xFFFF4444 : hasOverride() ? 0xFFFFCC88 : 0xFFCCCCCC;
             g.text(PresetSoundList.this.minecraft.font, "* " + groupName, getX() + 4, getY() + 5, col);
@@ -282,6 +283,7 @@ class PresetSoundList extends AbstractSelectionList<PresetSoundList.BaseRow> {
                 g.fill(getX(), getY(), getX() + rowW, getY() + PresetSoundList.this.rowItemHeight, pc | 0x55000000);
             }
 
+            slider.syncDisplay();
             float vol = preset.sounds.getOrDefault(soundId, 1.0f);
             int col = vol <= 0f ? 0xFFFF4444 : hasOverride() ? 0xFFFFCC88 : 0xFFCCCCCC;
             g.text(PresetSoundList.this.minecraft.font,
@@ -330,6 +332,7 @@ class PresetSoundList extends AbstractSelectionList<PresetSoundList.BaseRow> {
                 g.fill(getX(), getY(), getX() + rowW, getY() + PresetSoundList.this.rowItemHeight, pc | 0x55000000);
             }
 
+            slider.syncDisplay();
             float vol = preset.blocks.getOrDefault(blockId, 1.0f);
             int col = vol <= 0f ? 0xFFFF4444 : hasOverride() ? 0xFFFFCC88 : 0xFFCCCCCC;
             String name = MissingBlockRegistry.getDisplayName(blockId) + " [block]";
