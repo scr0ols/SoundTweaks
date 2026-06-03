@@ -121,7 +121,7 @@ public class PresetsScreen extends Screen {
         this.addRenderableWidget(this.doneBtn);
 
         this.importPresetsBtn = Button.builder(
-                Component.literal("Import Presets..."),
+                Component.literal("Import"),
                 btn -> {
                     String selected;
                     try (MemoryStack stack = MemoryStack.stackPush()) {
@@ -141,7 +141,7 @@ public class PresetsScreen extends Screen {
         this.addRenderableWidget(this.importPresetsBtn);
 
         this.exportPresetsBtn = Button.builder(
-                Component.literal("Export Presets..."),
+                Component.literal("Export"),
                 btn -> {
                     String target;
                     try (MemoryStack stack = MemoryStack.stackPush()) {
@@ -313,13 +313,14 @@ public class PresetsScreen extends Screen {
             int lx = (this.width - lw) / 2;
             presetList = new PresetListWidget(this.minecraft, lw, listHeight, listTop, 24);
             presetList.setX(lx);
-            // Linha 1: Import | Export | Open Config — dividir lw em 3 partes iguais
+            // Linha 1: Import | Export | Open Config — proporção 1:1:2
             int gap = 4, available = lw - 8 - gap * 2;
-            int bw = available / 3, bw3 = available - bw * 2;
-            int b1x = lx + 4, b2x = b1x + bw + gap, b3x = b2x + bw + gap;
-            importPresetsBtn.setX(b1x);  importPresetsBtn.setWidth(bw);   importPresetsBtn.setHeight(20);
-            exportPresetsBtn.setX(b2x);  exportPresetsBtn.setWidth(bw);   exportPresetsBtn.setHeight(20);
-            openConfigBtn.setX(b3x);     openConfigBtn.setWidth(bw3);     openConfigBtn.setHeight(20);
+            int bwSmall = available / 4;          // Import e Export
+            int bwLarge = available - bwSmall * 2; // Open Config (resto)
+            int b1x = lx + 4, b2x = b1x + bwSmall + gap, b3x = b2x + bwSmall + gap;
+            importPresetsBtn.setX(b1x);  importPresetsBtn.setWidth(bwSmall);  importPresetsBtn.setHeight(20);
+            exportPresetsBtn.setX(b2x);  exportPresetsBtn.setWidth(bwSmall);  exportPresetsBtn.setHeight(20);
+            openConfigBtn.setX(b3x);     openConfigBtn.setWidth(bwLarge);     openConfigBtn.setHeight(20);
             importPresetsBtn.setY(this.height - 50);
             exportPresetsBtn.setY(this.height - 50);
             openConfigBtn.setY(this.height - 50);
@@ -329,13 +330,14 @@ public class PresetsScreen extends Screen {
             newPresetBtn.setY(this.height - 26);   doneBtn.setY(this.height - 26);
         } else {
             presetList = new PresetListWidget(this.minecraft, LIST_W, listHeight, listTop, 24);
-            // Linha 1: Import | Export | Open Config — dividir LIST_W em 3 partes
+            // Linha 1: Import | Export | Open Config — proporção 1:1:2
             int gap = 4, available = LIST_W - 8 - gap * 2;
-            int bw = available / 3, bw3 = available - bw * 2;
-            int b1x = 4, b2x = b1x + bw + gap, b3x = b2x + bw + gap;
-            importPresetsBtn.setX(b1x);  importPresetsBtn.setWidth(bw);   importPresetsBtn.setHeight(20);
-            exportPresetsBtn.setX(b2x);  exportPresetsBtn.setWidth(bw);   exportPresetsBtn.setHeight(20);
-            openConfigBtn.setX(b3x);     openConfigBtn.setWidth(bw3);     openConfigBtn.setHeight(20);
+            int bwSmall = available / 4;
+            int bwLarge = available - bwSmall * 2;
+            int b1x = 4, b2x = b1x + bwSmall + gap, b3x = b2x + bwSmall + gap;
+            importPresetsBtn.setX(b1x);  importPresetsBtn.setWidth(bwSmall);  importPresetsBtn.setHeight(20);
+            exportPresetsBtn.setX(b2x);  exportPresetsBtn.setWidth(bwSmall);  exportPresetsBtn.setHeight(20);
+            openConfigBtn.setX(b3x);     openConfigBtn.setWidth(bwLarge);     openConfigBtn.setHeight(20);
             importPresetsBtn.setY(this.height - 50);
             exportPresetsBtn.setY(this.height - 50);
             openConfigBtn.setY(this.height - 50);
