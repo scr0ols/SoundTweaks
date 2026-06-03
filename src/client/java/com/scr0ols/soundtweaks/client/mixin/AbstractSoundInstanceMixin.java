@@ -25,6 +25,9 @@ public class AbstractSoundInstanceMixin {
         String soundId = id.toString();
         SoundRegistry.addDiscovered(soundId);
         float mult = VolumeResolver.getEffectiveVolume(soundId);
-        if (mult != 1.0f) cir.setReturnValue(cir.getReturnValue() * mult);
+        if (mult != 1.0f) {
+            Float original = cir.getReturnValue();
+            if (original != null) cir.setReturnValue(original * mult);
+        }
     }
 }

@@ -43,9 +43,13 @@ public enum SoundCategory {
     );
 
     private static boolean isRedstoneObject(String soundId) {
-        String withoutNs = soundId.contains(":") ? soundId.split(":")[1] : soundId;
-        String[] parts = withoutNs.split("\\.");
-        return parts.length >= 2 && REDSTONE_OBJECTS.contains(parts[1]);
+        int ci = soundId.indexOf(':');
+        String withoutNs = ci >= 0 ? soundId.substring(ci + 1) : soundId;
+        int dot1 = withoutNs.indexOf('.');
+        if (dot1 < 0) return false;
+        int dot2 = withoutNs.indexOf('.', dot1 + 1);
+        String obj = dot2 >= 0 ? withoutNs.substring(dot1 + 1, dot2) : withoutNs.substring(dot1 + 1);
+        return REDSTONE_OBJECTS.contains(obj);
     }
 
     // ── Sons sem ficheiro de áudio, acessibilidade ou sem relevância — excluídos da GUI ──

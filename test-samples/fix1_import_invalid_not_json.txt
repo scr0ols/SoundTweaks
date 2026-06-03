@@ -1,0 +1,3 @@
+isto nao e json
+apenas texto aleatorio
+{ broken: json, sem aspas }

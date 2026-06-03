@@ -10,8 +10,12 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Configuração de volumes persistida em disco.
@@ -24,6 +28,25 @@ public class VolumeConfig {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Type MAP_TYPE = new TypeToken<Map<String, Float>>() {}.getType();
+
+    /** Executor partilhado entre SOUNDS e BLOCKS — garante que saves não bloqueiam a render thread. */
+    private static final ExecutorService SAVE_EXECUTOR = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "SoundTweaks-Config-Save");
+        t.setDaemon(true);
+        return t;
+    });
+
+    /** Flush e shutdown do executor — chamar quando o cliente fecha para não perder o último save. */
+    public static void shutdownSaveExecutor() {
+        SAVE_EXECUTOR.shutdown();
+        try {
+            if (!SAVE_EXECUTOR.awaitTermination(3, TimeUnit.SECONDS))
+                SAVE_EXECUTOR.shutdownNow();
+        } catch (InterruptedException e) {
+            SAVE_EXECUTOR.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
 
     private final Map<String, Float> volumes = new ConcurrentHashMap<>();
     private volatile long lastSaveRequest = 0;
@@ -50,8 +73,17 @@ public class VolumeConfig {
 
     public void tickSave() {
         if (lastSaveRequest > 0 && System.currentTimeMillis() - lastSaveRequest > 300) {
-            save();
             lastSaveRequest = 0;
+            // Snapshot imutável para evitar race condition durante a escrita assíncrona
+            final String json = GSON.toJson(new LinkedHashMap<>(volumes));
+            final Path   target = configFile;
+            SAVE_EXECUTOR.submit(() -> {
+                try {
+                    Files.writeString(target, json);
+                } catch (IOException e) {
+                    SoundTweaks.LOGGER.error("SoundTweaks: erro ao guardar {}", target.getFileName(), e);
+                }
+            });
         }
     }
 
@@ -79,6 +111,21 @@ public class VolumeConfig {
     }
 
     /**
+     * Exporta os volumes actuais para um ficheiro externo.
+     * @return número de entradas exportadas, ou -1 em caso de erro
+     */
+    public int exportTo(Path file) {
+        try {
+            Files.writeString(file, GSON.toJson(new LinkedHashMap<>(volumes)));
+            SoundTweaks.LOGGER.info("SoundTweaks: exportadas {} entradas para {}", volumes.size(), file);
+            return volumes.size();
+        } catch (Exception e) {
+            SoundTweaks.LOGGER.error("SoundTweaks: erro ao exportar para {}", file, e);
+            return -1;
+        }
+    }
+
+    /**
      * Importa volumes de um ficheiro externo. Substitui todos os valores actuais.
      * @return número de entradas importadas, ou -1 em caso de erro
      */
@@ -86,9 +133,21 @@ public class VolumeConfig {
         try {
             Map<String, Float> loaded = GSON.fromJson(Files.readString(file), MAP_TYPE);
             if (loaded == null) return -1;
+
+            // Validar entradas antes de tocar em qualquer estado
+            Map<String, Float> validated = new LinkedHashMap<>();
+            loaded.forEach((id, vol) -> {
+                if (vol != null && Float.isFinite(vol))
+                    validated.put(id, Mth.clamp(vol, minVol, maxVol));
+            });
+
+            // Escrever para disco PRIMEIRO — se falhar, a memória fica intacta
+            Files.writeString(configFile, GSON.toJson(validated));
+
+            // Só agora actualizar o estado em memória
             volumes.clear();
-            loaded.forEach((id, vol) -> volumes.put(id, Mth.clamp(vol, minVol, maxVol)));
-            save();
+            volumes.putAll(validated);
+
             SoundTweaks.LOGGER.info("SoundTweaks: importadas {} entradas de {}", volumes.size(), file);
             return volumes.size();
         } catch (Exception e) {

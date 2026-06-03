@@ -52,7 +52,7 @@ public class PresetsScreen extends Screen {
     private int panelW() { return this.width - LIST_W - 1; }
 
     // Botões do footer (guardados para rebuildLayout)
-    private Button newPresetBtn, doneBtn, importPresetsBtn, openConfigBtn;
+    private Button newPresetBtn, doneBtn, importPresetsBtn, exportPresetsBtn, openConfigBtn;
 
     // ── Create overlay ────────────────────────────────────────────────────────
     private boolean creating = false;
@@ -121,7 +121,7 @@ public class PresetsScreen extends Screen {
         this.addRenderableWidget(this.doneBtn);
 
         this.importPresetsBtn = Button.builder(
-                Component.literal("Import Presets..."),
+                Component.literal("Import"),
                 btn -> {
                     String selected;
                     try (MemoryStack stack = MemoryStack.stackPush()) {
@@ -139,6 +139,25 @@ public class PresetsScreen extends Screen {
         this.importPresetsBtn.setTooltip(Tooltip.create(Component.literal(
                 "Import presets from a shared JSON file.")));
         this.addRenderableWidget(this.importPresetsBtn);
+
+        this.exportPresetsBtn = Button.builder(
+                Component.literal("Export"),
+                btn -> {
+                    String target;
+                    try (MemoryStack stack = MemoryStack.stackPush()) {
+                        PointerBuffer filters = stack.mallocPointer(1);
+                        filters.put(stack.UTF8("*.json")).flip();
+                        target = TinyFileDialogs.tinyfd_saveFileDialog(
+                                "Export presets", "soundtweaks_presets_export.json", filters,
+                                "JSON preset file (*.json)");
+                    }
+                    if (target == null) return;
+                    PresetConfig.exportTo(java.nio.file.Path.of(target));
+                }
+        ).bounds(4, this.height - 26, LIST_W / 2 - 6, 20).build();
+        this.exportPresetsBtn.setTooltip(Tooltip.create(Component.literal(
+                "Export all current presets to a JSON file.")));
+        this.addRenderableWidget(this.exportPresetsBtn);
 
         this.openConfigBtn = Button.builder(
                 Component.literal("Open Config Folder"), btn -> ConfigFileUtil.openConfigFolder()
@@ -294,20 +313,34 @@ public class PresetsScreen extends Screen {
             int lx = (this.width - lw) / 2;
             presetList = new PresetListWidget(this.minecraft, lw, listHeight, listTop, 24);
             presetList.setX(lx);
-            // Linha 1: Import | Open Config (utilitários)
-            importPresetsBtn.setX(lx + 4);         importPresetsBtn.setWidth(lw / 2 - 6);  importPresetsBtn.setHeight(20);
-            openConfigBtn.setX(lx + lw / 2 + 2);  openConfigBtn.setWidth(lw / 2 - 6);    openConfigBtn.setHeight(20);
-            importPresetsBtn.setY(this.height - 50); openConfigBtn.setY(this.height - 50);
-            // Linha 2: New Preset | Done (acções primárias) — mesma divisão da linha 1
+            // Linha 1: Import | Export | Open Config — proporção 1:1:2
+            int gap = 4, available = lw - 8 - gap * 2;
+            int bwSmall = available / 4;          // Import e Export
+            int bwLarge = available - bwSmall * 2; // Open Config (resto)
+            int b1x = lx + 4, b2x = b1x + bwSmall + gap, b3x = b2x + bwSmall + gap;
+            importPresetsBtn.setX(b1x);  importPresetsBtn.setWidth(bwSmall);  importPresetsBtn.setHeight(20);
+            exportPresetsBtn.setX(b2x);  exportPresetsBtn.setWidth(bwSmall);  exportPresetsBtn.setHeight(20);
+            openConfigBtn.setX(b3x);     openConfigBtn.setWidth(bwLarge);     openConfigBtn.setHeight(20);
+            importPresetsBtn.setY(this.height - 50);
+            exportPresetsBtn.setY(this.height - 50);
+            openConfigBtn.setY(this.height - 50);
+            // Linha 2: New Preset | Done
             newPresetBtn.setX(lx + 4);             newPresetBtn.setWidth(lw / 2 - 6);
             doneBtn.setX(lx + lw / 2 + 2);        doneBtn.setWidth(lw / 2 - 6);
             newPresetBtn.setY(this.height - 26);   doneBtn.setY(this.height - 26);
         } else {
             presetList = new PresetListWidget(this.minecraft, LIST_W, listHeight, listTop, 24);
-            // Linha 1: Import | Open Config (utilitários, esquerda)
-            importPresetsBtn.setX(4);              importPresetsBtn.setWidth(LIST_W / 2 - 6);  importPresetsBtn.setHeight(20);
-            openConfigBtn.setX(LIST_W / 2 + 2);   openConfigBtn.setWidth(LIST_W / 2 - 6);    openConfigBtn.setHeight(20);
-            importPresetsBtn.setY(this.height - 50); openConfigBtn.setY(this.height - 50);
+            // Linha 1: Import | Export | Open Config — proporção 1:1:2
+            int gap = 4, available = LIST_W - 8 - gap * 2;
+            int bwSmall = available / 4;
+            int bwLarge = available - bwSmall * 2;
+            int b1x = 4, b2x = b1x + bwSmall + gap, b3x = b2x + bwSmall + gap;
+            importPresetsBtn.setX(b1x);  importPresetsBtn.setWidth(bwSmall);  importPresetsBtn.setHeight(20);
+            exportPresetsBtn.setX(b2x);  exportPresetsBtn.setWidth(bwSmall);  exportPresetsBtn.setHeight(20);
+            openConfigBtn.setX(b3x);     openConfigBtn.setWidth(bwLarge);     openConfigBtn.setHeight(20);
+            importPresetsBtn.setY(this.height - 50);
+            exportPresetsBtn.setY(this.height - 50);
+            openConfigBtn.setY(this.height - 50);
             // Linha 2: New Preset (esquerda) | Done (direita, no painel)
             newPresetBtn.setX(4);                  newPresetBtn.setWidth(LIST_W - 8);
             doneBtn.setX(panelX() + panelW() / 2 - 60); doneBtn.setWidth(120);
@@ -621,6 +654,15 @@ public class PresetsScreen extends Screen {
     public boolean keyPressed(KeyEvent event) {
         int key = event.key();
 
+        // O overlay de create é modal — tem prioridade sobre o painel de edição.
+        // Sem este check primeiro, quando editingPreset != null e creating == true,
+        // o bloco seguinte consome todas as teclas sem as passar ao createBox.
+        if (creating) {
+            if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) { confirmCreate(); return true; }
+            if (key == GLFW.GLFW_KEY_ESCAPE) { exitCreateMode(); return true; }
+            return super.keyPressed(event);
+        }
+
         if (editingPreset != null) {
             if (editMode == EditMode.SHORTCUT) { handleShortcutKey(key); return true; }
             if (editMode == EditMode.RENAME) {
@@ -643,11 +685,6 @@ public class PresetsScreen extends Screen {
             }
             if (key == GLFW.GLFW_KEY_ESCAPE) { closeDetailPanel(); return true; }
             return true;
-        }
-
-        if (creating) {
-            if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) { confirmCreate(); return true; }
-            if (key == GLFW.GLFW_KEY_ESCAPE) { exitCreateMode(); return true; }
         }
 
         return super.keyPressed(event);

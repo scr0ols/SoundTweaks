@@ -29,7 +29,7 @@
   "soundtweaks.presets.name_hint":    "Preset name...",
   "soundtweaks.presets.no_favorites": "No favorites yet — go to Manage Presets to add some",
 
-  "key.categories.soundtweaks":   "SoundTweaks",
-  "key.soundtweaks.open_menu":    "Open SoundTweaks",
+  "key.category.soundtweaks.soundtweaks": "Sound Tweaks",
+  "key.soundtweaks.open_menu":    "Open Sound Tweaks",
   "key.soundtweaks.open_presets": "Open Presets Menu"
 }
