@@ -9,7 +9,10 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
 import java.nio.file.Path;
 
@@ -20,19 +23,23 @@ import java.nio.file.Path;
 public class ImportConfigScreen extends Screen {
 
     public enum ImportType {
-        PRESETS("Import Presets",
-                "Imports presets from soundtweaks_presets.json",
-                "New presets are added; existing IDs are kept."),
-        SOUNDS("Import Sound Config",
-                "Imports sound volumes from soundtweaks.json",
-                "Replaces all current sound volumes."),
-        BLOCKS("Import Block Config",
-                "Imports block volumes from soundtweaks_blocks.json",
-                "Replaces all current block volumes.");
+        PRESETS("Import / Export Presets",
+                "Import: adds presets from a JSON file.",
+                "Export: saves all current presets to a JSON file.",
+                "soundtweaks_presets_export.json"),
+        SOUNDS("Import / Export Sound Config",
+                "Import: replaces all current sound volumes.",
+                "Export: saves current sound volumes to a JSON file.",
+                "soundtweaks_export.json"),
+        BLOCKS("Import / Export Block Config",
+                "Import: replaces all current block volumes.",
+                "Export: saves current block volumes to a JSON file.",
+                "soundtweaks_blocks_export.json");
 
-        final String title, line1, line2;
-        ImportType(String title, String line1, String line2) {
+        final String title, line1, line2, defaultExportName;
+        ImportType(String title, String line1, String line2, String defaultExportName) {
             this.title = title; this.line1 = line1; this.line2 = line2;
+            this.defaultExportName = defaultExportName;
         }
     }
 
@@ -41,7 +48,7 @@ public class ImportConfigScreen extends Screen {
     private final Runnable onSuccess;
 
     private EditBox pathBox;
-    private Button  confirmBtn, cancelBtn;
+    private Button  confirmBtn, exportBtn, cancelBtn;
 
     // Feedback após tentativa de import
     private String feedbackMsg  = "";
@@ -70,14 +77,25 @@ public class ImportConfigScreen extends Screen {
         this.setFocused(pathBox);
         this.pathBox.setFocused(true);
 
+        // três botões centrados: [ Import ] [ Export ] [ Cancel ]
+        int btnW = 90, btnGap = 6;
+        int totalBtns = btnW * 3 + btnGap * 2;
+        int btnStartX = px + pw / 2 - totalBtns / 2;
+        int btnY = py + ph - 30;
+
         this.confirmBtn = Button.builder(Component.literal("Import"),
                 btn -> doImport()
-        ).bounds(px + pw / 2 - 105, py + ph - 30, 100, 20).build();
+        ).bounds(btnStartX, btnY, btnW, 20).build();
         this.addRenderableWidget(confirmBtn);
+
+        this.exportBtn = Button.builder(Component.literal("Export"),
+                btn -> doExport()
+        ).bounds(btnStartX + btnW + btnGap, btnY, btnW, 20).build();
+        this.addRenderableWidget(exportBtn);
 
         this.cancelBtn = Button.builder(Component.literal("Cancel"),
                 btn -> this.minecraft.setScreen(parent)
-        ).bounds(px + pw / 2 + 5, py + ph - 30, 100, 20).build();
+        ).bounds(btnStartX + (btnW + btnGap) * 2, btnY, btnW, 20).build();
         this.addRenderableWidget(cancelBtn);
     }
 
@@ -115,6 +133,34 @@ public class ImportConfigScreen extends Screen {
         // Feedback
         if (!feedbackMsg.isEmpty()) {
             g.centeredText(this.font, feedbackMsg, this.width / 2, py + 130, feedbackColor);
+        }
+    }
+
+    private void doExport() {
+        String target;
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            PointerBuffer filters = stack.mallocPointer(1);
+            filters.put(stack.UTF8("*.json")).flip();
+            target = TinyFileDialogs.tinyfd_saveFileDialog(
+                    "Export " + type.title, type.defaultExportName, filters,
+                    "JSON file (*.json)");
+        }
+        if (target == null) return;
+
+        int result;
+        switch (type) {
+            case PRESETS -> result = PresetConfig.exportTo(java.nio.file.Path.of(target));
+            case SOUNDS  -> result = VolumeConfig.SOUNDS.exportTo(java.nio.file.Path.of(target));
+            case BLOCKS  -> result = VolumeConfig.BLOCKS.exportTo(java.nio.file.Path.of(target));
+            default      -> result = -1;
+        }
+
+        if (result < 0) {
+            feedbackMsg   = "Export failed. Check logs for details.";
+            feedbackColor = 0xFFFF6666;
+        } else {
+            feedbackMsg   = "Exported " + result + " entries to file.";
+            feedbackColor = 0xFF88FF88;
         }
     }
 
