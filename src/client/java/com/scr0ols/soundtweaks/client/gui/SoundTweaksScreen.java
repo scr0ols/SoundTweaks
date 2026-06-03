@@ -231,6 +231,11 @@ public class SoundTweaksScreen extends Screen {
         graphics.fill(0, 0, contentW(), 24, 0xFF1A1A2E);
         graphics.fill(0, 24, contentW(), 25, 0xFF444466);
 
+        // Fundo da sidebar antes do super — para o botão Manage (widget) ficar por cima
+        if (sidebarOpen) {
+            graphics.fill(this.width - SIDE_W, 0, this.width, this.height, 0x771A1A1E);
+        }
+
         super.extractRenderState(graphics, mouseX, mouseY, a);
 
         // Título centrado, mas sem invadir os botões do header (ocupam até x≈182)
@@ -276,9 +281,6 @@ public class SoundTweaksScreen extends Screen {
         List<PresetConfig.Preset> favs = PresetConfig.getFavoritePresets();
         int sideX = this.width - SIDE_W;
 
-        // Fundo da sidebar — neutro semi-transparente, mesmo tom do fundo geral
-        graphics.fill(sideX, 0, this.width, this.height, 0x771A1A1E);
-
         // Cabeçalho — clicável para fechar
         boolean hovHeader = mouseX >= sideX && mouseY >= 0 && mouseY < 22;
         graphics.fill(sideX, 0, this.width, 24, hovHeader ? 0xFF222233 : 0xFF1A1A2E);
@@ -310,13 +312,10 @@ public class SoundTweaksScreen extends Screen {
                     && mouseY >= y && mouseY < y + PRESET_H;
 
             if (active) {
-                graphics.fill(sideX + 1, y, this.width - 1, y + PRESET_H, color | 0xFF000000);
-                graphics.fill(sideX + 1, y, this.width - 1, y + 1,        0xCCFFFFFF);
-                graphics.fill(sideX + 1, y + PRESET_H - 1, this.width - 1, y + PRESET_H, 0x44FFFFFF);
-                graphics.fill(sideX + 1, y, sideX + 6, y + PRESET_H, 0xFFFFFFFF);
+                graphics.fill(sideX + 1, y, this.width - 1, y + PRESET_H, (color & 0x00FFFFFF) | 0x55000000);
+                graphics.fill(sideX + 1, y, sideX + 4, y + PRESET_H, color | 0xFF000000); // acento lateral sólido
             } else {
-                graphics.fill(sideX + 1, y, this.width - 1, y + PRESET_H,
-                        (color & 0x00FFFFFF) | 0x44000000);
+                graphics.fill(sideX + 1, y, this.width - 1, y + PRESET_H, (color & 0x00FFFFFF) | 0x1A000000);
             }
             if (hov) graphics.fill(sideX + 1, y, this.width - 1, y + PRESET_H, 0x22FFFFFF);
 
