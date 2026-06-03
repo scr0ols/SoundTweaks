@@ -44,7 +44,7 @@ public class SoundTweaksScreen extends Screen {
     /** Y onde os botões de preset começam (abaixo do cabeçalho). */
     private static final int SIDE_TOP = 26;
     /** Altura do botão Manage no fundo. */
-    private static final int MANAGE_H = 18;
+    private static final int MANAGE_H = 20;
 
     @Nullable private final Screen parent;
 
@@ -81,7 +81,7 @@ public class SoundTweaksScreen extends Screen {
 
         // ── Linha 1 (Y=4): [speaker] [Simple/Detail View] [Presets ▶/◄] ... título ...
         this.muteSoundsBtn = Button.builder(Component.empty(), btn -> toggleMuteVisible())
-                .bounds(4, 4, 20, 14).build();
+                .bounds(4, 2, 20, 20).build();
         this.muteSoundsBtn.setTooltip(Tooltip.create(Component.literal(
                 "Mute / restore all currently visible sounds")));
         this.addRenderableWidget(this.muteSoundsBtn);
@@ -93,7 +93,7 @@ public class SoundTweaksScreen extends Screen {
                     btn.setMessage(Component.literal(detailedView ? "Detail View" : "Simple View"));
                     refreshList();
                 }
-        ).bounds(28, 4, 78, 14).build();
+        ).bounds(28, 2, 78, 20).build();
         this.viewToggleButton.setTooltip(Tooltip.create(Component.literal(
                 "Simple View: grouped by sound event\n" +
                 "Detail View: individual sound files")));
@@ -102,7 +102,7 @@ public class SoundTweaksScreen extends Screen {
         this.presetsBtn = Button.builder(
                 Component.literal("Presets"),
                 btn -> toggleSidebar()
-        ).bounds(110, 4, 68, 14).build();
+        ).bounds(110, 2, 68, 20).build();
         this.presetsBtn.setTooltip(Tooltip.create(Component.literal(
                 "Toggle the presets sidebar.\n" +
                 "Presets let you save and quickly switch\n" +
@@ -110,29 +110,29 @@ public class SoundTweaksScreen extends Screen {
         this.addRenderableWidget(this.presetsBtn);
 
         // ── Linha 2 (Y=22): [Categoria] [Objecto] [×] [barra de pesquisa (preenche resto)]
-        this.categoryDropdown = new FilterDropdown(4, 22, 120,
+        this.categoryDropdown = new FilterDropdown(4, 26, 120,
                 I18n.get("soundtweaks.gui.category"), this::onCategorySelected);
         populateCategoryDropdown();
 
-        this.objectDropdown = new FilterDropdown(128, 22, 130,
+        this.objectDropdown = new FilterDropdown(128, 26, 130,
                 I18n.get("soundtweaks.gui.object"), this::onObjectSelected);
         this.objectDropdown.setActive(false);
 
         this.clearButton = Button.builder(Component.literal("x"), btn -> clearFilters())
-                .bounds(262, 22, 20, 20).build();
+                .bounds(262, 26, 20, 20).build();
         this.clearButton.setTooltip(Tooltip.create(Component.literal("Clear all filters")));
         this.addRenderableWidget(this.clearButton);
 
         int searchX = 286;
         int searchW = Math.max(60, cw - searchX - 4);
-        this.searchBox = new EditBox(this.font, searchX, 22, searchW, 20,
+        this.searchBox = new EditBox(this.font, searchX, 26, searchW, 20,
                 Component.translatable("soundtweaks.gui.search_hint"));
         this.searchBox.setHint(Component.translatable("soundtweaks.gui.search_hint"));
         this.searchBox.setResponder(q -> { this.searchQuery = q; refreshList(); });
         this.addRenderableWidget(this.searchBox);
 
         // ── Lista de sons (começa imediatamente abaixo dos filtros)
-        int listY = 46;
+        int listY = 50;
         this.soundList = new SoundListWidget(this.minecraft,
                 cw, this.height - listY - 36, listY, 20);
         refreshList();
@@ -227,6 +227,10 @@ public class SoundTweaksScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
+        // Banda de fundo do header e separador — antes do super para não cobrir os botões
+        graphics.fill(0, 0, contentW(), 24, 0xFF1A1A2E);
+        graphics.fill(0, 24, contentW(), 25, 0xFF444466);
+
         super.extractRenderState(graphics, mouseX, mouseY, a);
 
         // Título centrado, mas sem invadir os botões do header (ocupam até x≈182)
