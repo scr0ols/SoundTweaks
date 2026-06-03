@@ -1,61 +1,48 @@
 package com.scr0ols.soundtweaks.client.gui;
 
-import com.scr0ols.soundtweaks.MissingBlockRegistry;
 import com.scr0ols.soundtweaks.PresetConfig;
 import com.scr0ols.soundtweaks.SoundCategory;
 import com.scr0ols.soundtweaks.VolumeConfig;
 import com.scr0ols.soundtweaks.SoundRegistry;
 import com.scr0ols.soundtweaks.client.SoundDisplayHelper;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.AbstractSelectionList;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.Util;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
- * Ecrã de edição dos sons de um preset.
- * Mostra todos os sons com barra de pesquisa e filtro de categoria.
- * Sons com override ficam destacados; 100% = sem override = remove do preset.
+ * Ecrã de edição dos sons de um preset (versão fullscreen, acessível via PresetEditorScreen).
+ * A lista de sons usa PresetSoundList, reutilizável também no painel inline da PresetsScreen.
  */
 public class PresetEditorScreen extends Screen {
 
-    // ── Estado persistente (partilhado entre aberturas do mesmo ecrã) ─────────
     @Nullable private static SoundCategory savedCategory = null;
     @Nullable private static String        savedObject   = null;
     private   static         String        savedSearch   = "";
     private   static         double        savedScroll   = 0.0;
-    // Toggle Simple/Detail view — static para persistir entre aberturas
-    static boolean detailedView = false;
 
     private final Screen parent;
     final PresetConfig.Preset preset;
 
-    private SoundEntryList soundList;
-    private EditBox        searchBox;
-    private FilterDropdown categoryDropdown;
-    private FilterDropdown objectDropdown;
-    private Button         viewToggleBtn;
+    private PresetSoundList soundList;
+    private EditBox         searchBox;
+    private FilterDropdown  categoryDropdown;
+    private FilterDropdown  objectDropdown;
+    private Button          viewToggleBtn;
 
     @Nullable private SoundCategory selectedCategory = null;
     @Nullable private String        selectedObject   = null;
     private           String        searchQuery      = "";
 
-    // Botão de silenciar/repor overrides visíveis
     private Button  mutePresetsBtn;
     private boolean mutePresetsActive = false;
 
@@ -70,13 +57,13 @@ public class PresetEditorScreen extends Screen {
         int listTop    = 70;
         int listBottom = this.height - 70;
 
-        this.soundList = new SoundEntryList(this.minecraft, this.width, listBottom - listTop, listTop, 20);
+        this.soundList = new PresetSoundList(this.minecraft, preset,
+                this.width, listBottom - listTop, listTop, 20);
         this.soundList.refresh();
         this.addRenderableWidget(this.soundList);
 
-        // ── Linha de filtros (Y=28): [Category 120] [Object 130] [×] [Search preenche] [View 78]
-        int fY  = 28;
-        int fH  = 20;
+        // ── Filtros ──────────────────────────────────────────────────────────
+        int fY = 28, fH = 20;
 
         this.categoryDropdown = new FilterDropdown(4, fY, 120,
                 I18n.get("soundtweaks.gui.category"), this::onCategorySelected);
@@ -92,16 +79,15 @@ public class PresetEditorScreen extends Screen {
         this.addRenderableWidget(clearBtn);
 
         this.viewToggleBtn = Button.builder(
-                Component.literal(detailedView ? "Detail View" : "Simple View"),
+                Component.literal(PresetSoundList.detailedView ? "Detail View" : "Simple View"),
                 btn -> {
-                    detailedView = !detailedView;
-                    btn.setMessage(Component.literal(detailedView ? "Detail View" : "Simple View"));
+                    PresetSoundList.detailedView = !PresetSoundList.detailedView;
+                    btn.setMessage(Component.literal(PresetSoundList.detailedView ? "Detail View" : "Simple View"));
                     refreshList();
                 }
         ).bounds(this.width - 82, fY, 78, fH).build();
         this.viewToggleBtn.setTooltip(Tooltip.create(Component.literal(
-                "Simple View: grouped by sound event\n" +
-                "Detail View: all individual sound files")));
+                "Simple View: grouped by sound event\nDetail View: all individual sound files")));
         this.addRenderableWidget(this.viewToggleBtn);
 
         int searchX = 286;
@@ -112,14 +98,12 @@ public class PresetEditorScreen extends Screen {
         this.searchBox.setResponder(q -> { this.searchQuery = q; refreshList(); });
         this.addRenderableWidget(this.searchBox);
 
-        // ── Footer: [Import 130] ... [speaker 24] [Done 100] ────────────────
-        // Import à esquerda; speaker + Done agrupados à direita do centro
-        int btnY   = this.height - 56;
+        // ── Footer ───────────────────────────────────────────────────────────
+        int btnY    = this.height - 56;
         int centerX = this.width / 2;
 
         var importBtn = Button.builder(
-                Component.literal("Import from config"),
-                btn -> importFromBase()
+                Component.literal("Import from config"), btn -> importFromBase()
         ).bounds(centerX - 135, btnY, 130, 20).build();
         importBtn.setTooltip(Tooltip.create(Component.literal(
                 "Copies all sounds/blocks with volume ≠ 100%\n" +
@@ -131,13 +115,11 @@ public class PresetEditorScreen extends Screen {
         this.mutePresetsBtn = Button.builder(Component.empty(), btn -> toggleMuteVisible())
                 .bounds(centerX + 2, btnY, 24, 20).build();
         this.mutePresetsBtn.setTooltip(Tooltip.create(Component.literal(
-                "Mute / restore all currently visible sounds\n" +
-                "in this preset (sets them to 0% / removes override).")));
+                "Mute / restore all currently visible sounds in this preset.")));
         this.addRenderableWidget(this.mutePresetsBtn);
 
         this.addRenderableWidget(Button.builder(
-                Component.translatable("soundtweaks.gui.done"),
-                btn -> this.onClose()
+                Component.translatable("soundtweaks.gui.done"), btn -> this.onClose()
         ).bounds(centerX + 30, btnY, 100, 20).build());
 
         restoreSavedState();
@@ -167,9 +149,8 @@ public class PresetEditorScreen extends Screen {
 
     private void populateCategoryDropdown() {
         List<String[]> pairs = new ArrayList<>();
-        for (SoundCategory cat : SoundCategory.visibleCategories()) {
+        for (SoundCategory cat : SoundCategory.visibleCategories())
             pairs.add(new String[]{ cat.getDropdownKey(), I18n.get(cat.getLabelKey()) });
-        }
         pairs.sort((a, b) -> a[1].compareToIgnoreCase(b[1]));
         List<String> opts = new ArrayList<>(), labels = new ArrayList<>();
         for (String[] p : pairs) { opts.add(p[0]); labels.add(p[1]); }
@@ -177,7 +158,7 @@ public class PresetEditorScreen extends Screen {
     }
 
     private void populateObjectDropdown(SoundCategory category) {
-        List<String> raw    = new ArrayList<>(SoundRegistry.getObjectsByCategory(category));
+        List<String> raw = new ArrayList<>(SoundRegistry.getObjectsByCategory(category));
         List<String> labels = new ArrayList<>();
         for (String obj : raw)
             labels.add(SoundDisplayHelper.getObjectName("minecraft:" + category.getPrefix() + "." + obj));
@@ -209,8 +190,7 @@ public class PresetEditorScreen extends Screen {
     }
 
     private void onObjectSelected(@Nullable String object) {
-        this.selectedObject = object;
-        refreshList();
+        this.selectedObject = object; refreshList();
     }
 
     private void clearFilters() {
@@ -236,23 +216,8 @@ public class PresetEditorScreen extends Screen {
     }
 
     private void toggleMuteVisible() {
-        mutePresetsActive = !mutePresetsActive;
-        for (var entry : soundList.children()) {
-            if (entry instanceof SoundEntryList.SoundRow sr) {
-                if (mutePresetsActive) preset.sounds.put(sr.soundId, 0.0f);
-                else                  preset.sounds.remove(sr.soundId);
-            } else if (entry instanceof SoundEntryList.BlockRow br) {
-                if (mutePresetsActive) preset.blocks.put(br.blockId, 0.0f);
-                else                  preset.blocks.remove(br.blockId);
-            } else if (entry instanceof SoundEntryList.GroupRow gr) {
-                // Simple View: mute/unmute todos os filhos do grupo
-                for (String id : gr.childIds) {
-                    if (mutePresetsActive) preset.sounds.put(id, 0.0f);
-                    else                  preset.sounds.remove(id);
-                }
-            }
-        }
-        PresetConfig.markDirty();
+        soundList.toggleMute();
+        mutePresetsActive = soundList.isMuteActive();
         refreshList();
     }
 
@@ -261,18 +226,13 @@ public class PresetEditorScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
         int rgb = preset.argbColor() & 0x00FFFFFF;
-        // Tint muitíssimo subtil da cor do preset sobre o fundo standard do Minecraft (8% opacidade)
-        // Escurece os canais a metade para não explodir com cores saturadas
         int tintR = (rgb >> 16) & 0xFF, tintG = (rgb >> 8) & 0xFF, tintB = rgb & 0xFF;
         int dampedRgb = ((tintR / 2) << 16) | ((tintG / 2) << 8) | (tintB / 2);
         graphics.fill(0, 0, this.width, this.height, dampedRgb | 0x15000000);
-
-        // Header colorido sólido (primeiros 24px) com a cor do preset
         graphics.fill(0, 0, this.width, 24, rgb | 0xCC000000);
 
         super.extractRenderState(graphics, mouseX, mouseY, a);
 
-        // Separadores e texto por cima da lista
         graphics.fill(0, 24, this.width, 25, 0xFF444466);
         graphics.fill(0, 66, this.width, 67, 0xFF333355);
         graphics.centeredText(this.font, "Editing: " + preset.name, this.width / 2, 8, 0xFFFFFFFF);
@@ -289,14 +249,12 @@ public class PresetEditorScreen extends Screen {
             hint = hint.stripTrailing() + "…";
         graphics.text(this.font, hint, 8, this.height - 18, 0xFFAAAAAA);
 
-        // Ícone de speaker no botão de silenciar/repor
         if (this.mutePresetsBtn != null)
             SoundTweaksScreen.drawSpeakerIcon(graphics,
                     this.mutePresetsBtn.getX(), this.mutePresetsBtn.getY(),
                     this.mutePresetsBtn.getWidth(), this.mutePresetsBtn.getHeight(),
                     mutePresetsActive);
 
-        // Dropdowns — por último para ficarem sobre tudo
         this.categoryDropdown.render(graphics, mouseX, mouseY);
         this.objectDropdown.render(graphics, mouseX, mouseY);
     }
@@ -306,12 +264,10 @@ public class PresetEditorScreen extends Screen {
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean consumed) {
         if (this.categoryDropdown.mouseClicked(event)) {
-            if (this.categoryDropdown.isOpen()) this.objectDropdown.close();
-            return true;
+            if (this.categoryDropdown.isOpen()) this.objectDropdown.close(); return true;
         }
         if (this.objectDropdown.mouseClicked(event)) {
-            if (this.objectDropdown.isOpen()) this.categoryDropdown.close();
-            return true;
+            if (this.objectDropdown.isOpen()) this.categoryDropdown.close(); return true;
         }
         return super.mouseClicked(event, consumed);
     }
@@ -360,342 +316,5 @@ public class PresetEditorScreen extends Screen {
         savedSearch   = this.searchQuery;
         savedScroll   = this.soundList != null ? this.soundList.getScrollAmount() : 0.0;
         this.minecraft.setScreen(parent);
-    }
-
-    // =========================================================================
-    // Lista unificada sons + blocos
-    // =========================================================================
-
-    class SoundEntryList extends AbstractSelectionList<SoundEntryList.BaseRow> {
-
-        private char   lastJumpLetter = 0;
-        private int    lastJumpIndex  = -1;
-        private double trackedScroll  = 0.0;
-
-        @Override
-        public void setScrollAmount(double amount) {
-            super.setScrollAmount(amount);
-            this.trackedScroll = amount;
-        }
-
-        public double getScrollAmount() { return trackedScroll; }
-
-        public boolean jumpToLetter(char c) {
-            char upper = Character.toUpperCase(c);
-            var entries = this.children();
-            List<Integer> matches = new ArrayList<>();
-            for (int i = 0; i < entries.size(); i++) {
-                String id = entries.get(i).getId();
-                if (id.isEmpty()) continue;
-                // Usar display name para jump
-                String name;
-                if (entries.get(i) instanceof GroupRow gr)        name = gr.groupName;
-                else if (entries.get(i) instanceof SoundRow sr)   name = SoundDisplayHelper.getDisplayName(sr.soundId);
-                else if (entries.get(i) instanceof BlockRow br)   name = MissingBlockRegistry.getDisplayName(br.blockId);
-                else continue;
-                if (!name.isEmpty() && Character.toUpperCase(name.charAt(0)) == upper) matches.add(i);
-            }
-            if (matches.isEmpty()) return false;
-            int nextPos;
-            if (upper != lastJumpLetter) nextPos = 0;
-            else { int cur = matches.indexOf(lastJumpIndex); nextPos = (cur + 1) % matches.size(); }
-            int targetIdx = matches.get(nextPos);
-            lastJumpLetter = upper;
-            lastJumpIndex  = targetIdx;
-            this.setSelected(entries.get(targetIdx));
-            this.setScrollAmount((double) targetIdx * this.entryHeight);
-            return true;
-        }
-
-        abstract class BaseRow extends AbstractSelectionList.Entry<BaseRow> {
-            abstract String  getId();
-            abstract boolean hasOverride();
-            public void updateNarration(NarrationElementOutput o) {}
-        }
-
-        private final int entryHeight;
-
-        public SoundEntryList(net.minecraft.client.Minecraft mc,
-                              int width, int height, int y, int itemHeight) {
-            super(mc, width, height, y, itemHeight);
-            this.entryHeight = itemHeight;
-        }
-
-        public void refresh() { refresh(null, null, ""); }
-
-        public void refresh(@Nullable SoundCategory category, @Nullable String object, String query) {
-            this.clearEntries();
-            this.lastJumpLetter = 0;
-            this.lastJumpIndex  = -1;
-
-            // ── Sons ──────────────────────────────────────────────────────────
-            List<String> sounds = new ArrayList<>(
-                    category != null
-                            ? SoundRegistry.getByCategory(category)
-                            : SoundRegistry.getAll());
-
-            if (object != null) {
-                String f = "." + object + ".";
-                String s = "." + object;
-                sounds = sounds.stream().filter(id -> {
-                    String p = id.contains(":") ? id.split(":")[1] : id;
-                    return p.contains(f) || p.endsWith(s);
-                }).toList();
-            }
-
-            if (!query.isBlank()) {
-                String q = query.toLowerCase();
-                sounds = sounds.stream().filter(id ->
-                        id.contains(q) || SoundDisplayHelper.getDisplayName(id).toLowerCase().contains(q)
-                ).toList();
-            }
-
-            sounds = sounds.stream()
-                    .filter(id -> !SoundCategory.isSilent(id))
-                    .filter(id -> SoundCategory.fromPrefix(SoundDisplayHelper.getCategoryPrefix(id)) != SoundCategory.HIDDEN)
-                    .sorted((a, b) -> {
-                        String ka = SoundDisplayHelper.getDisplayName(a).toLowerCase();
-                        String kb = SoundDisplayHelper.getDisplayName(b).toLowerCase();
-                        boolean aD = !ka.isEmpty() && Character.isDigit(ka.charAt(0));
-                        boolean bD = !kb.isEmpty() && Character.isDigit(kb.charAt(0));
-                        if (aD != bD) return aD ? 1 : -1;
-                        return ka.compareTo(kb);
-                    })
-                    .toList();
-
-            // ── Blocos (MissingBlockRegistry) ─────────────────────────────────
-            boolean showBlocks = (category == null || category == SoundCategory.BLOCK
-                    || category == SoundCategory.REDSTONE) && object == null;
-
-            List<String> blocks = new ArrayList<>();
-            if (showBlocks) {
-                blocks = new ArrayList<>(
-                        category == SoundCategory.REDSTONE
-                                ? MissingBlockRegistry.BLOCK_IDS.stream()
-                                    .filter(MissingBlockRegistry.REDSTONE_BLOCK_IDS::contains).toList()
-                                : MissingBlockRegistry.BLOCK_IDS);
-
-                if (!query.isBlank()) {
-                    String q = query.toLowerCase();
-                    blocks = blocks.stream().filter(id ->
-                            MissingBlockRegistry.getDisplayName(id).toLowerCase().contains(q)
-                            || id.contains(q)).toList();
-                }
-            }
-
-            if (!detailedView) {
-                // ── Simple View: agrupa sons por evento (igual à SoundListWidget) ──
-                Map<String, List<String>> groupMap = SoundRegistry.getGroups(sounds);
-                Set<String> groupedIds = new HashSet<>();
-                groupMap.values().forEach(groupedIds::addAll);
-
-                // Recolher entradas: [sortKey, entry]
-                List<Object[]> slots = new ArrayList<>();
-                for (Map.Entry<String, List<String>> e : groupMap.entrySet()) {
-                    String displayName = SoundDisplayHelper.getObjectName("x:" + e.getKey() + ".x");
-                    slots.add(new Object[]{ displayName.toLowerCase(), new GroupRow(e.getKey(), e.getValue()) });
-                }
-                for (String id : sounds) {
-                    if (!groupedIds.contains(id)) {
-                        String dn = SoundDisplayHelper.getDisplayName(id).toLowerCase();
-                        slots.add(new Object[]{ dn, new SoundRow(id) });
-                    }
-                }
-                slots.sort((a, b) -> {
-                    String ka = (String) a[0], kb = (String) b[0];
-                    boolean aD = !ka.isEmpty() && Character.isDigit(ka.charAt(0));
-                    boolean bD = !kb.isEmpty() && Character.isDigit(kb.charAt(0));
-                    if (aD != bD) return aD ? 1 : -1;
-                    return ka.compareTo(kb);
-                });
-                for (Object[] slot : slots) this.addEntry((BaseRow) slot[1]);
-            } else {
-                // ── Detail View: todos os sons individualmente ─────────────────
-                for (String id : sounds) this.addEntry(new SoundRow(id));
-            }
-
-            // Blocos sempre depois dos sons, separados por um divisor
-            if (!blocks.isEmpty()) {
-                this.addEntry(new DividerRow());
-                for (String id : blocks) this.addEntry(new BlockRow(id));
-            }
-        }
-
-        @Override public int getRowWidth() { return Math.min(500, this.width - 20); }
-        @Override protected int scrollBarX() { return this.getX() + this.width / 2 + getRowWidth() / 2 + 4; }
-        @Override public void updateWidgetNarration(NarrationElementOutput o) {}
-
-        // ── Linha divisória (entre sons e blocos) ────────────────────────────
-
-        class DividerRow extends BaseRow {
-            @Override public String  getId()       { return ""; }
-            @Override public boolean hasOverride() { return false; }
-
-            @Override
-            public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hov, float a) {
-                int midY = getY() + 10;
-                g.fill(getX() + 4, midY, getX() + SoundEntryList.this.getRowWidth() - 4, midY + 1, 0xFF555555);
-            }
-
-            @Override public boolean mouseClicked(MouseButtonEvent e, boolean c)          { return false; }
-            @Override public boolean mouseDragged(MouseButtonEvent e, double dx, double dy){ return false; }
-            @Override public boolean mouseReleased(MouseButtonEvent e)                     { return false; }
-        }
-
-        // ── Linha de grupo (Simple View) ──────────────────────────────────────
-
-        class GroupRow extends BaseRow {
-            final List<String> childIds;
-            private final String groupName;
-            private final PresetGroupSliderButton slider;
-            private long lastClick = 0;
-
-            GroupRow(String groupKey, List<String> childIds) {
-                this.childIds  = childIds;
-                this.groupName = SoundDisplayHelper.getObjectName("x:" + groupKey + ".x");
-                this.slider    = new PresetGroupSliderButton(preset, childIds, 0, 0, 90, 14);
-            }
-
-            @Override public String  getId()       { return "group:" + groupName; }
-            @Override public boolean hasOverride() { return childIds.stream().anyMatch(id -> preset.sounds.containsKey(id)); }
-
-            private float minChildVol() {
-                float min = 1.0f;
-                for (String id : childIds) { Float v = preset.sounds.get(id); if (v != null) min = Math.min(min, v); }
-                return min;
-            }
-
-            @Override
-            public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hov, float a) {
-                int rowW = SoundEntryList.this.getRowWidth();
-                boolean sel = SoundEntryList.this.getSelected() == this;
-                int pc = PresetEditorScreen.this.preset.argbColor() & 0x00FFFFFF;
-
-                if (hasOverride()) {
-                    // Acento lateral laranja + fundo subtil
-                    g.fill(getX(), getY(), getX() + 3, getY() + 20, 0xFFFF9944);
-                    g.fill(getX(), getY(), getX() + rowW, getY() + 20, 0x18FFAA44);
-                } else if (sel) {
-                    // Fundo com a cor do preset (como o ecrã geral usa azul para seleção)
-                    g.fill(getX(), getY(), getX() + rowW, getY() + 20, pc | 0x55000000);
-                } else {
-                    // Tint subtil da cor do preset (igual ao GroupEntry do ecrã geral mas com cor do preset)
-                    g.fill(getX(), getY(), getX() + rowW, getY() + 20, pc | 0x22000000);
-                }
-
-                float vol = minChildVol();
-                int col = vol <= 0f ? 0xFFFF4444 : hasOverride() ? 0xFFFFCC88 : 0xFFCCCCCC;
-                g.text(SoundEntryList.this.minecraft.font, "* " + groupName, getX()+4, getY()+5, col);
-                slider.setX(getX()+rowW-94); slider.setY(getY()+3);
-                slider.extractRenderState(g, mx, my, a);
-            }
-
-            @Override
-            public boolean mouseClicked(MouseButtonEvent e, boolean consumed) {
-                if (consumed) return false;
-                SoundEntryList.this.setSelected(this);
-                long now = Util.getMillis();
-                if (now - lastClick < 300) { slider.setSliderValue(minChildVol() >= 1f ? 0f : 1f); return true; }
-                lastClick = now;
-                return slider.mouseClicked(e, consumed);
-            }
-            @Override public boolean mouseDragged(MouseButtonEvent e, double dx, double dy) { return slider.mouseDragged(e,dx,dy); }
-            @Override public boolean mouseReleased(MouseButtonEvent e) { return slider.mouseReleased(e); }
-        }
-
-        // ── Linha de som ──────────────────────────────────────────────────────
-
-        class SoundRow extends BaseRow {
-            final String soundId;
-            private final PresetSoundSliderButton slider;
-            private long lastClick = 0;
-
-            SoundRow(String id) {
-                this.soundId = id;
-                this.slider  = new PresetSoundSliderButton(preset, id, 0, 0, 90, 14);
-            }
-
-            @Override public String  getId()         { return soundId; }
-            @Override public boolean hasOverride()   { return preset.sounds.containsKey(soundId); }
-
-            @Override
-            public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hov, float a) {
-                int rowW = SoundEntryList.this.getRowWidth();
-                boolean sel = SoundEntryList.this.getSelected() == this;
-                if (hasOverride()) {
-                    g.fill(getX(), getY(), getX() + 3, getY() + 20, 0xFFFF9944);
-                    g.fill(getX(), getY(), getX() + rowW, getY() + 20, 0x18FFAA44);
-                } else if (sel) {
-                    g.fill(getX(), getY(),      getX() + rowW, getY() + 1,  0x88AAAAFF);
-                    g.fill(getX(), getY() + 19, getX() + rowW, getY() + 20, 0x88AAAAFF);
-                }
-
-                float vol  = preset.sounds.getOrDefault(soundId, 1.0f);
-                int   col  = vol <= 0f ? 0xFFFF4444 : hasOverride() ? 0xFFFFCC88 : 0xFFCCCCCC;
-                g.text(SoundEntryList.this.minecraft.font, SoundDisplayHelper.getDisplayName(soundId), getX()+4, getY()+5, col);
-                slider.setX(getX()+rowW-94); slider.setY(getY()+3);
-                slider.extractRenderState(g, mx, my, a);
-            }
-
-            @Override
-            public boolean mouseClicked(MouseButtonEvent e, boolean consumed) {
-                if (consumed) return false;
-                SoundEntryList.this.setSelected(this);
-                long now = Util.getMillis();
-                if (now - lastClick < 300) { slider.setSliderValue(preset.sounds.getOrDefault(soundId,1f)>=1f?0f:1f); return true; }
-                lastClick = now;
-                return slider.mouseClicked(e, consumed);
-            }
-            @Override public boolean mouseDragged(MouseButtonEvent e, double dx, double dy) { return slider.mouseDragged(e,dx,dy); }
-            @Override public boolean mouseReleased(MouseButtonEvent e) { return slider.mouseReleased(e); }
-        }
-
-        // ── Linha de bloco ────────────────────────────────────────────────────
-
-        class BlockRow extends BaseRow {
-            final String blockId;
-            private final PresetBlockSliderButton slider;
-            private long lastClick = 0;
-
-            BlockRow(String id) {
-                this.blockId = id;
-                this.slider  = new PresetBlockSliderButton(preset, id, 0, 0, 90, 14);
-            }
-
-            @Override public String  getId()       { return blockId; }
-            @Override public boolean hasOverride() { return preset.blocks.containsKey(blockId); }
-
-            @Override
-            public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hov, float a) {
-                int rowW = SoundEntryList.this.getRowWidth();
-                boolean sel = SoundEntryList.this.getSelected() == this;
-                if (hasOverride()) {
-                    g.fill(getX(), getY(), getX() + 3, getY() + 20, 0xFFFF9944);
-                    g.fill(getX(), getY(), getX() + rowW, getY() + 20, 0x18FFAA44);
-                } else if (sel) {
-                    g.fill(getX(), getY(),      getX() + rowW, getY() + 1,  0x88AAAAFF);
-                    g.fill(getX(), getY() + 19, getX() + rowW, getY() + 20, 0x88AAAAFF);
-                }
-
-                float vol = preset.blocks.getOrDefault(blockId, 1.0f);
-                int   col = vol<=0f ? 0xFFFF4444 : hasOverride() ? 0xFFFFCC88 : 0xFFCCCCCC;
-                String name = MissingBlockRegistry.getDisplayName(blockId) + " [block]";
-                g.text(SoundEntryList.this.minecraft.font, name, getX()+4, getY()+5, col);
-                slider.setX(getX()+rowW-94); slider.setY(getY()+3);
-                slider.extractRenderState(g, mx, my, a);
-            }
-
-            @Override
-            public boolean mouseClicked(MouseButtonEvent e, boolean consumed) {
-                if (consumed) return false;
-                SoundEntryList.this.setSelected(this);
-                long now = Util.getMillis();
-                if (now - lastClick < 300) { slider.setSliderValue(preset.blocks.getOrDefault(blockId,1f)>=1f?0f:1f); return true; }
-                lastClick = now;
-                return slider.mouseClicked(e, consumed);
-            }
-            @Override public boolean mouseDragged(MouseButtonEvent e, double dx, double dy) { return slider.mouseDragged(e,dx,dy); }
-            @Override public boolean mouseReleased(MouseButtonEvent e) { return slider.mouseReleased(e); }
-        }
     }
 }
