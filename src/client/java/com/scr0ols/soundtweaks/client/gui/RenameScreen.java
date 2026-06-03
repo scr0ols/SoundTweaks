@@ -49,6 +49,7 @@ public class RenameScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
+        graphics.fill(0, 0, this.width, this.height, 0xBB000000);
         super.extractRenderState(graphics, mouseX, mouseY, a);
 
         int cx = this.width / 2 - 110;
@@ -56,11 +57,14 @@ public class RenameScreen extends Screen {
 
         // Caixa de fundo
         graphics.fill(cx - 14, cy - 32, cx + 234, cy + 52, 0xFF1A1A2E);
-        graphics.fill(cx - 14, cy - 32, cx + 234, cy - 31, 0xFF444466);
-        graphics.fill(cx - 14, cy + 51, cx + 234, cy + 52, 0xFF444466);
+        graphics.fill(cx - 14, cy - 32, cx + 234, cy - 31, 0xFF444466); // topo
+        graphics.fill(cx - 14, cy + 51, cx + 234, cy + 52, 0xFF444466); // baixo
+        graphics.fill(cx - 14, cy - 32, cx - 13, cy + 52, 0xFF444466); // esquerda
+        graphics.fill(cx + 233, cy - 32, cx + 234, cy + 52, 0xFF444466); // direita
 
         graphics.centeredText(this.font, "Rename preset:",
                 this.width / 2, cy - 22, 0xFFCCCCFF);
+        graphics.fill(cx - 14, cy - 14, cx + 234, cy - 13, 0xFF333355); // separador após título
     }
 
     @Override

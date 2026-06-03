@@ -17,9 +17,12 @@ public class PresetConfig {
     public static final int CUSTOM_COLOR_INDEX = 18;
 
     public static final int[] PRESET_COLORS = {
-        0xFF555566, 0xFF993333, 0xFF336633, 0xFF2255AA, 0xFF886622, 0xFF7733AA,
-        0xFF227788, 0xFFCC5522, 0xFF996688, 0xFF44AA55, 0xFF2277AA, 0xFFAA9933,
-        0xFF884444, 0xFF337755, 0xFF553366, 0xFF888844, 0xFFAA4488, 0xFF445533
+        // Retro Game — linha 1: Vermelho, Dourado, Verde Néon, Azul Vivo, Roxo, Azul Elétrico
+        0xFFE84118, 0xFFFBC531, 0xFF4CD137, 0xFF0097E6, 0xFF8C7AE6, 0xFF00A8FF,
+        // linha 2: Ocre, Lime, Denim, Tijolo, Azul Marinho, Noite
+        0xFFE1B12C, 0xFF44BD32, 0xFF487EB0, 0xFFC23616, 0xFF273C75, 0xFF192A56,
+        // linha 3: Laranja, Burnt, Petróleo, Orquídea, Lavanda, Violeta
+        0xFFF79F1F, 0xFFEE5A24, 0xFF1289A7, 0xFFD980FA, 0xFF9980FA, 0xFF5758BB
     };
 
     public static class Preset {
