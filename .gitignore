@@ -42,6 +42,8 @@ replay_*.log
 # docs internos (notas de sessão, planos)
 
 PLANO_ORGANIZACAO_SONS.md
+PLANO_PUBLICACAO.md
+MODRINTH_DESCRIPTION.md
 GIT_RESTRUCTURE_PLAN.md
 GIT_LOG.md
 
