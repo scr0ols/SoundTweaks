@@ -14,6 +14,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -60,7 +61,6 @@ public class PresetsScreen extends Screen {
 
     // ── Painel de detalhe ─────────────────────────────────────────────────────
     private enum EditMode { NONE, COLOR, RENAME, SHORTCUT, SOUNDS }
-    private boolean showingDeleteConfirm = false;
     private EditMode editMode = EditMode.NONE;
     @Nullable private PresetConfig.Preset editingPreset = null;
 
@@ -388,9 +388,6 @@ public class PresetsScreen extends Screen {
             createCancelBtn.extractRenderState(g, mouseX, mouseY, a);
         }
 
-        if (showingDeleteConfirm && editingPreset != null) {
-            renderDeletePopup(g, mouseX, mouseY);
-        }
     }
 
     // ── Painel de detalhe ─────────────────────────────────────────────────────
@@ -405,16 +402,23 @@ public class PresetsScreen extends Screen {
         }
 
         int pc = editingPreset.argbColor() & 0x00FFFFFF;
-        // Título escalado a 1.4× com outline em 4 direcções para legibilidade garantida
-        g.pose().pushMatrix();
-        g.pose().translate(cx2, 8);
-        g.pose().scale(1.15f, 1.15f);
-        g.centeredText(this.font, editingPreset.name,  1,  1, 0xFF000000); // sombra baixo-direita
-        g.centeredText(this.font, editingPreset.name, -1,  1, 0xFF000000); // sombra baixo-esquerda
-        g.centeredText(this.font, editingPreset.name,  1, -1, 0xFF000000); // sombra cima-direita
-        g.centeredText(this.font, editingPreset.name, -1, -1, 0xFF000000); // sombra cima-esquerda
-        g.centeredText(this.font, editingPreset.name,  0,  0, pc | 0xFF000000); // texto principal
-        g.pose().popMatrix();
+        int maxTitleW = panelW() - 20;
+        String titleText = editingPreset.name;
+        while (titleText.length() > 1 && this.font.width(titleText) > maxTitleW)
+            titleText = titleText.substring(0, titleText.length() - 1);
+        if (!titleText.equals(editingPreset.name)) titleText += "..";
+        int r = (pc >> 16) & 0xFF, gc = (pc >> 8) & 0xFF, bc = pc & 0xFF;
+        int lum = (r * 299 + gc * 587 + bc * 114) / 1000;
+        if (lum < 100) {
+            // clarear a cor do texto proporcionalmente à sua escuridão
+            float boost = (1f - lum / 100f) * 0.6f;
+            r  = (int)(r  + (255 - r)  * boost);
+            gc = (int)(gc + (255 - gc) * boost);
+            bc = (int)(bc + (255 - bc) * boost);
+            pc = (r << 16) | (gc << 8) | bc;
+        }
+        g.centeredText(this.font, titleText, cx2 + 1, 11, 0xCC000000);
+        g.centeredText(this.font, titleText, cx2,     10, pc | 0xFF000000);
         g.fill(px, PANEL_HDR_H - 2, this.width, PANEL_HDR_H - 1, 0xFF444466); // azul/cinza
         g.fill(px, PANEL_HDR_H - 1, this.width, PANEL_HDR_H,     0xFF111111); // preto
 
@@ -530,35 +534,6 @@ public class PresetsScreen extends Screen {
                     soundsMute.getWidth(), soundsMute.getHeight(), soundsWidget.isMuteActive());
     }
 
-    private void renderDeletePopup(GuiGraphicsExtractor g, int mouseX, int mouseY) {
-        if (editingPreset == null) return;
-        int cx = this.width / 2, cy = this.height / 2;
-        int pw = 220, ph = 90;
-        int px = cx - pw / 2, py = cy - ph / 2;
-
-        g.fill(0, 0, this.width, this.height, 0xBB000000);
-        g.fill(px - 1, py - 1, px + pw + 1, py + ph + 1, 0xFF111111);
-        g.fill(px, py, px + pw, py + ph, 0xFF2A1A1A);
-        g.fill(px, py, px + pw, py + 1, 0xFF884444);
-
-        g.centeredText(this.font, "Delete this preset?", cx, py + 14, 0xFFFFAAAA);
-        g.centeredText(this.font, "\"" + editingPreset.name + "\"", cx, py + 28, 0xFFFFFFFF);
-        g.centeredText(this.font, "This action cannot be undone.", cx, py + 42, 0xFF888888);
-
-        int btnY = py + 60;
-        int cancelX = cx - 106, confirmX = cx + 6;
-        boolean hovCancel  = mouseX >= cancelX  && mouseX < cancelX  + 100 && mouseY >= btnY && mouseY < btnY + 20;
-        boolean hovConfirm = mouseX >= confirmX && mouseX < confirmX + 100 && mouseY >= btnY && mouseY < btnY + 20;
-
-        g.fill(cancelX - 1, btnY - 1, cancelX + 101, btnY + 21, 0xFF111111);
-        g.fill(cancelX, btnY, cancelX + 100, btnY + 20, hovCancel ? 0xFF3A3A3A : 0xFF2A2A2A);
-        g.centeredText(this.font, "Cancel", cancelX + 50, btnY + 6, hovCancel ? 0xFFFFFFFF : 0xFFCCCCCC);
-
-        g.fill(confirmX - 1, btnY - 1, confirmX + 101, btnY + 21, 0xFF111111);
-        g.fill(confirmX, btnY, confirmX + 100, btnY + 20, hovConfirm ? 0xFF4A1A1A : 0xFF3A1010);
-        g.centeredText(this.font, "Delete", confirmX + 50, btnY + 6, hovConfirm ? 0xFFFF8888 : 0xFFCC4444);
-    }
-
     // ── Visibilidade de widgets ───────────────────────────────────────────────
 
     private void setCreateWidgetsVisible(boolean v) {
@@ -632,11 +607,6 @@ public class PresetsScreen extends Screen {
     @Override
     public boolean keyPressed(KeyEvent event) {
         int key = event.key();
-
-        if (showingDeleteConfirm) {
-            if (key == GLFW.GLFW_KEY_ESCAPE) { showingDeleteConfirm = false; return true; }
-            return true;
-        }
 
         if (editingPreset != null) {
             if (editMode == EditMode.SHORTCUT) { handleShortcutKey(key); return true; }
@@ -713,25 +683,6 @@ public class PresetsScreen extends Screen {
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean consumed) {
         double mx = event.x(), my = event.y();
-
-        if (showingDeleteConfirm) {
-            int cx = this.width / 2, cy = this.height / 2;
-            int pw = 220, ph = 90;
-            int popX = cx - pw / 2, popY = cy - ph / 2;
-            int btnY = popY + 60;
-            int cancelX = cx - 106, confirmX = cx + 6;
-            if (my >= btnY && my < btnY + 20) {
-                if (mx >= cancelX && mx < cancelX + 100) {
-                    showingDeleteConfirm = false; return true;
-                }
-                if (mx >= confirmX && mx < confirmX + 100) {
-                    PresetConfig.deletePreset(editingPreset.name);
-                    showingDeleteConfirm = false;
-                    closeDetailPanel(); return true;
-                }
-            }
-            return true;
-        }
 
         if (creating) {
             if (createConfirmBtn.mouseClicked(event, consumed)) return true;
@@ -815,10 +766,26 @@ public class PresetsScreen extends Screen {
 
     private void handleTabClick(int tabIndex) {
         if (tabIndex == TAB_LABELS.length - 1) {
-            showingDeleteConfirm = true;
+            openDeleteConfirm();
         } else {
             setEditMode(TAB_MODES[tabIndex]);
         }
+    }
+
+    private void openDeleteConfirm() {
+        if (editingPreset == null) return;
+        PresetConfig.Preset toDelete = editingPreset;
+        this.minecraft.setScreen(new ConfirmScreen(
+            confirmed -> {
+                if (confirmed) {
+                    PresetConfig.deletePreset(toDelete.name);
+                    closeDetailPanel();
+                }
+                this.minecraft.setScreen(PresetsScreen.this);
+            },
+            Component.literal("Delete preset?"),
+            Component.literal("\"" + toDelete.name + "\" — This action cannot be undone.")
+        ));
     }
 
     private void handleColorGridClick(double mx, double my, int px, int pw, PresetConfig.Preset preset) {
@@ -877,7 +844,6 @@ public class PresetsScreen extends Screen {
     private void closeDetailPanel() {
         if (soundsWidget != null) { this.removeWidget(soundsWidget); soundsWidget = null; }
         this.editingPreset = null; this.editMode = EditMode.NONE;
-        this.showingDeleteConfirm = false;
         setRenameWidgetsVisible(false); this.setFocused(null);
         if (presetList != null) presetList.setSelected(null);
         presetList.refresh();
