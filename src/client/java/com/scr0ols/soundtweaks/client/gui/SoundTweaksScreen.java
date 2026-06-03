@@ -281,12 +281,12 @@ public class SoundTweaksScreen extends Screen {
 
         // Cabeçalho — clicável para fechar
         boolean hovHeader = mouseX >= sideX && mouseY >= 0 && mouseY < 22;
-        graphics.fill(sideX, 0, this.width, 22, hovHeader ? 0x88282830 : 0x88202028);
+        graphics.fill(sideX, 0, this.width, 24, hovHeader ? 0xFF222233 : 0xFF1A1A2E);
         graphics.centeredText(this.font, "Presets",
-                sideX + SIDE_W / 2, 7, 0xFFDDDDDD);
+                sideX + SIDE_W / 2, 8, 0xFFDDDDDD);
         // Seta de fechar (◀) no canto esquerdo do cabeçalho
-        graphics.text(this.font, "◄", sideX + 4, 7, hovHeader ? 0xFFFFFFFF : 0xFF999999);
-        graphics.fill(sideX + 4, 20, this.width - 4, 21, 0xFF555555);
+        graphics.text(this.font, "◄", sideX + 4, 8, hovHeader ? 0xFFFFFFFF : 0xFF888899);
+        graphics.fill(sideX, 24, this.width, 25, 0xFF444466);
 
         // Área disponível para presets (entre cabeçalho e botão Manage — agora widget nativo)
         int manageY        = this.height - MANAGE_H - 4;
