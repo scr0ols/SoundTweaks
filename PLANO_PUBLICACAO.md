@@ -99,3 +99,16 @@
 - Opcionais (podem ir para v1.1):
   - [ ] PresetsScreen redesign (editMode overlay)
   - [ ] Tooltip nos dropdowns com texto truncado
+
+---
+
+## Melhorias UI — sessão de revisão (2026-06-03)
+
+> Nota: o botão "Clear" no rename overlay é intencional (limpa o campo, não fecha).
+
+- [x] `DividerEntry` (existe mas nunca usada) — usar para separar sons de blocos na lista principal e no editor de preset
+- [x] Footer do `PresetEditorScreen` — reposicionar speaker button para ficar mais equilibrado
+- [x] `PresetRow` — quadrado de cor maior (14×14) com borda branca quando inactivo
+- [x] Color picker — label "Custom" ao lado do slot personalizado
+- [x] Header `SoundTweaksScreen` — protecção de colisão título/botões
+- [x] Legenda footer `PresetEditorScreen` — ellipsis se a string for cortada
