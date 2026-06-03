@@ -112,15 +112,15 @@ public class PresetEditorScreen extends Screen {
         this.searchBox.setResponder(q -> { this.searchQuery = q; refreshList(); });
         this.addRenderableWidget(this.searchBox);
 
-        // ── Footer ────────────────────────────────────────────────────────────
+        // ── Footer: [Import 130] ... [speaker 24] [Done 100] ────────────────
+        // Import à esquerda; speaker + Done agrupados à direita do centro
         int btnY   = this.height - 56;
-        int totalW = 130 + 4 + 24 + 4 + 100;
-        int startX = (this.width - totalW) / 2;
+        int centerX = this.width / 2;
 
         var importBtn = Button.builder(
                 Component.literal("Import from config"),
                 btn -> importFromBase()
-        ).bounds(startX, btnY, 130, 20).build();
+        ).bounds(centerX - 135, btnY, 130, 20).build();
         importBtn.setTooltip(Tooltip.create(Component.literal(
                 "Copies all sounds/blocks with volume ≠ 100%\n" +
                 "from the base config into this preset.\n" +
@@ -129,7 +129,7 @@ public class PresetEditorScreen extends Screen {
 
         this.mutePresetsActive = false;
         this.mutePresetsBtn = Button.builder(Component.empty(), btn -> toggleMuteVisible())
-                .bounds(startX + 134, btnY, 24, 20).build();
+                .bounds(centerX + 2, btnY, 24, 20).build();
         this.mutePresetsBtn.setTooltip(Tooltip.create(Component.literal(
                 "Mute / restore all currently visible sounds\n" +
                 "in this preset (sets them to 0% / removes override).")));
@@ -138,7 +138,7 @@ public class PresetEditorScreen extends Screen {
         this.addRenderableWidget(Button.builder(
                 Component.translatable("soundtweaks.gui.done"),
                 btn -> this.onClose()
-        ).bounds(startX + 162, btnY, 100, 20).build());
+        ).bounds(centerX + 30, btnY, 100, 20).build());
 
         restoreSavedState();
     }
@@ -260,18 +260,17 @@ public class PresetEditorScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
+        int rgb = preset.argbColor() & 0x00FFFFFF;
+        // Fundo desenhado ANTES do super para não tapar a lista
+        graphics.fill(0, 0, this.width, this.height, 0xFF1A1A22);
+        // Header colorido nos primeiros 66px (semi-transparente sobre o fundo neutro)
+        graphics.fill(0, 0, this.width, 66, (rgb & 0x00FFFFFF) | 0x99000000);
+
         super.extractRenderState(graphics, mouseX, mouseY, a);
 
-        int rgb = preset.argbColor() & 0x00FFFFFF;
-        graphics.fill(0, 0, this.width, this.height, rgb | 0x30000000);
-        // Cabeçalho: cor do preset mais intensa (canais +40, clampados) e mais transparente
-        int rr = Math.min(0xFF, ((rgb >> 16) & 0xFF) + 40);
-        int gg = Math.min(0xFF, ((rgb >>  8) & 0xFF) + 40);
-        int bb = Math.min(0xFF, ( rgb        & 0xFF) + 40);
-        graphics.fill(0, 0, this.width, 24, (rr << 16 | gg << 8 | bb) | 0x55000000);
+        // Separadores e texto por cima da lista
         graphics.fill(0, 24, this.width, 25, 0xFF444466);
         graphics.fill(0, 66, this.width, 67, 0xFF333355);
-
         graphics.centeredText(this.font, "Editing: " + preset.name, this.width / 2, 8, 0xFFFFFFFF);
 
         graphics.fill(8, this.height - 72, this.width - 8, this.height - 71, 0xFF555555);
@@ -279,6 +278,11 @@ public class PresetEditorScreen extends Screen {
         String hint = overrideCount > 0
                 ? overrideCount + " override(s) — orange = has override  |  100% = remove override"
                 : "No overrides. Drag any slider below 100% to add an override.";
+        int maxHintW = this.width - 16;
+        while (hint.length() > 1 && this.font.width(hint) > maxHintW)
+            hint = hint.substring(0, hint.length() - 1);
+        if (!hint.endsWith("override") && !hint.endsWith("override."))
+            hint = hint.stripTrailing() + "…";
         graphics.text(this.font, hint, 8, this.height - 18, 0xFFAAAAAA);
 
         // Ícone de speaker no botão de silenciar/repor
@@ -506,13 +510,33 @@ public class PresetEditorScreen extends Screen {
                 for (String id : sounds) this.addEntry(new SoundRow(id));
             }
 
-            // Blocos: sempre individuais (sem grupos)
-            for (String id : blocks) this.addEntry(new BlockRow(id));
+            // Blocos sempre depois dos sons, separados por um divisor
+            if (!blocks.isEmpty()) {
+                this.addEntry(new DividerRow());
+                for (String id : blocks) this.addEntry(new BlockRow(id));
+            }
         }
 
         @Override public int getRowWidth() { return Math.min(500, this.width - 20); }
         @Override protected int scrollBarX() { return this.getX() + this.width / 2 + getRowWidth() / 2 + 4; }
         @Override public void updateWidgetNarration(NarrationElementOutput o) {}
+
+        // ── Linha divisória (entre sons e blocos) ────────────────────────────
+
+        class DividerRow extends BaseRow {
+            @Override public String  getId()       { return ""; }
+            @Override public boolean hasOverride() { return false; }
+
+            @Override
+            public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hov, float a) {
+                int midY = getY() + 10;
+                g.fill(getX() + 4, midY, getX() + SoundEntryList.this.getRowWidth() - 4, midY + 1, 0xFF555555);
+            }
+
+            @Override public boolean mouseClicked(MouseButtonEvent e, boolean c)          { return false; }
+            @Override public boolean mouseDragged(MouseButtonEvent e, double dx, double dy){ return false; }
+            @Override public boolean mouseReleased(MouseButtonEvent e)                     { return false; }
+        }
 
         // ── Linha de grupo (Simple View) ──────────────────────────────────────
 
@@ -540,12 +564,19 @@ public class PresetEditorScreen extends Screen {
             @Override
             public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hov, float a) {
                 int rowW = SoundEntryList.this.getRowWidth();
-                if (hasOverride())                                  g.fill(getX(), getY(), getX()+rowW, getY()+20, 0x33FFAA44);
-                else if (SoundEntryList.this.getSelected() == this) g.fill(getX(), getY(), getX()+rowW, getY()+20, 0x44AAAAFF);
-                else                                                g.fill(getX(), getY(), getX()+rowW, getY()+20, 0x22AAAAFF);
+                boolean sel = SoundEntryList.this.getSelected() == this;
+                if (hasOverride()) {
+                    // Acento lateral laranja + fundo muito subtil
+                    g.fill(getX(), getY(), getX() + 3, getY() + 20, 0xFFFF9944);
+                    g.fill(getX(), getY(), getX() + rowW, getY() + 20, 0x18FFAA44);
+                } else if (sel) {
+                    // Outline de selecção sem fill
+                    g.fill(getX(), getY(),      getX() + rowW, getY() + 1,      0x88AAAAFF);
+                    g.fill(getX(), getY() + 19, getX() + rowW, getY() + 20,     0x88AAAAFF);
+                }
 
                 float vol = minChildVol();
-                int col = vol <= 0f ? 0xFFFF4444 : hasOverride() ? 0xFFFFCC88 : 0xFFAAAAAA;
+                int col = vol <= 0f ? 0xFFFF4444 : hasOverride() ? 0xFFFFCC88 : 0xFFCCCCCC;
                 g.text(SoundEntryList.this.minecraft.font, "* " + groupName, getX()+4, getY()+5, col);
                 slider.setX(getX()+rowW-94); slider.setY(getY()+3);
                 slider.extractRenderState(g, mx, my, a);
@@ -582,11 +613,17 @@ public class PresetEditorScreen extends Screen {
             @Override
             public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hov, float a) {
                 int rowW = SoundEntryList.this.getRowWidth();
-                if (hasOverride()) g.fill(getX(), getY(), getX()+rowW, getY()+20, 0x33FFAA44);
-                else if (SoundEntryList.this.getSelected()==this) g.fill(getX(),getY(),getX()+rowW,getY()+20,0x44FFFFFF);
+                boolean sel = SoundEntryList.this.getSelected() == this;
+                if (hasOverride()) {
+                    g.fill(getX(), getY(), getX() + 3, getY() + 20, 0xFFFF9944);
+                    g.fill(getX(), getY(), getX() + rowW, getY() + 20, 0x18FFAA44);
+                } else if (sel) {
+                    g.fill(getX(), getY(),      getX() + rowW, getY() + 1,  0x88AAAAFF);
+                    g.fill(getX(), getY() + 19, getX() + rowW, getY() + 20, 0x88AAAAFF);
+                }
 
                 float vol  = preset.sounds.getOrDefault(soundId, 1.0f);
-                int   col  = vol <= 0f ? 0xFFFF4444 : hasOverride() ? 0xFFFFCC88 : 0xFFAAAAAA;
+                int   col  = vol <= 0f ? 0xFFFF4444 : hasOverride() ? 0xFFFFCC88 : 0xFFCCCCCC;
                 g.text(SoundEntryList.this.minecraft.font, SoundDisplayHelper.getDisplayName(soundId), getX()+4, getY()+5, col);
                 slider.setX(getX()+rowW-94); slider.setY(getY()+3);
                 slider.extractRenderState(g, mx, my, a);
@@ -623,11 +660,17 @@ public class PresetEditorScreen extends Screen {
             @Override
             public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hov, float a) {
                 int rowW = SoundEntryList.this.getRowWidth();
-                if (hasOverride()) g.fill(getX(), getY(), getX()+rowW, getY()+20, 0x33FFAA44);
-                else if (SoundEntryList.this.getSelected()==this) g.fill(getX(),getY(),getX()+rowW,getY()+20,0x44FFFFFF);
+                boolean sel = SoundEntryList.this.getSelected() == this;
+                if (hasOverride()) {
+                    g.fill(getX(), getY(), getX() + 3, getY() + 20, 0xFFFF9944);
+                    g.fill(getX(), getY(), getX() + rowW, getY() + 20, 0x18FFAA44);
+                } else if (sel) {
+                    g.fill(getX(), getY(),      getX() + rowW, getY() + 1,  0x88AAAAFF);
+                    g.fill(getX(), getY() + 19, getX() + rowW, getY() + 20, 0x88AAAAFF);
+                }
 
                 float vol = preset.blocks.getOrDefault(blockId, 1.0f);
-                int   col = vol<=0f ? 0xFFFF4444 : hasOverride() ? 0xFFFFCC88 : 0xFFAAAAAA;
+                int   col = vol<=0f ? 0xFFFF4444 : hasOverride() ? 0xFFFFCC88 : 0xFFCCCCCC;
                 String name = MissingBlockRegistry.getDisplayName(blockId) + " [block]";
                 g.text(SoundEntryList.this.minecraft.font, name, getX()+4, getY()+5, col);
                 slider.setX(getX()+rowW-94); slider.setY(getY()+3);

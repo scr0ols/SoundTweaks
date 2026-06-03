@@ -60,11 +60,6 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
             }
         }
 
-        for (String blockId : blockIds) {
-            BlockEntry be = new BlockEntry(blockId);
-            slots.add(new Object[]{ be.getDisplayName().toLowerCase(), be, new ArrayList<>() });
-        }
-
         slots.sort((a, b) -> {
             String ka = (String) a[0], kb = (String) b[0];
             boolean aD = !ka.isEmpty() && Character.isDigit(ka.charAt(0));
@@ -78,6 +73,12 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
             @SuppressWarnings("unchecked")
             List<BaseEntry> children = (List<BaseEntry>) slot[2];
             children.forEach(this::addEntry);
+        }
+
+        // Blocos sempre depois dos sons, separados por um divisor
+        if (!blockIds.isEmpty()) {
+            this.addEntry(new DividerEntry());
+            for (String blockId : blockIds) this.addEntry(new BlockEntry(blockId));
         }
 
         this.lastJumpLetter = 0;

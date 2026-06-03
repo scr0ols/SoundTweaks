@@ -363,6 +363,10 @@ public class PresetsScreen extends Screen {
             g.fill(gridX + sq, customY,     gridX + sq + 1,  customY + sq,     0xFF888888);
         }
 
+        // Label "Custom" ao lado do slot
+        g.text(this.font, "Custom", gridX + sq + 6, customY + (sq - 8) / 2,
+                customSel ? 0xFFCCCCFF : 0xFF666688);
+
         // EditBox hex — apenas quando custom selecionado
         if (customSel) {
             colorHexBox.extractRenderState(g, mouseX, mouseY, a);
@@ -754,9 +758,9 @@ public class PresetsScreen extends Screen {
             PresetRow(PresetConfig.Preset preset) { this.preset = preset; }
 
             private int rowW()    { return PresetListWidget.this.getRowWidth(); }
-            private int delX()    { return getX() + rowW() - 16; }   // [X] 14px
-            private int editBtnX(){ return delX() - 56; }             // [Edit ▼] 52px, 4px gap
-            private int starX()   { return editBtnX() - 18; }         // [★] 14px, 4px gap
+            private int delX()    { return getX() + rowW() - 22; }   // [X] 16px, 6px margem direita
+            private int editBtnX(){ return delX() - 58; }             // [Edit] 54px, 4px gap
+            private int starX()   { return editBtnX() - 22; }         // [★] 18px, 4px gap
 
             @Override
             public void extractContent(GuiGraphicsExtractor g, int mouseX, int mouseY,
@@ -766,30 +770,42 @@ public class PresetsScreen extends Screen {
                 int rW = rowW();
                 int pc = preset.argbColor();
 
+                // ── Fundo da linha ───────────────────────────────────────────
+                // Base neutra Minecraft; linha activa ligeiramente mais clara
+                int rowBg = active ? 0xFF2E2E2E : hovered ? 0xFF282828 : 0xFF222222;
+                g.fill(getX(), getY(), getX() + rW, getY() + 28, rowBg);
+                // Separador inferior preto
+                g.fill(getX(), getY() + 27, getX() + rW, getY() + 28, 0xFF111111);
+                // Barra colorida do preset à esquerda (sempre visível, mais espessa quando activo)
+                int barW = active ? 6 : 4;
+                g.fill(getX(), getY(), getX() + barW, getY() + 27, pc | 0xFF000000);
+
+                // ── Badge ON / OFF ────────────────────────────────────────────
+                // Caixa de fundo + texto; estilo tag Minecraft
+                int badgeX = getX() + 10, badgeY = getY() + 8;
+                int badgeBg = active ? 0xFF1A3A1A : 0xFF2A2A2A;
+                int badgeBorder = active ? 0xFF336633 : 0xFF444444;
+                // Borda 1px
+                g.fill(badgeX - 1, badgeY - 1, badgeX + 23, badgeY + 12, badgeBorder);
                 // Fundo
-                if (active) {
-                    g.fill(getX(), getY(), getX() + rW, getY() + 28,
-                            (pc & 0x00FFFFFF) | 0x88000000);
-                    g.fill(getX(), getY(), getX() + 4, getY() + 28, pc | 0xFF000000);
-                } else if (hovered) {
-                    g.fill(getX(), getY(), getX() + rW, getY() + 28, 0x22FFFFFF);
-                }
+                g.fill(badgeX, badgeY, badgeX + 22, badgeY + 11, badgeBg);
+                g.centeredText(PresetListWidget.this.minecraft.font,
+                        active ? "ON" : "OFF",
+                        badgeX + 11, badgeY + 2,
+                        active ? 0xFF55FF55 : 0xFF888888);
 
-                // ON/OFF
-                g.text(PresetListWidget.this.minecraft.font,
-                        active ? "ON " : "OFF",
-                        getX() + 8, getY() + 10, active ? 0xFF44FF44 : 0xFF888888);
-
-                // Cor indicator (pequeno quadrado colorido)
-                int sq = 10;
-                int sqX = getX() + 46, sqY = getY() + 9;
+                // ── Quadrado de cor do preset ─────────────────────────────────
+                int sq = 14, sqX = getX() + 40, sqY = getY() + 7;
+                // Borda preta (estilo Minecraft)
+                g.fill(sqX - 1, sqY - 1, sqX + sq + 1, sqY + sq + 1, 0xFF000000);
                 g.fill(sqX, sqY, sqX + sq, sqY + sq, pc | 0xFF000000);
 
-                // Nome
+                // ── Nome ──────────────────────────────────────────────────────
+                int nameCol = active ? 0xFFFFFFFF : 0xFFCCCCCC;
                 g.text(PresetListWidget.this.minecraft.font, preset.name,
-                        getX() + 62, getY() + 10, 0xFFFFFFFF);
+                        getX() + 62, getY() + 10, nameCol);
 
-                // Atalho (se existir, texto pequeno à direita do nome)
+                // Atalho (se existir)
                 String shortcutLabel = keyDisplayLabel(preset);
                 if (!shortcutLabel.equals("---")) {
                     g.text(PresetListWidget.this.minecraft.font,
@@ -798,33 +814,36 @@ public class PresetsScreen extends Screen {
                             getY() + 10, 0xFF66AA66);
                 }
 
-                // ── [★] favorito ────────────────────────────────────────────
-                int sx  = starX();
-                boolean hovStar = mouseX >= sx && mouseX < sx + 14
-                        && mouseY >= getY() + 7 && mouseY < getY() + 21;
-                g.fill(sx, getY() + 7, sx + 14, getY() + 21,
-                        hovStar ? 0xFF555522 : 0xFF333311);
+                // ── [★] favorito ── botão cinzento uniforme ──────────────────
+                int sx = starX();
+                boolean hovStar = mouseX >= sx && mouseX < sx + 18
+                        && mouseY >= getY() + 6 && mouseY < getY() + 22;
+                g.fill(sx - 1, getY() + 5, sx + 19, getY() + 23, 0xFF111111);        // borda
+                g.fill(sx, getY() + 6, sx + 18, getY() + 22,
+                        hovStar ? 0xFF4A4A4A : 0xFF3A3A3A);
                 g.centeredText(PresetListWidget.this.minecraft.font,
                         fav ? "★" : "☆",
-                        sx + 7, getY() + 10, fav ? 0xFFFFDD44 : 0xFF666655);
+                        sx + 9, getY() + 9, fav ? 0xFFFFDD44 : 0xFF777777);
 
-                // ── [Edit ▼] ─────────────────────────────────────────────────
-                int ex  = editBtnX();
-                boolean hovEdit = mouseX >= ex && mouseX < ex + 52
-                        && mouseY >= getY() + 7 && mouseY < getY() + 21;
-                g.fill(ex, getY() + 7, ex + 52, getY() + 21,
-                        hovEdit ? 0xFF445588 : 0xFF333355);
+                // ── [Edit] ── botão cinzento uniforme ────────────────────────
+                int ex = editBtnX();
+                boolean hovEdit = mouseX >= ex && mouseX < ex + 54
+                        && mouseY >= getY() + 6 && mouseY < getY() + 22;
+                g.fill(ex - 1, getY() + 5, ex + 55, getY() + 23, 0xFF111111);        // borda
+                g.fill(ex, getY() + 6, ex + 54, getY() + 22,
+                        hovEdit ? 0xFF4A4A4A : 0xFF3A3A3A);
                 g.centeredText(PresetListWidget.this.minecraft.font, "Edit",
-                        ex + 26, getY() + 10, 0xFFAAAAFF);
+                        ex + 27, getY() + 9, hovEdit ? 0xFFFFFFFF : 0xFFCCCCCC);
 
-                // ── [X] apagar ───────────────────────────────────────────────
-                int dx  = delX();
-                boolean hovDel = mouseX >= dx && mouseX < dx + 14
-                        && mouseY >= getY() + 7 && mouseY < getY() + 21;
-                g.fill(dx, getY() + 7, dx + 14, getY() + 21,
-                        hovDel ? 0xFF885533 : 0xFF553322);
+                // ── [X] ── botão cinzento, texto vermelho ─────────────────────
+                int dx = delX();
+                boolean hovDel = mouseX >= dx && mouseX < dx + 16
+                        && mouseY >= getY() + 6 && mouseY < getY() + 22;
+                g.fill(dx - 1, getY() + 5, dx + 17, getY() + 23, 0xFF111111);        // borda
+                g.fill(dx, getY() + 6, dx + 16, getY() + 22,
+                        hovDel ? 0xFF4A2020 : 0xFF3A1A1A);
                 g.centeredText(PresetListWidget.this.minecraft.font, "X",
-                        dx + 7, getY() + 10, 0xFFFF6666);
+                        dx + 8, getY() + 9, hovDel ? 0xFFFF8888 : 0xFFCC5555);
             }
 
             @Override
@@ -838,7 +857,7 @@ public class PresetsScreen extends Screen {
 
                 // [X] apagar — pede confirmação antes de eliminar
                 int dx = delX();
-                if (mx >= dx && mx < dx + 14 && my >= getY() + 7 && my < getY() + 21) {
+                if (mx >= dx && mx < dx + 16 && my >= getY() + 6 && my < getY() + 22) {
                     PresetListWidget.PresetRow self = this;
                     PresetListWidget.this.minecraft.setScreen(new ConfirmScreen(
                         confirmed -> {
@@ -854,16 +873,16 @@ public class PresetsScreen extends Screen {
                     return true;
                 }
 
-                // [Edit ▼] — abrir overlay de edição
+                // [Edit] — abrir overlay de edição
                 int ex = editBtnX();
-                if (mx >= ex && mx < ex + 52 && my >= getY() + 7 && my < getY() + 21) {
+                if (mx >= ex && mx < ex + 54 && my >= getY() + 6 && my < getY() + 22) {
                     PresetsScreen.this.openEditOverlay(preset);
                     return true;
                 }
 
                 // [★] favorito
                 int sx = starX();
-                if (mx >= sx && mx < sx + 14 && my >= getY() + 7 && my < getY() + 21) {
+                if (mx >= sx && mx < sx + 18 && my >= getY() + 6 && my < getY() + 22) {
                     PresetConfig.setFavorite(preset.name, !PresetConfig.isFavorite(preset.name));
                     return true;
                 }

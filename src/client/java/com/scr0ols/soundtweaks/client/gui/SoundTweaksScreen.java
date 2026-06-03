@@ -229,8 +229,12 @@ public class SoundTweaksScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
         super.extractRenderState(graphics, mouseX, mouseY, a);
 
+        // Título centrado, mas sem invadir os botões do header (ocupam até x≈182)
+        int titleMinX = 185;
+        int titleCenterX = Math.max(titleMinX + this.font.width(I18n.get("soundtweaks.gui.title")) / 2,
+                contentW() / 2);
         graphics.centeredText(this.font, I18n.get("soundtweaks.gui.title"),
-                contentW() / 2, 8, 0xFFFFFFFF);
+                titleCenterX, 8, 0xFFFFFFFF);
 
         // Ícone de speaker no botão de silenciar/repor
         if (this.muteSoundsBtn != null)
