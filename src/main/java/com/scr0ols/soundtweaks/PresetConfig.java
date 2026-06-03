@@ -66,6 +66,18 @@ public class PresetConfig {
     private static final List<String> favoriteNames = new CopyOnWriteArrayList<>();
     private static volatile long      lastSaveRequest = 0;
 
+    /**
+     * Cache imutável dos presets activos — rebuilt apenas quando activeNames muda.
+     * Evita new ArrayList<>() no hot path de áudio (chamado por cada som reproduzido).
+     */
+    private static volatile List<Preset> cachedActivePresets = Collections.emptyList();
+
+    private static void rebuildActivePresetsCache() {
+        List<Preset> result = new ArrayList<>();
+        for (Preset p : presets) if (activeNames.contains(p.name)) result.add(p);
+        cachedActivePresets = Collections.unmodifiableList(result);
+    }
+
     // ── Leitura ───────────────────────────────────────────────────────────────
 
     public static List<Preset> getPresets() { return Collections.unmodifiableList(presets); }
@@ -73,10 +85,9 @@ public class PresetConfig {
     public static boolean isActive(String name)   { return activeNames.contains(name); }
     public static boolean isFavorite(String name) { return favoriteNames.contains(name); }
 
+    /** Devolve snapshot imutável dos presets activos. Zero alocações no hot path. */
     public static List<Preset> getActivePresets() {
-        List<Preset> result = new ArrayList<>();
-        for (Preset p : presets) if (activeNames.contains(p.name)) result.add(p);
-        return result;
+        return cachedActivePresets;
     }
 
     public static List<Preset> getFavoritePresets() {
@@ -91,6 +102,7 @@ public class PresetConfig {
     public static void setActive(String name, boolean active) {
         if (active) activeNames.add(name);
         else        activeNames.remove(name);
+        rebuildActivePresetsCache();
         markDirty();
     }
 
@@ -114,6 +126,7 @@ public class PresetConfig {
         presets.removeIf(p -> p.name.equals(name));
         activeNames.remove(name);
         favoriteNames.remove(name);
+        rebuildActivePresetsCache();
         markDirty();
     }
 
@@ -126,6 +139,7 @@ public class PresetConfig {
         if (activeNames.remove(oldName))  activeNames.add(unique);
         int fi = favoriteNames.indexOf(oldName);
         if (fi >= 0) favoriteNames.set(fi, unique);
+        rebuildActivePresetsCache();
         markDirty();
     }
 
@@ -185,6 +199,8 @@ public class PresetConfig {
                 SoundTweaks.LOGGER.info("SoundTweaks: referências órfãs removidas de presets config");
                 save();
             }
+
+            rebuildActivePresetsCache();
         } catch (IOException e) {
             SoundTweaks.LOGGER.error("SoundTweaks: erro ao carregar presets", e);
         }
@@ -221,6 +237,7 @@ public class PresetConfig {
                 String n = uuidToName.get(el.getAsString());
                 if (n != null && !favoriteNames.contains(n)) favoriteNames.add(n);
             }
+        rebuildActivePresetsCache();
         SoundTweaks.LOGGER.info("SoundTweaks: {} presets migrados do formato antigo", presets.size());
         save();
     }
@@ -284,7 +301,7 @@ public class PresetConfig {
                 activeNames.add(name);
                 added++;
             }
-            if (added > 0) save();
+            if (added > 0) { rebuildActivePresetsCache(); save(); }
             return added;
         } catch (Exception e) {
             SoundTweaks.LOGGER.error("SoundTweaks: erro ao importar presets de {}", file, e);
