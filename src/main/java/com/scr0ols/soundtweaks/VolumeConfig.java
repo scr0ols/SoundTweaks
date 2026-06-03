@@ -111,6 +111,21 @@ public class VolumeConfig {
     }
 
     /**
+     * Exporta os volumes actuais para um ficheiro externo.
+     * @return número de entradas exportadas, ou -1 em caso de erro
+     */
+    public int exportTo(Path file) {
+        try {
+            Files.writeString(file, GSON.toJson(new LinkedHashMap<>(volumes)));
+            SoundTweaks.LOGGER.info("SoundTweaks: exportadas {} entradas para {}", volumes.size(), file);
+            return volumes.size();
+        } catch (Exception e) {
+            SoundTweaks.LOGGER.error("SoundTweaks: erro ao exportar para {}", file, e);
+            return -1;
+        }
+    }
+
+    /**
      * Importa volumes de um ficheiro externo. Substitui todos os valores actuais.
      * @return número de entradas importadas, ou -1 em caso de erro
      */

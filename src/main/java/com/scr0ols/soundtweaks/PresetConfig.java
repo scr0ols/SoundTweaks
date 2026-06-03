@@ -284,6 +284,27 @@ public class PresetConfig {
         }
     }
 
+    // ── Export ───────────────────────────────────────────────────────────────
+
+    /**
+     * Exporta todos os presets actuais para um ficheiro JSON externo.
+     * @return número de presets exportados, ou -1 em caso de erro
+     */
+    public static int exportTo(Path file) {
+        try {
+            JsonObject root = new JsonObject();
+            JsonArray presetsArr = new JsonArray();
+            for (Preset p : presets) presetsArr.add(serializePreset(p));
+            root.add("presets", presetsArr);
+            Files.writeString(file, GSON.toJson(root));
+            SoundTweaks.LOGGER.info("SoundTweaks: exportados {} presets para {}", presets.size(), file);
+            return presets.size();
+        } catch (Exception e) {
+            SoundTweaks.LOGGER.error("SoundTweaks: erro ao exportar presets para {}", file, e);
+            return -1;
+        }
+    }
+
     // ── Import ────────────────────────────────────────────────────────────────
 
     public static int importFrom(Path file) {
