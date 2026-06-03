@@ -174,6 +174,12 @@ public class PresetConfig {
                 }
                 SoundTweaks.LOGGER.info("SoundTweaks: {} presets carregados", presets.size());
             }
+
+            // Limpar referências órfãs (preset eliminado mas ainda em favoriteNames/activeNames)
+            Set<String> existingNames = new HashSet<>();
+            for (Preset p : presets) existingNames.add(p.name);
+            favoriteNames.removeIf(n -> !existingNames.contains(n));
+            activeNames.removeIf(n -> !existingNames.contains(n));
         } catch (IOException e) {
             SoundTweaks.LOGGER.error("SoundTweaks: erro ao carregar presets", e);
         }
@@ -321,7 +327,10 @@ public class PresetConfig {
     private static void readFloatMap(JsonObject src, Map<String, Float> dst) {
         if (src == null) return;
         src.entrySet().forEach(e -> {
-            float v = e.getValue().getAsFloat();
+            JsonElement val = e.getValue();
+            // Ignorar nulls e não-primitivos (ex: arrays/objectos mal-formados)
+            if (val == null || !val.isJsonPrimitive()) return;
+            float v = val.getAsFloat();
             if (Float.isFinite(v)) dst.put(e.getKey(), Mth.clamp(v, 0f, 2f));
         });
     }

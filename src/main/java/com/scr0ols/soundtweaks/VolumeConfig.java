@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -86,9 +87,21 @@ public class VolumeConfig {
         try {
             Map<String, Float> loaded = GSON.fromJson(Files.readString(file), MAP_TYPE);
             if (loaded == null) return -1;
+
+            // Validar entradas antes de tocar em qualquer estado
+            Map<String, Float> validated = new LinkedHashMap<>();
+            loaded.forEach((id, vol) -> {
+                if (vol != null && Float.isFinite(vol))
+                    validated.put(id, Mth.clamp(vol, minVol, maxVol));
+            });
+
+            // Escrever para disco PRIMEIRO — se falhar, a memória fica intacta
+            Files.writeString(configFile, GSON.toJson(validated));
+
+            // Só agora actualizar o estado em memória
             volumes.clear();
-            loaded.forEach((id, vol) -> volumes.put(id, Mth.clamp(vol, minVol, maxVol)));
-            save();
+            volumes.putAll(validated);
+
             SoundTweaks.LOGGER.info("SoundTweaks: importadas {} entradas de {}", volumes.size(), file);
             return volumes.size();
         } catch (Exception e) {
