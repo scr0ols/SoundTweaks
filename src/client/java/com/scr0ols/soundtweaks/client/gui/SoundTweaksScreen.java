@@ -468,7 +468,8 @@ public class SoundTweaksScreen extends Screen {
             String f = "." + selectedObject + ".";
             String s = "." + selectedObject;
             base = base.stream().filter(id -> {
-                String p = id.contains(":") ? id.split(":")[1] : id;
+                int ci = id.indexOf(':');
+                String p = ci >= 0 ? id.substring(ci + 1) : id;
                 return p.contains(f) || p.endsWith(s);
             }).toList();
         }

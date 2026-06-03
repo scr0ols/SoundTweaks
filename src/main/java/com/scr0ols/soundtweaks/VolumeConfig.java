@@ -13,6 +13,9 @@ import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Configuração de volumes persistida em disco.
@@ -25,6 +28,25 @@ public class VolumeConfig {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Type MAP_TYPE = new TypeToken<Map<String, Float>>() {}.getType();
+
+    /** Executor partilhado entre SOUNDS e BLOCKS — garante que saves não bloqueiam a render thread. */
+    private static final ExecutorService SAVE_EXECUTOR = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "SoundTweaks-Config-Save");
+        t.setDaemon(true);
+        return t;
+    });
+
+    /** Flush e shutdown do executor — chamar quando o cliente fecha para não perder o último save. */
+    public static void shutdownSaveExecutor() {
+        SAVE_EXECUTOR.shutdown();
+        try {
+            if (!SAVE_EXECUTOR.awaitTermination(3, TimeUnit.SECONDS))
+                SAVE_EXECUTOR.shutdownNow();
+        } catch (InterruptedException e) {
+            SAVE_EXECUTOR.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
 
     private final Map<String, Float> volumes = new ConcurrentHashMap<>();
     private volatile long lastSaveRequest = 0;
@@ -51,8 +73,17 @@ public class VolumeConfig {
 
     public void tickSave() {
         if (lastSaveRequest > 0 && System.currentTimeMillis() - lastSaveRequest > 300) {
-            save();
             lastSaveRequest = 0;
+            // Snapshot imutável para evitar race condition durante a escrita assíncrona
+            final String json = GSON.toJson(new LinkedHashMap<>(volumes));
+            final Path   target = configFile;
+            SAVE_EXECUTOR.submit(() -> {
+                try {
+                    Files.writeString(target, json);
+                } catch (IOException e) {
+                    SoundTweaks.LOGGER.error("SoundTweaks: erro ao guardar {}", target.getFileName(), e);
+                }
+            });
         }
     }
 
