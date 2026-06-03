@@ -105,6 +105,7 @@
 ## Melhorias UI — sessão de revisão (2026-06-03)
 
 > Nota: o botão "Clear" no rename overlay é intencional (limpa o campo, não fecha).
+> Commits: seguir sempre GIT_LOG.md (Conventional Commits, branch `26.1.2`, actualizar GIT_LOG.md após cada commit).
 
 - [x] `DividerEntry` (existe mas nunca usada) — usar para separar sons de blocos na lista principal e no editor de preset
 - [x] Footer do `PresetEditorScreen` — reposicionar speaker button para ficar mais equilibrado
@@ -112,3 +113,7 @@
 - [x] Color picker — label "Custom" ao lado do slot personalizado
 - [x] Header `SoundTweaksScreen` — protecção de colisão título/botões
 - [x] Legenda footer `PresetEditorScreen` — ellipsis se a string for cortada
+- [x] `PresetsScreen` — redesign estilo Minecraft: fundo neutro, badge ON/OFF, botões cinzentos uniformes
+- [x] `PresetEditorScreen` — fix fundo opaco a tapar lista; header colorido, body neutro
+- [ ] `PresetEditorScreen` — estilo similar ao ecrã geral com tint subtil da cor do preset
+- [ ] `PresetsScreen` — layout master-detail: lista simplificada + painel lateral de configuração
