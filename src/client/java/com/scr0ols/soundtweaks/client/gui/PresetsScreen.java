@@ -111,6 +111,8 @@ public class PresetsScreen extends Screen {
         this.newPresetBtn = Button.builder(
                 Component.translatable("soundtweaks.presets.new"), btn -> enterCreateMode()
         ).bounds(4, this.height - 50, LIST_W - 8, 20).build();
+        this.newPresetBtn.setTooltip(Tooltip.create(Component.literal(
+                "Create a new preset from the current\nvolume configuration.")));
         this.addRenderableWidget(this.newPresetBtn);
 
         this.doneBtn = Button.builder(
@@ -141,6 +143,8 @@ public class PresetsScreen extends Screen {
         this.openConfigBtn = Button.builder(
                 Component.literal("Open Config Folder"), btn -> ConfigFileUtil.openConfigFolder()
         ).bounds(LIST_W / 2 + 2, this.height - 26, LIST_W / 2 - 6, 20).build();
+        this.openConfigBtn.setTooltip(Tooltip.create(Component.literal(
+                "Open the folder containing\nSoundTweaks config and preset files.")));
         this.addRenderableWidget(this.openConfigBtn);
 
         rebuildLayout();
@@ -224,6 +228,7 @@ public class PresetsScreen extends Screen {
 
         this.soundsClear = Button.builder(Component.literal("x"), btn -> clearSoundsFilters())
                 .bounds(px + 212, fy, 18, fh).build();
+        this.soundsClear.setTooltip(Tooltip.create(Component.literal("Clear all sound filters.")));
         this.soundsClear.visible = false;
         this.addRenderableWidget(this.soundsClear);
 
@@ -247,6 +252,8 @@ public class PresetsScreen extends Screen {
                     refreshSoundsList();
                 }
         ).bounds(px + pw - 82, fy, 78, fh).build();
+        this.soundsViewToggle.setTooltip(Tooltip.create(Component.literal(
+                "Simple View: one entry per sound event.\nDetail View: individual sound files.")));
         this.soundsViewToggle.visible = false;
         this.addRenderableWidget(this.soundsViewToggle);
 
@@ -287,25 +294,24 @@ public class PresetsScreen extends Screen {
             int lx = (this.width - lw) / 2;
             presetList = new PresetListWidget(this.minecraft, lw, listHeight, listTop, 24);
             presetList.setX(lx);
-            // Linha 1: New Preset (2/3) | Done (1/3)
-            int newW = lw - 134;
-            newPresetBtn.setX(lx + 4);             newPresetBtn.setWidth(newW);
-            doneBtn.setX(lx + newW + 8);           doneBtn.setWidth(lw - newW - 16);
-            newPresetBtn.setY(this.height - 50);   doneBtn.setY(this.height - 50);
-            // Linha 2: Import | Open Config
+            // Linha 1: Import | Open Config (utilitários)
             importPresetsBtn.setX(lx + 4);         importPresetsBtn.setWidth(lw / 2 - 6);  importPresetsBtn.setHeight(20);
             openConfigBtn.setX(lx + lw / 2 + 2);  openConfigBtn.setWidth(lw / 2 - 6);    openConfigBtn.setHeight(20);
-            importPresetsBtn.setY(this.height - 26); openConfigBtn.setY(this.height - 26);
+            importPresetsBtn.setY(this.height - 50); openConfigBtn.setY(this.height - 50);
+            // Linha 2: New Preset | Done (acções primárias) — mesma divisão da linha 1
+            newPresetBtn.setX(lx + 4);             newPresetBtn.setWidth(lw / 2 - 6);
+            doneBtn.setX(lx + lw / 2 + 2);        doneBtn.setWidth(lw / 2 - 6);
+            newPresetBtn.setY(this.height - 26);   doneBtn.setY(this.height - 26);
         } else {
             presetList = new PresetListWidget(this.minecraft, LIST_W, listHeight, listTop, 24);
-            // Linha 1: New Preset (esquerda) | Done (direita, no painel)
-            newPresetBtn.setX(4);                  newPresetBtn.setWidth(LIST_W - 8);
-            doneBtn.setX(panelX() + panelW() / 2 - 60); doneBtn.setWidth(120);
-            newPresetBtn.setY(this.height - 50);   doneBtn.setY(this.height - 26);
-            // Linha 2: Import | Open Config (esquerda)
+            // Linha 1: Import | Open Config (utilitários, esquerda)
             importPresetsBtn.setX(4);              importPresetsBtn.setWidth(LIST_W / 2 - 6);  importPresetsBtn.setHeight(20);
             openConfigBtn.setX(LIST_W / 2 + 2);   openConfigBtn.setWidth(LIST_W / 2 - 6);    openConfigBtn.setHeight(20);
-            importPresetsBtn.setY(this.height - 26); openConfigBtn.setY(this.height - 26);
+            importPresetsBtn.setY(this.height - 50); openConfigBtn.setY(this.height - 50);
+            // Linha 2: New Preset (esquerda) | Done (direita, no painel)
+            newPresetBtn.setX(4);                  newPresetBtn.setWidth(LIST_W - 8);
+            doneBtn.setX(panelX() + panelW() / 2 - 60); doneBtn.setWidth(120);
+            newPresetBtn.setY(this.height - 26);   doneBtn.setY(this.height - 26);
         }
         this.addRenderableWidget(presetList);
         presetList.refresh();
@@ -377,12 +383,19 @@ public class PresetsScreen extends Screen {
         if (creating) {
             g.fill(0, 0, this.width, this.height, 0xBB000000);
             int cx = this.width / 2 - 130, cy = this.height / 2 - 22;
+            String draft = createBox.getValue().trim();
+            boolean nameExists = !draft.isEmpty() && PresetConfig.getPresets().stream()
+                    .anyMatch(p -> p.name.equalsIgnoreCase(draft));
+            boolean nameEmpty  = draft.isEmpty();
+            createConfirmBtn.active = !nameExists && !nameEmpty;
             g.fill(cx - 10, cy - 26, cx + 232, cy + 46, 0xFF1A1A2E);
             g.fill(cx - 10, cy - 26, cx + 232, cy - 25, 0xFF444466); // topo
             g.fill(cx - 10, cy + 45, cx + 232, cy + 46, 0xFF444466); // baixo
             g.fill(cx - 10, cy - 26, cx - 9,   cy + 46, 0xFF444466); // esquerda
             g.fill(cx + 231, cy - 26, cx + 232, cy + 46, 0xFF444466); // direita
             g.text(this.font, "New preset name:", cx, cy - 18, 0xFFCCCCFF);
+            if (nameExists)
+                g.centeredText(this.font, "Name already in use!", cx + 110, cy + 13, 0xFFFF5555);
             createBox.extractRenderState(g, mouseX, mouseY, a);
             createConfirmBtn.extractRenderState(g, mouseX, mouseY, a);
             createCancelBtn.extractRenderState(g, mouseX, mouseY, a);
@@ -775,6 +788,7 @@ public class PresetsScreen extends Screen {
     private void openDeleteConfirm() {
         if (editingPreset == null) return;
         PresetConfig.Preset toDelete = editingPreset;
+        setEditMode(EditMode.COLOR); // reset antes de abrir overlay — garante estado limpo ao regressar
         this.minecraft.setScreen(new ConfirmScreen(
             confirmed -> {
                 if (confirmed) {
@@ -784,7 +798,10 @@ public class PresetsScreen extends Screen {
                 this.minecraft.setScreen(PresetsScreen.this);
             },
             Component.literal("Delete preset?"),
-            Component.literal("\"" + toDelete.name + "\" — This action cannot be undone.")
+            Component.empty()
+                .append(Component.literal("\"" + toDelete.name + "\"").withStyle(s ->
+                    s.withColor(net.minecraft.network.chat.TextColor.fromRgb(toDelete.argbColor() & 0x00FFFFFF))))
+                .append(Component.literal(" — This action cannot be undone."))
         ));
     }
 
@@ -928,22 +945,28 @@ public class PresetsScreen extends Screen {
                 g.fill(badgeX, badgeY, badgeX+22, badgeY+11, active ? 0xFF1A3A1A : 0xFF2A2A2A);
                 g.centeredText(PresetListWidget.this.minecraft.font, active ? "ON" : "OFF", badgeX+11, badgeY+2, active ? 0xFF55FF55 : 0xFF888888);
 
-                int sq = 12, sqX = getX() + 38, sqY = getY() + 6;
-                g.fill(sqX-1, sqY-1, sqX+sq+1, sqY+sq+1, 0xFF000000);
-                g.fill(sqX, sqY, sqX+sq, sqY+sq, pc | 0xFF000000);
-
                 int nameCol = selected ? 0xFFFFFFFF : active ? 0xFFDDDDDD : 0xFF999999;
-                g.text(PresetListWidget.this.minecraft.font, preset.name, getX()+58, getY()+8, nameCol);
+                g.text(PresetListWidget.this.minecraft.font, preset.name, getX()+38, getY()+8, nameCol);
                 String sc = keyDisplayLabel(preset);
                 if (!sc.equals("---"))
                     g.text(PresetListWidget.this.minecraft.font, " [" + sc + "]",
-                            getX()+58+PresetListWidget.this.minecraft.font.width(preset.name), getY()+8, 0xFF556655);
+                            getX()+38+PresetListWidget.this.minecraft.font.width(preset.name), getY()+8, 0xFF556655);
 
                 int sx = starX();
                 boolean hovStar = mouseX >= sx && mouseX < sx+18 && mouseY >= getY()+4 && mouseY < getY()+20;
-                g.fill(sx-1, getY()+3, sx+19, getY()+21, 0xFF111111);
-                g.fill(sx, getY()+4, sx+18, getY()+20, hovStar ? 0xFF4A4A4A : 0xFF3A3A3A);
-                g.centeredText(PresetListWidget.this.minecraft.font, fav ? "★" : "☆", sx+9, getY()+7, fav ? 0xFFFFDD44 : 0xFF777777);
+                // Botão de favorito: preenchido com cor do preset (sem margem interior)
+                g.fill(sx-1, getY()+3, sx+19, getY()+21, fav ? 0xFFFFFFFF : 0xFF111111); // borda
+                if (fav) {
+                    g.fill(sx, getY()+4, sx+18, getY()+20, pc | 0xFF000000);
+                } else {
+                    g.fill(sx, getY()+4, sx+18, getY()+20, hovStar ? 0xFF4A4A4A : 0xFF2A2A2A);
+                }
+                // Label de hover
+                if (hovStar) {
+                    String tip = fav ? "Remove favourite" : "Add to favourites";
+                    g.text(PresetListWidget.this.minecraft.font, tip,
+                           sx - PresetListWidget.this.minecraft.font.width(tip) - 4, getY() + 8, 0xFFAAAAAA);
+                }
             }
 
             @Override
