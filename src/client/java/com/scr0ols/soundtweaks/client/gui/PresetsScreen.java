@@ -112,7 +112,7 @@ public class PresetsScreen extends Screen {
                 Component.translatable("soundtweaks.presets.new"), btn -> enterCreateMode()
         ).bounds(4, this.height - 50, LIST_W - 8, 20).build();
         this.newPresetBtn.setTooltip(Tooltip.create(Component.literal(
-                "Create a new preset from the current\nvolume configuration.")));
+                "Create a new preset.")));
         this.addRenderableWidget(this.newPresetBtn);
 
         this.doneBtn = Button.builder(
@@ -137,7 +137,7 @@ public class PresetsScreen extends Screen {
                 }
         ).bounds(4, this.height - 26, LIST_W / 2 - 6, 20).build();
         this.importPresetsBtn.setTooltip(Tooltip.create(Component.literal(
-                "Import presets from a shared file.\nA new ID is always generated — no conflicts.")));
+                "Import presets from a shared JSON file.")));
         this.addRenderableWidget(this.importPresetsBtn);
 
         this.openConfigBtn = Button.builder(
