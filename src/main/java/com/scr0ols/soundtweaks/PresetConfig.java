@@ -10,6 +10,9 @@ import net.minecraft.util.Mth;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class PresetConfig {
@@ -65,6 +68,25 @@ public class PresetConfig {
     private static final Set<String>  activeNames   = Collections.synchronizedSet(new LinkedHashSet<>());
     private static final List<String> favoriteNames = new CopyOnWriteArrayList<>();
     private static volatile long      lastSaveRequest = 0;
+
+    /** Executor dedicado para saves assíncronos — não bloqueia a render thread. */
+    private static final ExecutorService SAVE_EXECUTOR = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "SoundTweaks-Preset-Save");
+        t.setDaemon(true);
+        return t;
+    });
+
+    /** Flush e shutdown do executor — chamar quando o cliente fecha. */
+    public static void shutdownSaveExecutor() {
+        SAVE_EXECUTOR.shutdown();
+        try {
+            if (!SAVE_EXECUTOR.awaitTermination(3, TimeUnit.SECONDS))
+                SAVE_EXECUTOR.shutdownNow();
+        } catch (InterruptedException e) {
+            SAVE_EXECUTOR.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
 
     /**
      * Cache imutável dos presets activos — rebuilt apenas quando activeNames muda.
@@ -149,8 +171,10 @@ public class PresetConfig {
 
     public static void tickSave() {
         if (lastSaveRequest > 0 && System.currentTimeMillis() - lastSaveRequest > 300) {
-            save();
             lastSaveRequest = 0;
+            // save() usa colecções thread-safe (CopyOnWriteArrayList, synchronizedSet)
+            // — seguro chamar de thread de background
+            SAVE_EXECUTOR.submit(PresetConfig::save);
         }
     }
 

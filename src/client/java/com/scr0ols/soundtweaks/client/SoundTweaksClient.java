@@ -7,6 +7,7 @@ import com.scr0ols.soundtweaks.VolumeConfig;
 import com.scr0ols.soundtweaks.client.gui.PresetsScreen;
 import com.scr0ols.soundtweaks.client.gui.SoundTweaksScreen;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
@@ -48,6 +49,15 @@ public class SoundTweaksClient implements ClientModInitializer {
                 soundTweaksCategory
         ));
 
+        // Flush dos saves assíncronos antes de o cliente fechar
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
+            VolumeConfig.SOUNDS.save();
+            VolumeConfig.BLOCKS.save();
+            PresetConfig.save();
+            VolumeConfig.shutdownSaveExecutor();
+            PresetConfig.shutdownSaveExecutor();
+        });
+
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             VolumeConfig.SOUNDS.tickSave();
             VolumeConfig.BLOCKS.tickSave();
@@ -56,6 +66,7 @@ public class SoundTweaksClient implements ClientModInitializer {
             // Atalhos de presets — só activos quando não há nenhum ecrã aberto
             if (client.screen == null && client.getOverlay() == null) {
                 long win = GLFW.glfwGetCurrentContext();
+                if (win == 0L) return; // contexto GLFW inválido — skip
 
                 for (PresetConfig.Preset preset : PresetConfig.getPresets()) {
                     if (preset.shortcutKey <= 0) continue;
