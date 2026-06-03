@@ -228,7 +228,6 @@ class PresetSoundList extends AbstractSelectionList<PresetSoundList.BaseRow> {
             int pc = preset.argbColor() & 0x00FFFFFF;
 
             if (hasOverride()) {
-                g.fill(getX(), getY(), getX() + 3,   getY() + PresetSoundList.this.rowItemHeight, 0xFFFF9944);
                 g.fill(getX(), getY(), getX() + rowW, getY() + PresetSoundList.this.rowItemHeight, 0x18FFAA44);
             } else if (sel) {
                 g.fill(getX(), getY(), getX() + rowW, getY() + PresetSoundList.this.rowItemHeight, pc | 0x55000000);
@@ -278,7 +277,6 @@ class PresetSoundList extends AbstractSelectionList<PresetSoundList.BaseRow> {
             int pc = preset.argbColor() & 0x00FFFFFF;
 
             if (hasOverride()) {
-                g.fill(getX(), getY(), getX() + 3,   getY() + PresetSoundList.this.rowItemHeight, 0xFFFF9944);
                 g.fill(getX(), getY(), getX() + rowW, getY() + PresetSoundList.this.rowItemHeight, 0x18FFAA44);
             } else if (sel) {
                 g.fill(getX(), getY(), getX() + rowW, getY() + PresetSoundList.this.rowItemHeight, pc | 0x55000000);
@@ -327,7 +325,6 @@ class PresetSoundList extends AbstractSelectionList<PresetSoundList.BaseRow> {
             int pc = preset.argbColor() & 0x00FFFFFF;
 
             if (hasOverride()) {
-                g.fill(getX(), getY(), getX() + 3,   getY() + PresetSoundList.this.rowItemHeight, 0xFFFF9944);
                 g.fill(getX(), getY(), getX() + rowW, getY() + PresetSoundList.this.rowItemHeight, 0x18FFAA44);
             } else if (sel) {
                 g.fill(getX(), getY(), getX() + rowW, getY() + PresetSoundList.this.rowItemHeight, pc | 0x55000000);
