@@ -654,6 +654,15 @@ public class PresetsScreen extends Screen {
     public boolean keyPressed(KeyEvent event) {
         int key = event.key();
 
+        // O overlay de create é modal — tem prioridade sobre o painel de edição.
+        // Sem este check primeiro, quando editingPreset != null e creating == true,
+        // o bloco seguinte consome todas as teclas sem as passar ao createBox.
+        if (creating) {
+            if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) { confirmCreate(); return true; }
+            if (key == GLFW.GLFW_KEY_ESCAPE) { exitCreateMode(); return true; }
+            return super.keyPressed(event);
+        }
+
         if (editingPreset != null) {
             if (editMode == EditMode.SHORTCUT) { handleShortcutKey(key); return true; }
             if (editMode == EditMode.RENAME) {
@@ -676,11 +685,6 @@ public class PresetsScreen extends Screen {
             }
             if (key == GLFW.GLFW_KEY_ESCAPE) { closeDetailPanel(); return true; }
             return true;
-        }
-
-        if (creating) {
-            if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) { confirmCreate(); return true; }
-            if (key == GLFW.GLFW_KEY_ESCAPE) { exitCreateMode(); return true; }
         }
 
         return super.keyPressed(event);
