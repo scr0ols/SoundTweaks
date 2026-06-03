@@ -1,0 +1,5 @@
+{
+  "comment": "Este ficheiro e JSON valido mas nao tem a estrutura certa",
+  "version": 1,
+  "data": ["a", "b", "c"]
+}

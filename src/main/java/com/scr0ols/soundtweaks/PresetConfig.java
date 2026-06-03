@@ -178,8 +178,13 @@ public class PresetConfig {
             // Limpar referências órfãs (preset eliminado mas ainda em favoriteNames/activeNames)
             Set<String> existingNames = new HashSet<>();
             for (Preset p : presets) existingNames.add(p.name);
-            favoriteNames.removeIf(n -> !existingNames.contains(n));
-            activeNames.removeIf(n -> !existingNames.contains(n));
+            boolean hadOrphans = favoriteNames.removeIf(n -> !existingNames.contains(n));
+            hadOrphans |= activeNames.removeIf(n -> !existingNames.contains(n));
+            // Se havia órfãos, persistir a limpeza imediatamente para o ficheiro ficar consistente
+            if (hadOrphans) {
+                SoundTweaks.LOGGER.info("SoundTweaks: referências órfãs removidas de presets config");
+                save();
+            }
         } catch (IOException e) {
             SoundTweaks.LOGGER.error("SoundTweaks: erro ao carregar presets", e);
         }
