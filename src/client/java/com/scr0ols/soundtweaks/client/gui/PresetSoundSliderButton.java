@@ -45,4 +45,13 @@ public class PresetSoundSliderButton extends AbstractSliderButton {
         this.applyValue();
         this.updateMessage();
     }
+
+    /** Sincroniza o display sem escrever no preset (chamado em cada frame). */
+    public void syncDisplay() {
+        double current = Math.min(preset.sounds.getOrDefault(soundId, 1.0f), 1.0);
+        if (Math.abs(this.value - current) > 0.001) {
+            this.value = current;
+            this.updateMessage();
+        }
+    }
 }

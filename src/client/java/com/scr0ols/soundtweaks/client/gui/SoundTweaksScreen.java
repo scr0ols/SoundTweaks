@@ -44,7 +44,7 @@ public class SoundTweaksScreen extends Screen {
     /** Y onde os botões de preset começam (abaixo do cabeçalho). */
     private static final int SIDE_TOP = 26;
     /** Altura do botão Manage no fundo. */
-    private static final int MANAGE_H = 18;
+    private static final int MANAGE_H = 20;
 
     @Nullable private final Screen parent;
 
@@ -81,7 +81,7 @@ public class SoundTweaksScreen extends Screen {
 
         // ── Linha 1 (Y=4): [speaker] [Simple/Detail View] [Presets ▶/◄] ... título ...
         this.muteSoundsBtn = Button.builder(Component.empty(), btn -> toggleMuteVisible())
-                .bounds(4, 4, 20, 14).build();
+                .bounds(4, 2, 20, 20).build();
         this.muteSoundsBtn.setTooltip(Tooltip.create(Component.literal(
                 "Mute / restore all currently visible sounds")));
         this.addRenderableWidget(this.muteSoundsBtn);
@@ -93,7 +93,7 @@ public class SoundTweaksScreen extends Screen {
                     btn.setMessage(Component.literal(detailedView ? "Detail View" : "Simple View"));
                     refreshList();
                 }
-        ).bounds(28, 4, 78, 14).build();
+        ).bounds(28, 2, 78, 20).build();
         this.viewToggleButton.setTooltip(Tooltip.create(Component.literal(
                 "Simple View: grouped by sound event\n" +
                 "Detail View: individual sound files")));
@@ -102,7 +102,7 @@ public class SoundTweaksScreen extends Screen {
         this.presetsBtn = Button.builder(
                 Component.literal("Presets"),
                 btn -> toggleSidebar()
-        ).bounds(110, 4, 68, 14).build();
+        ).bounds(110, 2, 68, 20).build();
         this.presetsBtn.setTooltip(Tooltip.create(Component.literal(
                 "Toggle the presets sidebar.\n" +
                 "Presets let you save and quickly switch\n" +
@@ -110,29 +110,29 @@ public class SoundTweaksScreen extends Screen {
         this.addRenderableWidget(this.presetsBtn);
 
         // ── Linha 2 (Y=22): [Categoria] [Objecto] [×] [barra de pesquisa (preenche resto)]
-        this.categoryDropdown = new FilterDropdown(4, 22, 120,
+        this.categoryDropdown = new FilterDropdown(4, 26, 120,
                 I18n.get("soundtweaks.gui.category"), this::onCategorySelected);
         populateCategoryDropdown();
 
-        this.objectDropdown = new FilterDropdown(128, 22, 130,
+        this.objectDropdown = new FilterDropdown(128, 26, 130,
                 I18n.get("soundtweaks.gui.object"), this::onObjectSelected);
         this.objectDropdown.setActive(false);
 
         this.clearButton = Button.builder(Component.literal("x"), btn -> clearFilters())
-                .bounds(262, 22, 20, 20).build();
+                .bounds(262, 26, 20, 20).build();
         this.clearButton.setTooltip(Tooltip.create(Component.literal("Clear all filters")));
         this.addRenderableWidget(this.clearButton);
 
         int searchX = 286;
         int searchW = Math.max(60, cw - searchX - 4);
-        this.searchBox = new EditBox(this.font, searchX, 22, searchW, 20,
+        this.searchBox = new EditBox(this.font, searchX, 26, searchW, 20,
                 Component.translatable("soundtweaks.gui.search_hint"));
         this.searchBox.setHint(Component.translatable("soundtweaks.gui.search_hint"));
         this.searchBox.setResponder(q -> { this.searchQuery = q; refreshList(); });
         this.addRenderableWidget(this.searchBox);
 
         // ── Lista de sons (começa imediatamente abaixo dos filtros)
-        int listY = 46;
+        int listY = 50;
         this.soundList = new SoundListWidget(this.minecraft,
                 cw, this.height - listY - 36, listY, 20);
         refreshList();
@@ -227,10 +227,23 @@ public class SoundTweaksScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
+        // Banda de fundo do header e separador — antes do super para não cobrir os botões
+        graphics.fill(0, 0, contentW(), 24, 0xFF1A1A2E);
+        graphics.fill(0, 24, contentW(), 25, 0xFF444466);
+
+        // Fundo da sidebar antes do super — para o botão Manage (widget) ficar por cima
+        if (sidebarOpen) {
+            graphics.fill(this.width - SIDE_W, 0, this.width, this.height, 0x771A1A1E);
+        }
+
         super.extractRenderState(graphics, mouseX, mouseY, a);
 
+        // Título centrado, mas sem invadir os botões do header (ocupam até x≈182)
+        int titleMinX = 185;
+        int titleCenterX = Math.max(titleMinX + this.font.width(I18n.get("soundtweaks.gui.title")) / 2,
+                contentW() / 2);
         graphics.centeredText(this.font, I18n.get("soundtweaks.gui.title"),
-                contentW() / 2, 8, 0xFFFFFFFF);
+                titleCenterX, 8, 0xFFFFFFFF);
 
         // Ícone de speaker no botão de silenciar/repor
         if (this.muteSoundsBtn != null)
@@ -268,17 +281,14 @@ public class SoundTweaksScreen extends Screen {
         List<PresetConfig.Preset> favs = PresetConfig.getFavoritePresets();
         int sideX = this.width - SIDE_W;
 
-        // Fundo da sidebar — neutro semi-transparente, mesmo tom do fundo geral
-        graphics.fill(sideX, 0, this.width, this.height, 0x771A1A1E);
-
         // Cabeçalho — clicável para fechar
         boolean hovHeader = mouseX >= sideX && mouseY >= 0 && mouseY < 22;
-        graphics.fill(sideX, 0, this.width, 22, hovHeader ? 0x88282830 : 0x88202028);
+        graphics.fill(sideX, 0, this.width, 24, hovHeader ? 0xFF222233 : 0xFF1A1A2E);
         graphics.centeredText(this.font, "Presets",
-                sideX + SIDE_W / 2, 7, 0xFFDDDDDD);
+                sideX + SIDE_W / 2, 8, 0xFFDDDDDD);
         // Seta de fechar (◀) no canto esquerdo do cabeçalho
-        graphics.text(this.font, "◄", sideX + 4, 7, hovHeader ? 0xFFFFFFFF : 0xFF999999);
-        graphics.fill(sideX + 4, 20, this.width - 4, 21, 0xFF555555);
+        graphics.text(this.font, "◄", sideX + 4, 8, hovHeader ? 0xFFFFFFFF : 0xFF888899);
+        graphics.fill(sideX, 24, this.width, 25, 0xFF444466);
 
         // Área disponível para presets (entre cabeçalho e botão Manage — agora widget nativo)
         int manageY        = this.height - MANAGE_H - 4;
@@ -302,13 +312,10 @@ public class SoundTweaksScreen extends Screen {
                     && mouseY >= y && mouseY < y + PRESET_H;
 
             if (active) {
-                graphics.fill(sideX + 1, y, this.width - 1, y + PRESET_H, color | 0xFF000000);
-                graphics.fill(sideX + 1, y, this.width - 1, y + 1,        0xCCFFFFFF);
-                graphics.fill(sideX + 1, y + PRESET_H - 1, this.width - 1, y + PRESET_H, 0x44FFFFFF);
-                graphics.fill(sideX + 1, y, sideX + 6, y + PRESET_H, 0xFFFFFFFF);
+                graphics.fill(sideX + 1, y, this.width - 1, y + PRESET_H, (color & 0x00FFFFFF) | 0x55000000);
+                graphics.fill(sideX + 1, y, sideX + 4, y + PRESET_H, color | 0xFF000000); // acento lateral sólido
             } else {
-                graphics.fill(sideX + 1, y, this.width - 1, y + PRESET_H,
-                        (color & 0x00FFFFFF) | 0x44000000);
+                graphics.fill(sideX + 1, y, this.width - 1, y + PRESET_H, (color & 0x00FFFFFF) | 0x1A000000);
             }
             if (hov) graphics.fill(sideX + 1, y, this.width - 1, y + PRESET_H, 0x22FFFFFF);
 
