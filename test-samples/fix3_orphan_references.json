@@ -1,0 +1,24 @@
+{
+  "presets": [
+    {
+      "name": "Preset Existente",
+      "colorIndex": 3,
+      "shortcutKey": 0,
+      "shortcutHeldKey": 0,
+      "shortcutHeldKey2": 0,
+      "sounds": {
+        "minecraft:ambient.cave": 0.3
+      },
+      "blocks": {}
+    }
+  ],
+  "activePresets": [
+    "Preset Existente",
+    "Preset Que Foi Apagado",
+    "Outro Preset Inexistente"
+  ],
+  "favoritePresets": [
+    "Preset Existente",
+    "Preset Que Foi Apagado"
+  ]
+}

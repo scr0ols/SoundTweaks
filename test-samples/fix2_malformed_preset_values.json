@@ -1,0 +1,37 @@
+{
+  "presets": [
+    {
+      "name": "Preset Mal-Formado",
+      "colorIndex": 2,
+      "shortcutKey": 0,
+      "shortcutHeldKey": 0,
+      "shortcutHeldKey2": 0,
+      "sounds": {
+        "minecraft:entity.creeper.primed": 0.2,
+        "minecraft:ambient.cave": null,
+        "minecraft:block.note_block.harp": [],
+        "minecraft:entity.player.hurt": { "nested": "object" },
+        "minecraft:block.piston.extend": 0.5
+      },
+      "blocks": {
+        "minecraft:note_block": 0.8,
+        "minecraft:tnt": null,
+        "minecraft:piston": "nao_sou_um_numero"
+      }
+    },
+    {
+      "name": "Preset Normal",
+      "colorIndex": 5,
+      "shortcutKey": 0,
+      "shortcutHeldKey": 0,
+      "shortcutHeldKey2": 0,
+      "sounds": {
+        "minecraft:entity.creeper.primed": 0.1,
+        "minecraft:entity.tnt.primed": 0.0
+      },
+      "blocks": {}
+    }
+  ],
+  "activePresets": ["Preset Normal"],
+  "favoritePresets": []
+}

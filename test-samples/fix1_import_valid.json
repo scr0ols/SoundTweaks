@@ -1,0 +1,8 @@
+{
+  "minecraft:block.note_block.harp": 0.4,
+  "minecraft:entity.creeper.primed": 0.2,
+  "minecraft:entity.player.hurt": 1.5,
+  "minecraft:ambient.cave": 0.1,
+  "minecraft:block.piston.extend": 0.7,
+  "minecraft:entity.tnt.primed": 0.0
+}
