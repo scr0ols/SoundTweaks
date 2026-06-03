@@ -53,4 +53,15 @@ public class PresetGroupSliderButton extends AbstractSliderButton {
         this.applyValue();
         this.updateMessage();
     }
+
+    /** Sincroniza o display sem escrever no preset (chamado em cada frame). */
+    public void syncDisplay() {
+        float min = 1.0f;
+        for (String id : children) { Float v = preset.sounds.get(id); if (v != null) min = Math.min(min, v); }
+        double current = min;
+        if (Math.abs(this.value - current) > 0.001) {
+            this.value = current;
+            this.updateMessage();
+        }
+    }
 }
