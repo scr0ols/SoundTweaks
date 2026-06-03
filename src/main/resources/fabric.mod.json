@@ -10,7 +10,7 @@
 	"contact": {},
 	"license": "CC0-1.0",
 	"icon": "assets/soundtweaks/icon.png",
-	"environment": "*",
+	"environment": "client",
 	"entrypoints": {
 		"main": [
 			"com.scr0ols.soundtweaks.SoundTweaks"
