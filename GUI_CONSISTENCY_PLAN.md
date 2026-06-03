@@ -87,12 +87,51 @@ Título           = TEXT_DIALOG (0xFFCCCCFF)
 
 ---
 
+## Melhorias adicionais aplicadas na sessão de GUI refinement (após checklist inicial)
+
+### `PresetsScreen.java` — toques visuais
+- [x] **Preset header**: fundo transparente; título na cor do preset, 1.15× escalado, outline 4 direcções
+- [x] **Tab ativa**: acento superior na cor do preset; fundo neutro (`0xFF2A2A3A`)
+- [x] **Header border**: 2px — `0xFF444466` + `0xFF111111`
+- [x] **Footer**: separador 2px (`0xFF111111` + `0xFF555555`); Done move para `height-26`
+- [x] **Divisor vertical** painel: removido
+- [x] **Color tab**: painel escuro 340×138px (`0xBB1A1A1A`)
+- [x] **Shortcut tab**: painel escuro 340×64px (`0xBB1A1A1A`), garante legibilidade
+- [x] **Rename widget**: max 320px, centrado, botões a full-width do campo
+- [x] **Create overlay**: bordas nos 4 lados completas
+- [x] **Sounds panel**: mute→header, Import from config ao lado de Done no footer
+- [x] **Override hint**: texto removido
+
+### `PresetSoundList.java`
+- [x] **Orange accent bar**: removida; override indicado só pela cor do texto + tint subtil
+
+### `PresetConfig.java`
+- [x] **Paleta de cores**: 18 Jewel Tones em 3 linhas (Rubi→Jade / Coral→Menta / Borgonha→Ouro)
+
+### `SoundTweaksScreen.java`
+- [x] Botões mute/view/presets visíveis (banda desenhada antes do super)
+
+---
+
+## Próxima tarefa — Toques finais de UI
+
+Branch: `feat/ui-improvements` (continuar) ou novo `feat/ui-polish`
+
+Pendentes identificados e a explorar:
+- [ ] **PresetsScreen — título escalado**: validar centramento em nomes longos
+- [ ] **SoundTweaksScreen**: rever consistência do header da sidebar com o novo design
+- [ ] **Geral**: rever todos os ecrãs após mudanças para garantir que nada ficou desalinhado
+- [ ] **Possível**: adicionar tooltips / feedback visual nos overlays (create, delete)
+- [ ] **Possível**: animação/transição subtil ao mudar de tab (se API suportar)
+
+---
+
 ## Ordem de Implementação Recomendada
 
-1. `RenameScreen.java` (crítico — ecrã visualmente quebrado)
-2. `PresetsScreen.java` — divisor e separadores
-3. `SoundTweaksScreen.java` — header e botões
-4. `PresetsScreen.java` — botões footer (altura 18→20) e título Y
+~~1. `RenameScreen.java` (crítico — ecrã visualmente quebrado)~~  ✅  
+~~2. `PresetsScreen.java` — divisor e separadores~~  ✅  
+~~3. `SoundTweaksScreen.java` — header e botões~~  ✅  
+~~4. `PresetsScreen.java` — botões footer e título Y~~  ✅  
 
 ---
 
@@ -100,3 +139,4 @@ Título           = TEXT_DIALOG (0xFFCCCCFF)
 
 - GUI: `src/client/java/com/scr0ols/soundtweaks/client/gui/`
 - Ecrã de referência (mais completo): `ImportConfigScreen.java`
+- Plano Git: `GIT_LOG.md`
