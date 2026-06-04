@@ -25,6 +25,14 @@ dependencies {
     // NeoForge is automatically added by the moddev plugin
 }
 
+processResources {
+    def version = project.version
+    inputs.property "version", version
+    filesMatching("META-INF/neoforge.mods.toml") {
+        expand "version": version
+    }
+}
+
 tasks.withType(JavaCompile).configureEach {
     it.options.release = 25
 }
