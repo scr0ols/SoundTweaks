@@ -222,7 +222,7 @@ public class PresetConfig {
             // If there were orphans, persist the cleanup immediately so the file stays consistent
             if (hadOrphans) {
                 SoundTweaks.LOGGER.info("SoundTweaks: referências órfãs removidas de presets config");
-                save();
+                SAVE_EXECUTOR.submit(PresetConfig::save); // async — load() runs on the render thread
             }
 
             rebuildActivePresetsCache();
@@ -264,7 +264,7 @@ public class PresetConfig {
             }
         rebuildActivePresetsCache();
         SoundTweaks.LOGGER.info("SoundTweaks: {} presets migrados do formato antigo", presets.size());
-        save();
+        SAVE_EXECUTOR.submit(PresetConfig::save); // async — migrateFromLegacy() is called from load() on the render thread
     }
 
     public static void save() {
