@@ -3,7 +3,7 @@ package com.scr0ols.soundtweaks;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import net.fabricmc.loader.api.FabricLoader;
+import net.neoforged.fml.loading.FMLPaths;
 import net.minecraft.util.Mth;
 
 import java.io.IOException;
@@ -55,7 +55,7 @@ public class VolumeConfig {
     private final float maxVol;
 
     private VolumeConfig(String fileName, float minVol, float maxVol) {
-        this.configFile = FabricLoader.getInstance().getConfigDir().resolve(fileName);
+        this.configFile = FMLPaths.CONFIGDIR.get().resolve(fileName);
         this.minVol     = minVol;
         this.maxVol     = maxVol;
     }

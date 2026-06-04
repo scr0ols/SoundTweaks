@@ -1,7 +1,7 @@
 package com.scr0ols.soundtweaks;
 
 import com.google.gson.*;
-import net.fabricmc.loader.api.FabricLoader;
+import net.neoforged.fml.loading.FMLPaths;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -59,9 +59,9 @@ public class PresetConfig {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    private static final Path CONFIG_FILE = FabricLoader.getInstance().getConfigDir()
+    private static final Path CONFIG_FILE = FMLPaths.CONFIGDIR.get()
             .resolve("soundtweaks_presets.json");
-    private static final Path LEGACY_DIR  = FabricLoader.getInstance().getConfigDir()
+    private static final Path LEGACY_DIR  = FMLPaths.CONFIGDIR.get()
             .resolve("soundtweaks_presets");
 
     private static final List<Preset> presets       = new CopyOnWriteArrayList<>();

@@ -1,22 +1,29 @@
 package com.scr0ols.soundtweaks;
 
-import net.fabricmc.api.ModInitializer;
-import net.fabricmc.loader.api.FabricLoader;
+import com.scr0ols.soundtweaks.client.SoundTweaksClient;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModList;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.loading.FMLEnvironment;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SoundTweaks implements ModInitializer {
+@Mod(SoundTweaks.MOD_ID)
+public class SoundTweaks {
 	public static final String MOD_ID = "soundtweaks";
-
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-	@Override
-	public void onInitialize() {
-		String version = FabricLoader.getInstance()
-				.getModContainer(MOD_ID)
-				.map(c -> c.getMetadata().getVersion().getFriendlyString())
+	public SoundTweaks(IEventBus modBus) {
+		String version = ModList.get()
+				.getModContainerById(MOD_ID)
+				.map(c -> c.getModInfo().getVersion().toString())
 				.orElse("?");
 		LOGGER.info("SoundTweaks {} loaded", version);
+
+		if (FMLEnvironment.getDist() == Dist.CLIENT) {
+			SoundTweaksClient.init(modBus);
+		}
 	}
 }

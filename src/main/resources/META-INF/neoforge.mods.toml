@@ -1,0 +1,34 @@
+modLoader = "javafml"
+mixins = ["soundtweaks.mixins.json"]
+loaderVersion = "[4,)"
+license = "CC0-1.0"
+
+[[mods]]
+    modId = "soundtweaks"
+    version = "${file.jarVersion}"
+    displayName = "SoundTweaks"
+    description = '''
+Per-sound volume control — mute, amplify or individually adjust any sound in the game.
+'''
+    logoFile = "icon.png"
+
+    [[mods.authors]]
+        name = "scr0ols"
+
+    [mods.properties]
+        homepage = "https://github.com/scr0ols/SoundTweaks/wiki"
+        issues = "https://github.com/scr0ols/SoundTweaks/issues"
+
+[[dependencies.soundtweaks]]
+    modId = "neoforge"
+    type = "required"
+    versionRange = "[26.1,)"
+    ordering = "NONE"
+    side = "CLIENT"
+
+[[dependencies.soundtweaks]]
+    modId = "minecraft"
+    type = "required"
+    versionRange = "[26.1.2,)"
+    ordering = "NONE"
+    side = "CLIENT"

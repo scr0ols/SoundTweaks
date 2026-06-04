@@ -1,6 +1,6 @@
 package com.scr0ols.soundtweaks;
 
-import net.fabricmc.loader.api.FabricLoader;
+import net.neoforged.fml.loading.FMLPaths;
 import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.io.IOException;
@@ -162,7 +162,7 @@ public class SoundRegistry {
 
     // Exports the full sound list to a .txt file — useful for reference and manual mapping
     private static void exportSoundList() {
-        Path outFile = FabricLoader.getInstance().getConfigDir().resolve("soundtweaks_sounds.txt");
+        Path outFile = FMLPaths.CONFIGDIR.get().resolve("soundtweaks_sounds.txt");
         try {
             Files.writeString(outFile, String.join("\n", knownSounds));
             SoundTweaks.LOGGER.info("SoundTweaks: lista de sons exportada para {}", outFile);

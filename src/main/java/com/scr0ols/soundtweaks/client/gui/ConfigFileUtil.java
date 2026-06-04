@@ -1,6 +1,6 @@
 package com.scr0ols.soundtweaks.client.gui;
 
-import net.fabricmc.loader.api.FabricLoader;
+import net.neoforged.fml.loading.FMLPaths;
 import net.minecraft.util.Util;
 
 import java.nio.file.Path;
@@ -14,12 +14,12 @@ public final class ConfigFileUtil {
 
     /** Opens the OS file explorer at the mod's config folder. */
     public static void openConfigFolder() {
-        Util.getPlatform().openPath(FabricLoader.getInstance().getConfigDir());
+        Util.getPlatform().openPath(FMLPaths.CONFIGDIR.get());
     }
 
     /** Returns the absolute path of the config folder (for display to the user). */
     public static String getConfigDirString() {
-        return FabricLoader.getInstance().getConfigDir().toAbsolutePath().toString();
+        return FMLPaths.CONFIGDIR.get().toAbsolutePath().toString();
     }
 
     /**
@@ -34,7 +34,7 @@ public final class ConfigFileUtil {
             Path p = Path.of(input);
             if (p.isAbsolute() && p.toFile().isFile()) return p;
             // Try relative to the config folder
-            Path relative = FabricLoader.getInstance().getConfigDir().resolve(p);
+            Path relative = FMLPaths.CONFIGDIR.get().resolve(p);
             if (relative.toFile().isFile()) return relative;
             return null;
         } catch (Exception e) {

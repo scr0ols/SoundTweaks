@@ -2,7 +2,7 @@ package com.scr0ols.soundtweaks.client;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import net.fabricmc.loader.api.FabricLoader;
+import net.neoforged.fml.loading.FMLPaths;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -153,7 +153,7 @@ public class SoundDisplayHelper {
      * If the JSON is invalid, logs a warning and uses an empty map.
      */
     static void loadOverrides() {
-        Path file = FabricLoader.getInstance().getConfigDir()
+        Path file = FMLPaths.CONFIGDIR.get()
                 .resolve("soundtweaks_name_overrides.json");
 
         if (!Files.exists(file)) {
