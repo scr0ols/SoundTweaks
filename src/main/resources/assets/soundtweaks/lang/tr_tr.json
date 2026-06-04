@@ -1,0 +1,36 @@
+{
+  "soundtweaks.gui.title":            "SoundTweaks",
+  "soundtweaks.gui.search_hint":      "Ses ara...",
+  "soundtweaks.gui.done":             "Tamam",
+  "soundtweaks.gui.category":         "Kategori",
+  "soundtweaks.gui.object":           "Nesne",
+  "soundtweaks.gui.all":              "(Tümü)",
+  "soundtweaks.gui.sounds":           "%d ses",
+  "soundtweaks.gui.sounds_filtered":  "%d / %d ses",
+  "soundtweaks.gui.blocks":           "%d blok",
+
+  "soundtweaks.category.block":       "Bloklar",
+  "soundtweaks.category.entity":      "Varlıklar",
+  "soundtweaks.category.item":        "Eşyalar",
+  "soundtweaks.category.ambient":     "Ortam",
+  "soundtweaks.category.music":       "Müzik",
+  "soundtweaks.category.music_disc":  "Diskler",
+  "soundtweaks.category.ui":          "Arayüz",
+  "soundtweaks.category.weather":     "Hava Durumu",
+  "soundtweaks.category.enchant":     "Büyüler",
+  "soundtweaks.category.event":       "Olaylar",
+  "soundtweaks.category.others":      "Diğer",
+  "soundtweaks.category.redstone":    "Redstone",
+
+  "soundtweaks.presets.title":        "Presets",
+  "soundtweaks.presets.new":          "+ Yeni Preset",
+  "soundtweaks.presets.confirm":      "Preset Kaydet",
+  "soundtweaks.presets.manage":       "Presets Yönet",
+  "soundtweaks.presets.name_hint":    "Preset adı...",
+  "soundtweaks.presets.no_favorites": "Henüz favori yok — eklemek için Presets Yönet'e git",
+
+  "key.category.soundtweaks.soundtweaks": "Sound Tweaks",
+  "key.soundtweaks.open_menu":    "Sound Tweaks'i Aç",
+  "key.soundtweaks.open_presets": "Presets Menüsünü Aç",
+  "key.soundtweaks.perf_report":  "Performans Raporu Yazdır"
+}
