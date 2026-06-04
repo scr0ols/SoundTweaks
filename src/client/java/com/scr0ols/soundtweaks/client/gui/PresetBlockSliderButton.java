@@ -6,8 +6,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 
 /**
- * Slider que escreve em preset.blocks (para blocos sem evento dedicado).
- * 100% = sem override = remove do preset.
+ * Slider that writes to preset.blocks (for blocks without a dedicated sound event).
+ * 100% = no override = removes from preset.
  */
 public class PresetBlockSliderButton extends AbstractSliderButton {
 
@@ -42,7 +42,7 @@ public class PresetBlockSliderButton extends AbstractSliderButton {
         this.updateMessage();
     }
 
-    /** Sincroniza o display sem escrever no preset (chamado em cada frame). */
+    /** Syncs the display without writing to the preset (called every frame). */
     public void syncDisplay() {
         double current = Math.min(preset.blocks.getOrDefault(blockId, 1.0f), 1.0);
         if (Math.abs(this.value - current) > 0.001) {

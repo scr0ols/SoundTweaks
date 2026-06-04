@@ -16,11 +16,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ClientLevel.class)
 public abstract class LevelMixin {
 
-    // Previne loop infinito quando re-invocamos playLocalSound com volume modificado
+    // Prevents infinite loop when re-invoking playLocalSound with a modified volume
     private static final ThreadLocal<Boolean> applying = ThreadLocal.withInitial(() -> false);
 
-    // Em 26.1.2 não existe playLocalSound(BlockPos, ...) — o método usa coordenadas double.
-    // Reconstruímos o BlockPos a partir de (x, y, z) para identificar o bloco.
+    // In 26.1.2 there is no playLocalSound(BlockPos, ...) — the method uses double coordinates.
+    // We reconstruct the BlockPos from (x, y, z) to identify the block.
     @Inject(
         method = "playLocalSound(DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V",
         at = @At("HEAD"),
@@ -30,7 +30,7 @@ public abstract class LevelMixin {
                                    SoundEvent sound, SoundSource source,
                                    float volume, float pitch, boolean distanceDelay,
                                    CallbackInfo ci) {
-        if (applying.get()) return; // chamada re-entrante — deixar passar sem modificar
+        if (applying.get()) return; // re-entrant call — let it pass unmodified
 
         ClientLevel self = (ClientLevel)(Object)this;
         BlockPos pos = BlockPos.containing(x, y, z);
@@ -42,18 +42,18 @@ public abstract class LevelMixin {
         String id = blockId.toString();
         if (!MissingBlockRegistry.contains(id)) return;
 
-        // Blocos com GROUP_PREFIX (note_block, jukebox) têm o seu volume controlado
-        // via cascade → SoundConfig → AbstractSoundInstanceMixin. Se os interceptarmos
-        // aqui também, o multiplicador seria aplicado duas vezes. Deixamos passar.
+        // Blocks with GROUP_PREFIX (note_block, jukebox) have their volume controlled
+        // via cascade → SoundConfig → AbstractSoundInstanceMixin. Intercepting them
+        // here as well would apply the multiplier twice. Let them pass.
         if (MissingBlockRegistry.GROUP_PREFIXES.containsKey(id)) return;
 
         float multiplier = VolumeResolver.getEffectiveBlockVolume(id);
-        if (multiplier == 1.0f) return; // sem alteração, deixar passar
+        if (multiplier == 1.0f) return; // no change, let through
 
         ci.cancel(); // cancelar chamada original
 
         if (multiplier > 0.0f) {
-            // Re-invocar com volume ajustado; o flag applying previne recursão
+            // Re-invoke with adjusted volume; the applying flag prevents recursion
             applying.set(true);
             try {
                 self.playLocalSound(x, y, z, sound, source, volume * multiplier, pitch, distanceDelay);
@@ -61,6 +61,6 @@ public abstract class LevelMixin {
                 applying.set(false);
             }
         }
-        // se multiplier == 0.0f, som silenciado — cancelado acima, nada mais a fazer
+        // if multiplier == 0.0f, sound is muted — already cancelled above, nothing more to do
     }
 }

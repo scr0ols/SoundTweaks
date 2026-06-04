@@ -6,26 +6,26 @@ import net.minecraft.util.Util;
 import java.nio.file.Path;
 
 /**
- * Utilitários para config portável entre instâncias.
+ * Utilities for portable config between instances.
  */
 public final class ConfigFileUtil {
 
     private ConfigFileUtil() {}
 
-    /** Abre o explorador de ficheiros do sistema operativo na pasta de config do mod. */
+    /** Opens the OS file explorer at the mod's config folder. */
     public static void openConfigFolder() {
         Util.getPlatform().openPath(FabricLoader.getInstance().getConfigDir());
     }
 
-    /** Devolve o caminho absoluto da pasta de config (para mostrar ao utilizador). */
+    /** Returns the absolute path of the config folder (for display to the user). */
     public static String getConfigDirString() {
         return FabricLoader.getInstance().getConfigDir().toAbsolutePath().toString();
     }
 
     /**
-     * Tenta resolver um caminho inserido pelo utilizador.
-     * Aceita caminho absoluto ou nome de ficheiro relativo à pasta config.
-     * Devolve null se o ficheiro não existir.
+     * Attempts to resolve a path entered by the user.
+     * Accepts an absolute path or a filename relative to the config folder.
+     * Returns null if the file does not exist.
      */
     public static Path resolvePath(String input) {
         if (input == null || input.isBlank()) return null;
@@ -33,7 +33,7 @@ public final class ConfigFileUtil {
         try {
             Path p = Path.of(input);
             if (p.isAbsolute() && p.toFile().isFile()) return p;
-            // Tentar relativo à pasta config
+            // Try relative to the config folder
             Path relative = FabricLoader.getInstance().getConfigDir().resolve(p);
             if (relative.toFile().isFile()) return relative;
             return null;

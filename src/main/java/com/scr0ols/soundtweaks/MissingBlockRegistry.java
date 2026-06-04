@@ -5,23 +5,23 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Blocos sem eventos de som dedicados em BuiltInRegistries.SOUND_EVENT,
- * ou blocos com controlo "master" sobre grupos de sons existentes.
+ * Blocks without dedicated sound events in BuiltInRegistries.SOUND_EVENT,
+ * or blocks that act as "master" over groups of existing sounds.
  *
- * Controlados via LevelMixin (playLocalSound) para sons que passam por aí,
- * e/ou via cascata em BlockConfig para grupos de SoundConfig entries.
+ * Controlled via LevelMixin (playLocalSound) for sounds routed through that path,
+ * and/or via cascade in BlockConfig for groups of SoundConfig entries.
  */
 public class MissingBlockRegistry {
 
     public static final List<String> BLOCK_IDS = List.of(
-        "minecraft:observer",          // click de activação
-        "minecraft:dropper",           // som ao disparar
-        "minecraft:stonecutter",       // som ao usar
-        "minecraft:cauldron",          // sons ao encher/usar
-        "minecraft:loom",              // som de madeira ao abrir
-        "minecraft:cartography_table", // som de madeira ao abrir
-        "minecraft:note_block",        // MASTER: controla todos os block.note_block.*
-        "minecraft:jukebox"            // MASTER: controla todos os music_disc.*
+        "minecraft:observer",          // activation click
+        "minecraft:dropper",           // firing sound
+        "minecraft:stonecutter",       // use sound
+        "minecraft:cauldron",          // fill/use sounds
+        "minecraft:loom",              // wood open sound
+        "minecraft:cartography_table", // wood open sound
+        "minecraft:note_block",        // MASTER: controls all block.note_block.*
+        "minecraft:jukebox"            // MASTER: controls all music_disc.*
     );
 
     private static final Map<String, String> DISPLAY_NAMES = Map.of(
@@ -36,11 +36,11 @@ public class MissingBlockRegistry {
     );
 
     /**
-     * Blocos que funcionam como "master" sobre um grupo de SoundConfig entries.
-     * Quando o volume destes é alterado, todas as entradas do grupo são actualizadas.
+     * Blocks that act as "master" over a group of SoundConfig entries.
+     * When their volume is changed, all entries in the group are updated.
      *
      * Key: blockId
-     * Value: prefixo dos soundIds a actualizar em SoundConfig
+     * Value: prefix of the soundIds to update in SoundConfig
      */
     public static final Map<String, String> GROUP_PREFIXES = Map.of(
         "minecraft:note_block", "minecraft:block.note_block.",
@@ -55,7 +55,7 @@ public class MissingBlockRegistry {
         return BLOCK_IDS.contains(blockId);
     }
 
-    /** Blocos da MissingBlockRegistry que pertencem à categoria REDSTONE. */
+    /** MissingBlockRegistry blocks that belong to the REDSTONE category. */
     public static final Set<String> REDSTONE_BLOCK_IDS = Set.of(
         "minecraft:observer",
         "minecraft:dropper",

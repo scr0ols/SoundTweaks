@@ -18,8 +18,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Configuração de volumes persistida em disco.
- * Duas instâncias estáticas: SOUNDS (sons, [0-2]) e BLOCKS (blocos, [0-1]).
+ * Volume configuration persisted to disk.
+ * Two static instances: SOUNDS (sounds, [0-2]) and BLOCKS (blocks, [0-1]).
  */
 public class VolumeConfig {
 
@@ -29,14 +29,14 @@ public class VolumeConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Type MAP_TYPE = new TypeToken<Map<String, Float>>() {}.getType();
 
-    /** Executor partilhado entre SOUNDS e BLOCKS — garante que saves não bloqueiam a render thread. */
+    /** Shared executor for SOUNDS and BLOCKS — ensures saves never block the render thread. */
     private static final ExecutorService SAVE_EXECUTOR = Executors.newSingleThreadExecutor(r -> {
         Thread t = new Thread(r, "SoundTweaks-Config-Save");
         t.setDaemon(true);
         return t;
     });
 
-    /** Flush e shutdown do executor — chamar quando o cliente fecha para não perder o último save. */
+    /** Flush and shutdown the executor — call when the client stops to avoid losing the last save. */
     public static void shutdownSaveExecutor() {
         SAVE_EXECUTOR.shutdown();
         try {
@@ -74,7 +74,7 @@ public class VolumeConfig {
     public void tickSave() {
         if (lastSaveRequest > 0 && System.currentTimeMillis() - lastSaveRequest > 300) {
             lastSaveRequest = 0;
-            // Snapshot imutável para evitar race condition durante a escrita assíncrona
+            // Immutable snapshot to avoid race condition during async write
             final String json = GSON.toJson(new LinkedHashMap<>(volumes));
             final Path   target = configFile;
             SAVE_EXECUTOR.submit(() -> {
@@ -111,8 +111,8 @@ public class VolumeConfig {
     }
 
     /**
-     * Exporta os volumes actuais para um ficheiro externo.
-     * @return número de entradas exportadas, ou -1 em caso de erro
+     * Exports current volumes to an external file.
+     * @return number of entries exported, or -1 on error
      */
     public int exportTo(Path file) {
         try {
@@ -126,25 +126,24 @@ public class VolumeConfig {
     }
 
     /**
-     * Importa volumes de um ficheiro externo. Substitui todos os valores actuais.
-     * @return número de entradas importadas, ou -1 em caso de erro
+     * Imports volumes from an external file. Replaces all current values.
+     * @return number of entries imported, or -1 on error
      */
     public int importFrom(Path file) {
         try {
             Map<String, Float> loaded = GSON.fromJson(Files.readString(file), MAP_TYPE);
             if (loaded == null) return -1;
 
-            // Validar entradas antes de tocar em qualquer estado
+            // Validate entries before touching any state
             Map<String, Float> validated = new LinkedHashMap<>();
             loaded.forEach((id, vol) -> {
                 if (vol != null && Float.isFinite(vol))
                     validated.put(id, Mth.clamp(vol, minVol, maxVol));
             });
 
-            // Escrever para disco PRIMEIRO — se falhar, a memória fica intacta
+            // Write to disk FIRST — if it fails, memory stays intact
             Files.writeString(configFile, GSON.toJson(validated));
 
-            // Só agora actualizar o estado em memória
             volumes.clear();
             volumes.putAll(validated);
 

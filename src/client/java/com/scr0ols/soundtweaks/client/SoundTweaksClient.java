@@ -22,7 +22,7 @@ public class SoundTweaksClient implements ClientModInitializer {
     public static KeyMapping openMenuKey;
     public static KeyMapping openPresetsKey;
 
-    // IDs de presets cujo trigger estava pressionado no tick anterior (deteção de flanco)
+    // Preset names whose trigger was held on the previous tick (rising-edge detection)
     private static final Set<String> shortcutKeysHeld = new HashSet<>();
 
     @Override
@@ -49,7 +49,7 @@ public class SoundTweaksClient implements ClientModInitializer {
                 soundTweaksCategory
         ));
 
-        // Flush dos saves assíncronos antes de o cliente fechar
+        // Flush async saves before the client stops
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
             VolumeConfig.SOUNDS.save();
             VolumeConfig.BLOCKS.save();
@@ -63,10 +63,10 @@ public class SoundTweaksClient implements ClientModInitializer {
             VolumeConfig.BLOCKS.tickSave();
             PresetConfig.tickSave();
 
-            // Atalhos de presets — só activos quando não há nenhum ecrã aberto
+            // Preset shortcuts — only active when no screen is open
             if (client.screen == null && client.getOverlay() == null) {
                 long win = GLFW.glfwGetCurrentContext();
-                if (win == 0L) return; // contexto GLFW inválido — skip
+                if (win == 0L) return; // invalid GLFW context — skip
 
                 for (PresetConfig.Preset preset : PresetConfig.getPresets()) {
                     if (preset.shortcutKey <= 0) continue;
@@ -75,7 +75,7 @@ public class SoundTweaksClient implements ClientModInitializer {
                     boolean triggerActive;
 
                     if (preset.shortcutHeldKey != 0) {
-                        // 2 ou 3 teclas: verificar held keys + trigger
+                        // 2 or 3 keys: verify held keys + trigger
                         if (GLFW.glfwGetKey(win, preset.shortcutHeldKey) != GLFW.GLFW_PRESS) {
                             shortcutKeysHeld.remove(preset.name); continue;
                         }
@@ -85,7 +85,7 @@ public class SoundTweaksClient implements ClientModInitializer {
                         }
                         triggerActive = GLFW.glfwGetKey(win, glfwKey) == GLFW.GLFW_PRESS;
                     } else {
-                        // 1 tecla: apenas verificar a trigger key (rising edge)
+                        // 1 key: only check the trigger key (rising edge)
                         triggerActive = GLFW.glfwGetKey(win, glfwKey) == GLFW.GLFW_PRESS;
                     }
 

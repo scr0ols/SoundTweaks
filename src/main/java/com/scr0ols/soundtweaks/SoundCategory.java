@@ -28,14 +28,14 @@ public enum SoundCategory {
     EVENT      ("event",      "soundtweaks.category.event",       true,    null),
     OTHERS     (null,         "soundtweaks.category.others",      true,    null),
 
-    // Categoria especial: sons dentro de "block.*" cujo objecto é redstone
-    // O filtro é aplicado DEPOIS do prefixo — method reference evita problemas de
-    // ordem de inicialização (o Set é estático e estará pronto quando for chamado)
+    // Special category: sounds within "block.*" whose object is redstone.
+    // The filter is applied AFTER the prefix — method reference avoids static initialisation
+    // order issues (the Set is static and will be ready when called)
     REDSTONE   ("block",      "soundtweaks.category.redstone",    true,    SoundCategory::isRedstoneObject),
 
     HIDDEN     ("intentionally_empty", null,                      false,   null);
 
-    // ── Objectos redstone (parts[1] do soundId) ───────────────────────────────
+    // ── Redstone objects (parts[1] of the soundId) ───────────────────────────
     private static final Set<String> REDSTONE_OBJECTS = Set.of(
         "piston", "comparator", "lever", "note_block", "tripwire",
         "dispenser", "crafter", "sculk_sensor", "sculk_shrieker",
@@ -52,22 +52,22 @@ public enum SoundCategory {
         return REDSTONE_OBJECTS.contains(obj);
     }
 
-    // ── Sons sem ficheiro de áudio, acessibilidade ou sem relevância — excluídos da GUI ──
+    // ── Sounds without audio file, accessibility sounds, or otherwise irrelevant — excluded from GUI ──
     private static final Set<String> SILENT_SOUNDS;
     static {
         HashSet<String> s = new HashSet<>(Arrays.asList(
-            // Sons sem ficheiro de áudio
+            // Sounds without an audio file
             "minecraft:block.fungus.fall",
             "minecraft:block.fungus.hit",
             "minecraft:music.nether.warped_forest",
-            // Sons idle de blocos (decorativos, sem audio relevante)
+            // Block idle sounds (decorative, no relevant audio)
             "minecraft:block.deadbush.idle",
             "minecraft:block.eyeblossom.idle",
             "minecraft:block.firefly_bush.idle",
             "minecraft:block.pale_hanging_moss.idle",
             "minecraft:block.sand.idle",
             "minecraft:block.creaking_heart.idle",
-            // Sons ambient de blocos (loops contínuos — controlados via volume de bloco)
+            // Block ambient sounds (continuous loops — controlled via block volume)
             "minecraft:block.beacon.ambient",
             "minecraft:block.candle.ambient",
             "minecraft:block.conduit.ambient",
@@ -83,7 +83,7 @@ public enum SoundCategory {
             "minecraft:block.trial_spawner.ambient_ominous",
             "minecraft:block.vault.ambient",
             "minecraft:block.water.ambient",
-            // Outros sem relevância prática
+            // Others with no practical relevance
             "minecraft:block.hanging_sign.waxed_interact_fail",
             "minecraft:block.trial_spawner.place",
             "minecraft:block.vault.reject_rewarded_player",
@@ -96,11 +96,11 @@ public enum SoundCategory {
         return SILENT_SOUNDS.contains(soundId);
     }
 
-    // ── Campos ────────────────────────────────────────────────────────────────
+    // ── Fields ────────────────────────────────────────────────────────────────
     private final @Nullable String prefix;
     private final @Nullable String labelKey;
     private final boolean visible;
-    private final @Nullable Predicate<String> extraFilter; // null = só prefixo
+    private final @Nullable Predicate<String> extraFilter; // null = prefix only
 
     SoundCategory(@Nullable String prefix, @Nullable String labelKey,
                   boolean visible, @Nullable Predicate<String> extraFilter) {
@@ -110,7 +110,7 @@ public enum SoundCategory {
         this.extraFilter = extraFilter;
     }
 
-    /** Chave única usada no dropdown — difere do prefix para categorias com filtro extra. */
+    /** Unique key used in the dropdown — differs from prefix for categories with an extra filter. */
     public String getDropdownKey() {
         if (extraFilter != null) return name().toLowerCase(); // ex: "redstone"
         return prefix != null ? prefix : "others";
@@ -122,11 +122,11 @@ public enum SoundCategory {
     public @Nullable Predicate<String> getExtraFilter() { return extraFilter; }
 
     /**
-     * Verdadeiro se este soundId pertence a esta categoria.
-     * Não deve ser chamado para OTHERS ou HIDDEN — têm lógica especial no Registry.
+     * True if this soundId belongs to this category.
+     * Should not be called for OTHERS or HIDDEN — they have special logic in the Registry.
      */
     public boolean matches(String soundId) {
-        if (prefix == null) return false; // OTHERS trata-se no Registry
+        if (prefix == null) return false; // OTHERS is handled in the Registry
         String withoutNs = soundId.contains(":") ? soundId.split(":")[1] : soundId;
         int dot = withoutNs.indexOf('.');
         String actualPrefix = dot >= 0 ? withoutNs.substring(0, dot) : withoutNs;
@@ -134,7 +134,7 @@ public enum SoundCategory {
         return extraFilter == null || extraFilter.test(soundId);
     }
 
-    /** Devolve a categoria pela dropdownKey (inclui categorias com filtro extra). */
+    /** Returns the category by dropdownKey (includes categories with an extra filter). */
     public static @Nullable SoundCategory fromDropdownKey(@Nullable String key) {
         if (key == null) return null;
         for (SoundCategory cat : values()) {
@@ -143,7 +143,7 @@ public enum SoundCategory {
         return null;
     }
 
-    /** Devolve a categoria pelo prefixo. Ignora categorias com filtro extra (ex: REDSTONE). */
+    /** Returns the category by prefix. Ignores categories with an extra filter (e.g. REDSTONE). */
     public static SoundCategory fromPrefix(String prefix) {
         if (prefix == null) return OTHERS;
         for (SoundCategory cat : values()) {
@@ -152,7 +152,7 @@ public enum SoundCategory {
         return OTHERS;
     }
 
-    /** Todas as categorias visíveis, por ordem do enum. */
+    /** All visible categories, in enum order. */
     public static SoundCategory[] visibleCategories() {
         return Arrays.stream(values())
                 .filter(SoundCategory::isVisible)

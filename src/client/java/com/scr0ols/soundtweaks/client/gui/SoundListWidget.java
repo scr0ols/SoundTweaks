@@ -75,7 +75,7 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
             children.forEach(this::addEntry);
         }
 
-        // Blocos sempre depois dos sons, separados por um divisor
+        // Blocks always after sounds, separated by a divider
         if (!blockIds.isEmpty()) {
             this.addEntry(new DividerEntry());
             for (String blockId : blockIds) this.addEntry(new BlockEntry(blockId));
@@ -180,7 +180,7 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
                 g.fill(getX(), getY(), getX() + rowW, getY() + 20, 0x22AAAAFF);
 
             slider.refreshFromChildren();
-            // Loop simples em vez de stream — elimina alocação de lambda/Stream por frame
+            // Simple loop instead of stream — eliminates lambda/Stream allocation per frame
             float vol = minEffectiveVol(children);
             g.text(SoundListWidget.this.minecraft.font,
                     "* " + displayName, getX() + 4, getY() + 5, volumeColor(vol));

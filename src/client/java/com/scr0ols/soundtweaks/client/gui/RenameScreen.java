@@ -55,22 +55,22 @@ public class RenameScreen extends Screen {
         int cx = this.width / 2 - 110;
         int cy = this.height / 2 - 10;
 
-        // Caixa de fundo
+        // Background box
         graphics.fill(cx - 14, cy - 32, cx + 234, cy + 52, 0xFF1A1A2E);
-        graphics.fill(cx - 14, cy - 32, cx + 234, cy - 31, 0xFF444466); // topo
-        graphics.fill(cx - 14, cy + 51, cx + 234, cy + 52, 0xFF444466); // baixo
-        graphics.fill(cx - 14, cy - 32, cx - 13, cy + 52, 0xFF444466); // esquerda
-        graphics.fill(cx + 233, cy - 32, cx + 234, cy + 52, 0xFF444466); // direita
+        graphics.fill(cx - 14, cy - 32, cx + 234, cy - 31, 0xFF444466); // top
+        graphics.fill(cx - 14, cy + 51, cx + 234, cy + 52, 0xFF444466); // bottom
+        graphics.fill(cx - 14, cy - 32, cx - 13, cy + 52, 0xFF444466); // left
+        graphics.fill(cx + 233, cy - 32, cx + 234, cy + 52, 0xFF444466); // right
 
         graphics.centeredText(this.font, "Rename preset:",
                 this.width / 2, cy - 22, 0xFFCCCCFF);
-        graphics.fill(cx - 14, cy - 14, cx + 234, cy - 13, 0xFF333355); // separador após título
+        graphics.fill(cx - 14, cy - 14, cx + 234, cy - 13, 0xFF333355); // separator below title
     }
 
     @Override
     public void tick() {
         super.tick();
-        // Garantir foco no primeiro tick (init() pode ser sobreposto pelo MC)
+        // Ensure focus on the first tick (init() may be overridden by MC)
         if (!focusSet && nameBox != null) {
             this.setFocused(nameBox);
             nameBox.setFocused(true);

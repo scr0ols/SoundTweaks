@@ -26,7 +26,7 @@ import java.util.List;
 
 public class SoundTweaksScreen extends Screen {
 
-    // ── Estado persistente ────────────────────────────────────────────────────
+    // ── Persistent state ──────────────────────────────────────────────────────
     @Nullable private static SoundCategory savedCategory = null;
     @Nullable private static String        savedObject   = null;
     private   static         String        savedSearch   = "";
@@ -34,16 +34,16 @@ public class SoundTweaksScreen extends Screen {
     private   static         boolean       detailedView  = false;
     private   static         boolean       sidebarOpen   = true;
 
-    // ── Sidebar de presets favoritos (lado direito) ───────────────────────────
-    /** Largura da sidebar — permite ~35 caracteres de nome. */
+    // ── Favourites preset sidebar (right side) ────────────────────────────────
+    /** Sidebar width — fits ~35 name characters. */
     private static final int SIDE_W   = 220;
-    /** Largura da aba de abertura quando a sidebar está fechada. */
+    /** Tab width when the sidebar is closed. */
     private static final int TAB_W    = 18;
-    /** Altura do botão de cada preset. */
+    /** Height of each preset button. */
     private static final int PRESET_H = 22;
-    /** Y onde os botões de preset começam (abaixo do cabeçalho). */
+    /** Y where preset buttons start (below the header). */
     private static final int SIDE_TOP = 26;
-    /** Altura do botão Manage no fundo. */
+    /** Height of the Manage button at the bottom. */
     private static final int MANAGE_H = 20;
 
     @Nullable private final Screen parent;
@@ -54,8 +54,8 @@ public class SoundTweaksScreen extends Screen {
     private Button          viewToggleButton;
     private Button          muteSoundsBtn;
     private Button          presetsBtn;
-    // Static para persistir entre aberturas — o estado real está no VolumeResolver,
-    // mas usamos este flag para saber o que o botão "fez" (o que está para desmutar)
+    // Static to persist across opens — the real state lives in VolumeResolver,
+    // but this flag tracks what the button "did" (what is queued to be unmuted)
     private static boolean  muteSoundsActive = false;
 
     private FilterDropdown categoryDropdown;
@@ -65,7 +65,7 @@ public class SoundTweaksScreen extends Screen {
     @Nullable private String        selectedObject   = null;
     private           String        searchQuery      = "";
 
-    /** Largura da área de conteúdo (respeitando sidebar aberta/fechada). */
+    /** Width of the content area (accounting for sidebar open/closed). */
     private int contentW() { return sidebarOpen ? this.width - SIDE_W - 2 : this.width; }
 
     public SoundTweaksScreen(@Nullable Screen parent) {
@@ -79,7 +79,7 @@ public class SoundTweaksScreen extends Screen {
     protected void init() {
         int cw = contentW();
 
-        // ── Linha 1 (Y=4): [speaker] [Simple/Detail View] [Presets ▶/◄] ... título ...
+        // ── Row 1 (Y=4): [speaker] [Simple/Detail View] [Presets ▶/◄] ... title ...
         this.muteSoundsBtn = Button.builder(Component.empty(), btn -> toggleMuteVisible())
                 .bounds(4, 2, 20, 20).build();
         this.muteSoundsBtn.setTooltip(Tooltip.create(Component.literal(
@@ -109,7 +109,7 @@ public class SoundTweaksScreen extends Screen {
                 "between different volume configurations.")));
         this.addRenderableWidget(this.presetsBtn);
 
-        // ── Linha 2 (Y=22): [Categoria] [Objecto] [×] [barra de pesquisa (preenche resto)]
+        // ── Row 2 (Y=22): [Category] [Object] [×] [search bar (fills remaining space)]
         this.categoryDropdown = new FilterDropdown(4, 26, 120,
                 I18n.get("soundtweaks.gui.category"), this::onCategorySelected);
         populateCategoryDropdown();
@@ -131,21 +131,21 @@ public class SoundTweaksScreen extends Screen {
         this.searchBox.setResponder(q -> { this.searchQuery = q; refreshList(); });
         this.addRenderableWidget(this.searchBox);
 
-        // ── Lista de sons (começa imediatamente abaixo dos filtros)
+        // ── Sound list (starts immediately below the filters)
         int listY = 50;
         this.soundList = new SoundListWidget(this.minecraft,
                 cw, this.height - listY - 36, listY, 20);
         refreshList();
         this.addRenderableWidget(this.soundList);
 
-        // Botão Feito
+        // Done button
         this.addRenderableWidget(
                 Button.builder(Component.translatable("soundtweaks.gui.done"), btn -> this.onClose())
                         .bounds(cw / 2 + 5, this.height - 26, 120, 20)
                         .build()
         );
 
-        // Importar config de outra instância via file dialog nativo
+        // Import config from another instance via native file dialog
         var importCfgBtn = Button.builder(
                 Component.literal("Import Config..."),
                 btn -> {
@@ -178,7 +178,7 @@ public class SoundTweaksScreen extends Screen {
                 "Replaces current configuration.")));
         this.addRenderableWidget(importCfgBtn);
 
-        // Botão Manage Presets como widget nativo (só quando sidebar aberta)
+        // Manage Presets button as a native widget (only when sidebar is open)
         if (sidebarOpen) {
             int sideX   = this.width - SIDE_W;
             int manageY = this.height - MANAGE_H - 4;
@@ -214,7 +214,7 @@ public class SoundTweaksScreen extends Screen {
         syncMuteState();
     }
 
-    /** Sincroniza o ícone do botão mute com o estado real do VolumeResolver. */
+    /** Syncs the mute button icon with the actual VolumeResolver state. */
     private void syncMuteState() {
         List<String> sounds = getFilteredSounds();
         List<String> blocks = getFilteredBlocks();
@@ -227,30 +227,30 @@ public class SoundTweaksScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
-        // Banda de fundo do header e separador — antes do super para não cobrir os botões
+        // Header background band and separator — before super so it does not cover the buttons
         graphics.fill(0, 0, contentW(), 24, 0xFF1A1A2E);
         graphics.fill(0, 24, contentW(), 25, 0xFF444466);
 
-        // Fundo da sidebar antes do super — para o botão Manage (widget) ficar por cima
+        // Sidebar background before super — so the Manage button (widget) renders on top
         if (sidebarOpen) {
             graphics.fill(this.width - SIDE_W, 0, this.width, this.height, 0x771A1A1E);
         }
 
         super.extractRenderState(graphics, mouseX, mouseY, a);
 
-        // Título centrado, mas sem invadir os botões do header (ocupam até x≈182)
+        // Title centred, but not overlapping the header buttons (which extend to x≈182)
         int titleMinX = 185;
         int titleCenterX = Math.max(titleMinX + this.font.width(I18n.get("soundtweaks.gui.title")) / 2,
                 contentW() / 2);
         graphics.centeredText(this.font, I18n.get("soundtweaks.gui.title"),
                 titleCenterX, 8, 0xFFFFFFFF);
 
-        // Ícone de speaker no botão de silenciar/repor
+        // Speaker icon on the mute/restore button
         if (this.muteSoundsBtn != null)
             drawSpeakerIcon(graphics, this.muteSoundsBtn.getX(), this.muteSoundsBtn.getY(),
                     this.muteSoundsBtn.getWidth(), this.muteSoundsBtn.getHeight(), muteSoundsActive);
 
-        // Linha separadora vertical — só quando sidebar aberta (aba fechada tem o seu próprio separador)
+        // Vertical separator line — only when sidebar is open (closed tab has its own separator)
         if (sidebarOpen) {
             int sepX = this.width - SIDE_W - 1;
             graphics.fill(sepX, 0, sepX + 1, this.height, 0xFF333355);
@@ -268,12 +268,12 @@ public class SoundTweaksScreen extends Screen {
         // Sidebar
         renderFavoritesSidebar(graphics, mouseX, mouseY);
 
-        // Dropdowns — sempre por último (renderizam sobre tudo)
+        // Dropdowns — always last (render on top of everything)
         this.categoryDropdown.render(graphics, mouseX, mouseY);
         this.objectDropdown.render(graphics, mouseX, mouseY);
     }
 
-    // ── Sidebar de favoritos ──────────────────────────────────────────────────
+    // ── Favourites sidebar ────────────────────────────────────────────────────
 
     private void renderFavoritesSidebar(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         if (!sidebarOpen) return;
@@ -281,16 +281,16 @@ public class SoundTweaksScreen extends Screen {
         List<PresetConfig.Preset> favs = PresetConfig.getFavoritePresets();
         int sideX = this.width - SIDE_W;
 
-        // Cabeçalho — clicável para fechar
+        // Header — clickable to close
         boolean hovHeader = mouseX >= sideX && mouseY >= 0 && mouseY < 22;
         graphics.fill(sideX, 0, this.width, 24, hovHeader ? 0xFF222233 : 0xFF1A1A2E);
         graphics.centeredText(this.font, "Presets",
                 sideX + SIDE_W / 2, 8, 0xFFDDDDDD);
-        // Seta de fechar (◀) no canto esquerdo do cabeçalho
+        // Close arrow (◀) on the left corner of the header
         graphics.text(this.font, "◄", sideX + 4, 8, hovHeader ? 0xFFFFFFFF : 0xFF888899);
         graphics.fill(sideX, 24, this.width, 25, 0xFF444466);
 
-        // Área disponível para presets (entre cabeçalho e botão Manage — agora widget nativo)
+        // Available area for presets (between header and Manage button — now a native widget)
         int manageY        = this.height - MANAGE_H - 4;
         int availableBottom = manageY - 4;
 
@@ -313,7 +313,7 @@ public class SoundTweaksScreen extends Screen {
 
             if (active) {
                 graphics.fill(sideX + 1, y, this.width - 1, y + PRESET_H, (color & 0x00FFFFFF) | 0x55000000);
-                graphics.fill(sideX + 1, y, sideX + 4, y + PRESET_H, color | 0xFF000000); // acento lateral sólido
+                graphics.fill(sideX + 1, y, sideX + 4, y + PRESET_H, color | 0xFF000000); // solid side accent
             } else {
                 graphics.fill(sideX + 1, y, this.width - 1, y + PRESET_H, (color & 0x00FFFFFF) | 0x1A000000);
             }
@@ -336,12 +336,12 @@ public class SoundTweaksScreen extends Screen {
         }
     }
 
-    // ── Eventos de rato ───────────────────────────────────────────────────────
+    // ── Mouse events ──────────────────────────────────────────────────────────
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean consumed) {
-        // Dropdowns têm prioridade: a popup sobrepõe-se ao soundList (y=46+)
-        // e o super.mouseClicked passaria o clique ao soundList antes do dropdown
+        // Dropdowns take priority: the popup overlaps the soundList (y=46+)
+        // and super.mouseClicked would pass the click to soundList before the dropdown
         if (this.categoryDropdown.mouseClicked(event)) {
             if (this.categoryDropdown.isOpen()) this.objectDropdown.close();
             return true;
@@ -366,13 +366,13 @@ public class SoundTweaksScreen extends Screen {
         int sideX = this.width - SIDE_W;
         if (mx < sideX) return false;
 
-        // Cabeçalho da sidebar → fechar
+        // Sidebar header → close
         if (my < 22) {
             toggleSidebar();
             return true;
         }
 
-        // Botões de preset
+        // Preset buttons
         List<PresetConfig.Preset> favs = PresetConfig.getFavoritePresets();
         int availableBottom = this.height - MANAGE_H - 8;
         int y = SIDE_TOP;
@@ -385,7 +385,7 @@ public class SoundTweaksScreen extends Screen {
             y += PRESET_H + 1;
         }
 
-        return true; // absorver restantes cliques na sidebar
+        return true; // absorb remaining clicks on the sidebar
     }
 
     private void toggleSidebar() {
@@ -431,7 +431,7 @@ public class SoundTweaksScreen extends Screen {
         return super.keyPressed(event);
     }
 
-    // ── Callbacks dos dropdowns ───────────────────────────────────────────────
+    // ── Dropdown callbacks ────────────────────────────────────────────────────
 
     private void onCategorySelected(@Nullable String key) {
         this.selectedCategory = SoundCategory.fromDropdownKey(key);
@@ -452,7 +452,7 @@ public class SoundTweaksScreen extends Screen {
         refreshList();
     }
 
-    // ── Filtragem ─────────────────────────────────────────────────────────────
+    // ── Filtering ─────────────────────────────────────────────────────────────
 
     private void refreshList() {
         if (this.soundList == null) return;
@@ -506,7 +506,7 @@ public class SoundTweaksScreen extends Screen {
         return candidates;
     }
 
-    // ── Helpers de inicialização ──────────────────────────────────────────────
+    // ── Init helpers ──────────────────────────────────────────────────────────
 
     private void populateCategoryDropdown() {
         List<String[]> pairs = new ArrayList<>();
@@ -524,7 +524,7 @@ public class SoundTweaksScreen extends Screen {
         List<String> labels = new ArrayList<>();
         for (String obj : raw)
             labels.add(SoundDisplayHelper.getObjectName("minecraft:" + category.getPrefix() + "." + obj));
-        // Ordenar por label — dígitos depois do Z (char '~' > 'Z' em ASCII)
+        // Sort by label — digits after Z (char '~' > 'Z' in ASCII)
         List<int[]> order = new ArrayList<>();
         for (int i = 0; i < labels.size(); i++) order.add(new int[]{i});
         order.sort((a, b) -> {
@@ -540,8 +540,8 @@ public class SoundTweaksScreen extends Screen {
 
     private void toggleMuteVisible() {
         muteSoundsActive = !muteSoundsActive;
-        // Usa o mute layer volátil do VolumeResolver — prioridade absoluta sobre presets e
-        // config base, sem corromper nenhuma configuração persistida.
+        // Uses VolumeResolver's volatile mute layer — absolute priority over presets and
+        // base config, without corrupting any persisted configuration.
         if (muteSoundsActive) {
             for (String id : getFilteredSounds()) VolumeResolver.muteSound(id);
             for (String id : getFilteredBlocks()) VolumeResolver.muteBlock(id);
@@ -553,16 +553,16 @@ public class SoundTweaksScreen extends Screen {
     }
 
     /**
-     * Desenha um ícone de speaker pixel-art centrado num botão.
-     * muted=false → speaker com ondas (sons activos); muted=true → speaker com X vermelho.
+     * Draws a pixel-art speaker icon centred on a button.
+     * muted=false → speaker with waves (active); muted=true → speaker with red X.
      */
     static void drawSpeakerIcon(GuiGraphicsExtractor g, int bx, int by, int bw, int bh, boolean muted) {
-        // Ícone: 12×10 pixels, centrado no botão
+        // Icon: 12×10 pixels, centred on the button
         int ox = bx + (bw - 12) / 2;
         int oy = by + (bh - 10) / 2;
         int col = 0xFFFFFFFF;
 
-        // Cone do speaker (diamante a apontar para a direita)
+        // Speaker cone (diamond pointing right)
         g.fill(ox+3, oy+0, ox+4, oy+1,  col);
         g.fill(ox+2, oy+1, ox+4, oy+2,  col);
         g.fill(ox+1, oy+2, ox+4, oy+3,  col);
@@ -575,16 +575,16 @@ public class SoundTweaksScreen extends Screen {
         g.fill(ox+3, oy+9, ox+4, oy+10, col);
 
         if (!muted) {
-            // Onda próxima (arco ])
+            // Near wave (arc ])
             g.fill(ox+5, oy+2, ox+6, oy+3,  col);
             g.fill(ox+6, oy+3, ox+7, oy+7,  col);
             g.fill(ox+5, oy+7, ox+6, oy+8,  col);
-            // Onda afastada (arco ] maior)
+            // Far wave (larger arc ])
             g.fill(ox+7, oy+1, ox+8, oy+2,  col);
             g.fill(ox+8, oy+2, ox+9, oy+8,  col);
             g.fill(ox+7, oy+8, ox+8, oy+9,  col);
         } else {
-            // X vermelho (muted)
+            // Red X (muted)
             int r = 0xFFFF4444;
             g.fill(ox+5, oy+3, ox+6, oy+4,  r);
             g.fill(ox+8, oy+3, ox+9, oy+4,  r);
@@ -607,7 +607,7 @@ public class SoundTweaksScreen extends Screen {
         refreshList();
     }
 
-    // ── Fechar ────────────────────────────────────────────────────────────────
+    // ── Close ─────────────────────────────────────────────────────────────────
 
     @Override
     public void onClose() {

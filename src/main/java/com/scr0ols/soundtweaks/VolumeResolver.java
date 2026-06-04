@@ -5,17 +5,17 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Resolve o volume efectivo de um som ou bloco.
+ * Resolves the effective volume for a sound or block.
  *
- * Prioridade (maior → menor):
- *   1. Mute layer volátil — silêncio absoluto aplicado pelo botão mute do UI.
- *   2. Presets activos — maior desvio de 1.0 ganha conflitos entre presets.
- *   3. VolumeConfig base (SOUNDS / BLOCKS) — fallback permanente.
- *   4. Default 1.0 (sem alteração).
+ * Priority (highest → lowest):
+ *   1. Volatile mute layer — absolute silence applied by the UI mute button.
+ *   2. Active presets — highest deviation from 1.0 wins conflicts between presets.
+ *   3. Base VolumeConfig (SOUNDS / BLOCKS) — permanent fallback.
+ *   4. Default 1.0 (no change).
  */
 public class VolumeResolver {
 
-    // ── Mute layer volátil ────────────────────────────────────────────────────
+    // ── Volatile mute layer ───────────────────────────────────────────────────
 
     private static final Set<String> MUTED_SOUNDS = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private static final Set<String> MUTED_BLOCKS = Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -28,7 +28,7 @@ public class VolumeResolver {
     public static void unmuteBlock(String id)     { MUTED_BLOCKS.remove(id); }
     public static boolean isBlockMuted(String id) { return MUTED_BLOCKS.contains(id); }
 
-    // ── Resolução de volume ───────────────────────────────────────────────────
+    // ── Volume resolution ─────────────────────────────────────────────────────
 
     public static float getEffectiveVolume(String soundId) {
         if (MUTED_SOUNDS.contains(soundId)) return 0.0f;

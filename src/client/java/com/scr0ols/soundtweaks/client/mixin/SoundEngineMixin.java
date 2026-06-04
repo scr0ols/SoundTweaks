@@ -21,9 +21,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class SoundEngineMixin {
 
     /**
-     * Redirect em play() — necessário para que AbstractSoundInstanceMixin possa
-     * aplicar o multiplicador de volume. O discovery é feito lá, não aqui,
-     * para evitar addDiscovered() duplo por cada som reproduzido.
+     * Redirect in play() — required so AbstractSoundInstanceMixin can apply
+     * the volume multiplier. Discovery is done there, not here,
+     * to avoid a double addDiscovered() call per sound played.
      */
     @Redirect(
         method = "play",
@@ -35,8 +35,8 @@ public class SoundEngineMixin {
     }
 
     /**
-     * Discovery de TickableSoundInstances via queueTickingSound.
-     * Em 26.1.2 entidades não usam este path, mas outros sons podem usar.
+     * Discovery of TickableSoundInstances via queueTickingSound.
+     * In 26.1.2 entities do not use this path, but other sounds may.
      */
     @Inject(
         method = "queueTickingSound",

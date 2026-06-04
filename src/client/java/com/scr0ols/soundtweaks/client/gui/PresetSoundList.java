@@ -16,8 +16,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
- * Lista de sons/blocos editável para um preset.
- * Reutilizável em PresetEditorScreen e no painel inline da PresetsScreen.
+ * Editable sound/block list for a preset.
+ * Reusable in PresetEditorScreen and in the inline panel of PresetsScreen.
  */
 class PresetSoundList extends AbstractSelectionList<PresetSoundList.BaseRow> {
 
@@ -41,7 +41,7 @@ class PresetSoundList extends AbstractSelectionList<PresetSoundList.BaseRow> {
         this.rowItemHeight = itemHeight;
     }
 
-    // ── Toggle mute de todos os itens visíveis ────────────────────────────────
+    // ── Toggle mute for all visible items ────────────────────────────────────
 
     public void toggleMute() {
         muteActive = !muteActive;
