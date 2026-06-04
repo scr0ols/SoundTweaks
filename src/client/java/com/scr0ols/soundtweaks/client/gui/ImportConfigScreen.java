@@ -23,22 +23,22 @@ import java.nio.file.Path;
 public class ImportConfigScreen extends Screen {
 
     public enum ImportType {
-        PRESETS("Import / Export Presets",
+        PRESETS("soundtweaks.import.presets.title",
                 "Import: adds presets from a JSON file.",
                 "Export: saves all current presets to a JSON file.",
                 "soundtweaks_presets_export.json"),
-        SOUNDS("Import / Export Sound Config",
+        SOUNDS("soundtweaks.import.sounds.title",
                 "Import: replaces all current sound volumes.",
                 "Export: saves current sound volumes to a JSON file.",
                 "soundtweaks_export.json"),
-        BLOCKS("Import / Export Block Config",
+        BLOCKS("soundtweaks.import.blocks.title",
                 "Import: replaces all current block volumes.",
                 "Export: saves current block volumes to a JSON file.",
                 "soundtweaks_blocks_export.json");
 
-        final String title, line1, line2, defaultExportName;
-        ImportType(String title, String line1, String line2, String defaultExportName) {
-            this.title = title; this.line1 = line1; this.line2 = line2;
+        final String titleKey, line1, line2, defaultExportName;
+        ImportType(String titleKey, String line1, String line2, String defaultExportName) {
+            this.titleKey = titleKey; this.line1 = line1; this.line2 = line2;
             this.defaultExportName = defaultExportName;
         }
     }
@@ -55,7 +55,7 @@ public class ImportConfigScreen extends Screen {
     private int    feedbackColor = 0xFFAAAAAA;
 
     public ImportConfigScreen(Screen parent, ImportType type, Runnable onSuccess) {
-        super(Component.literal(type.title));
+        super(Component.translatable(type.titleKey));
         this.parent    = parent;
         this.type      = type;
         this.onSuccess = onSuccess;
@@ -72,7 +72,7 @@ public class ImportConfigScreen extends Screen {
         this.pathBox = new EditBox(this.font, px + 10, inputY, pw - 20, 20, Component.empty());
         this.pathBox.setMaxLength(512);
         this.pathBox.setTextColor(0xFFFFFFFF);
-        this.pathBox.setHint(Component.literal("e.g. C:\\...\\config\\soundtweaks_presets.json"));
+        this.pathBox.setHint(Component.translatable("soundtweaks.gui.path_hint"));
         this.addRenderableWidget(this.pathBox);
         this.setFocused(pathBox);
         this.pathBox.setFocused(true);
@@ -83,17 +83,17 @@ public class ImportConfigScreen extends Screen {
         int btnStartX = px + pw / 2 - totalBtns / 2;
         int btnY = py + ph - 30;
 
-        this.confirmBtn = Button.builder(Component.literal("Import"),
+        this.confirmBtn = Button.builder(Component.translatable("soundtweaks.gui.import"),
                 btn -> doImport()
         ).bounds(btnStartX, btnY, btnW, 20).build();
         this.addRenderableWidget(confirmBtn);
 
-        this.exportBtn = Button.builder(Component.literal("Export"),
+        this.exportBtn = Button.builder(Component.translatable("soundtweaks.gui.export"),
                 btn -> doExport()
         ).bounds(btnStartX + btnW + btnGap, btnY, btnW, 20).build();
         this.addRenderableWidget(exportBtn);
 
-        this.cancelBtn = Button.builder(Component.literal("Cancel"),
+        this.cancelBtn = Button.builder(Component.translatable("soundtweaks.gui.cancel"),
                 btn -> this.minecraft.setScreen(parent)
         ).bounds(btnStartX + (btnW + btnGap) * 2, btnY, btnW, 20).build();
         this.addRenderableWidget(cancelBtn);
@@ -116,7 +116,7 @@ public class ImportConfigScreen extends Screen {
         g.fill(px + pw - 1, py, px + pw, py + ph, 0xFF444466);
 
         // Title
-        g.centeredText(this.font, type.title, this.width / 2, py + 10, 0xFFCCCCFF);
+        g.centeredText(this.font, net.minecraft.client.resources.language.I18n.get(type.titleKey), this.width / 2, py + 10, 0xFFCCCCFF);
         g.fill(px + 8, py + 22, px + pw - 8, py + 23, 0xFF333355);
 
         // Description
@@ -142,7 +142,7 @@ public class ImportConfigScreen extends Screen {
             PointerBuffer filters = stack.mallocPointer(1);
             filters.put(stack.UTF8("*.json")).flip();
             target = TinyFileDialogs.tinyfd_saveFileDialog(
-                    "Export " + type.title, type.defaultExportName, filters,
+                    "Export " + net.minecraft.client.resources.language.I18n.get(type.titleKey), type.defaultExportName, filters,
                     "JSON file (*.json)");
         }
         if (target == null) return;

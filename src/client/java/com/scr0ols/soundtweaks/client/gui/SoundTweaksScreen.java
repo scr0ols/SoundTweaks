@@ -85,15 +85,14 @@ public class SoundTweaksScreen extends Screen {
         // ── Row 1 (Y=4): [speaker] [Simple/Detail View] [Presets ▶/◄] ... title ...
         this.muteSoundsBtn = Button.builder(Component.empty(), btn -> toggleMuteVisible())
                 .bounds(4, 2, 20, 20).build();
-        this.muteSoundsBtn.setTooltip(Tooltip.create(Component.literal(
-                "Mute / restore all currently visible sounds")));
+        this.muteSoundsBtn.setTooltip(Tooltip.create(Component.translatable("soundtweaks.gui.mute_all")));
         this.addRenderableWidget(this.muteSoundsBtn);
 
         this.viewToggleButton = Button.builder(
-                Component.literal(detailedView ? "Detail View" : "Simple View"),
+                detailedView ? Component.translatable("soundtweaks.gui.view_detail") : Component.translatable("soundtweaks.gui.view_simple"),
                 btn -> {
                     detailedView = !detailedView;
-                    btn.setMessage(Component.literal(detailedView ? "Detail View" : "Simple View"));
+                    btn.setMessage(detailedView ? Component.translatable("soundtweaks.gui.view_detail") : Component.translatable("soundtweaks.gui.view_simple"));
                     refreshList();
                 }
         ).bounds(28, 2, 78, 20).build();
@@ -103,7 +102,7 @@ public class SoundTweaksScreen extends Screen {
         this.addRenderableWidget(this.viewToggleButton);
 
         this.presetsBtn = Button.builder(
-                Component.literal("Presets"),
+                Component.translatable("soundtweaks.presets.title"),
                 btn -> toggleSidebar()
         ).bounds(110, 2, 68, 20).build();
         this.presetsBtn.setTooltip(Tooltip.create(Component.literal(
@@ -123,7 +122,7 @@ public class SoundTweaksScreen extends Screen {
 
         this.clearButton = Button.builder(Component.literal("x"), btn -> clearFilters())
                 .bounds(262, 26, 20, 20).build();
-        this.clearButton.setTooltip(Tooltip.create(Component.literal("Clear all filters")));
+        this.clearButton.setTooltip(Tooltip.create(Component.translatable("soundtweaks.gui.clear_filters")));
         this.addRenderableWidget(this.clearButton);
 
         int searchX = 286;
@@ -150,7 +149,7 @@ public class SoundTweaksScreen extends Screen {
 
         // Import config from another instance via native file dialog
         var importCfgBtn = Button.builder(
-                Component.literal("Import Config..."),
+                Component.translatable("soundtweaks.gui.import_config"),
                 btn -> {
                     String selected;
                     try (MemoryStack stack = MemoryStack.stackPush()) {
