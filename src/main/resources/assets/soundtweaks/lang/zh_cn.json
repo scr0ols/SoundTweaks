@@ -1,0 +1,36 @@
+{
+  "soundtweaks.gui.title":            "SoundTweaks",
+  "soundtweaks.gui.search_hint":      "搜索音效...",
+  "soundtweaks.gui.done":             "完成",
+  "soundtweaks.gui.category":         "分类",
+  "soundtweaks.gui.object":           "对象",
+  "soundtweaks.gui.all":              "（全部）",
+  "soundtweaks.gui.sounds":           "%d 个音效",
+  "soundtweaks.gui.sounds_filtered":  "%d / %d 个音效",
+  "soundtweaks.gui.blocks":           "%d 个方块",
+
+  "soundtweaks.category.block":       "方块",
+  "soundtweaks.category.entity":      "实体",
+  "soundtweaks.category.item":        "物品",
+  "soundtweaks.category.ambient":     "环境",
+  "soundtweaks.category.music":       "音乐",
+  "soundtweaks.category.music_disc":  "唱片",
+  "soundtweaks.category.ui":          "界面",
+  "soundtweaks.category.weather":     "天气",
+  "soundtweaks.category.enchant":     "附魔",
+  "soundtweaks.category.event":       "事件",
+  "soundtweaks.category.others":      "其他",
+  "soundtweaks.category.redstone":    "红石",
+
+  "soundtweaks.presets.title":        "Presets",
+  "soundtweaks.presets.new":          "+ 新建 Preset",
+  "soundtweaks.presets.confirm":      "保存 Preset",
+  "soundtweaks.presets.manage":       "管理 Presets",
+  "soundtweaks.presets.name_hint":    "Preset 名称...",
+  "soundtweaks.presets.no_favorites": "暂无收藏 — 前往管理 Presets 以添加",
+
+  "key.category.soundtweaks.soundtweaks": "Sound Tweaks",
+  "key.soundtweaks.open_menu":    "打开 Sound Tweaks",
+  "key.soundtweaks.open_presets": "打开 Presets 菜单",
+  "key.soundtweaks.perf_report":  "打印性能报告"
+}
