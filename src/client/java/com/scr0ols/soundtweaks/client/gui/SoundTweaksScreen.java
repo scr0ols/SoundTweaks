@@ -19,8 +19,11 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -162,8 +165,7 @@ public class SoundTweaksScreen extends Screen {
                     }
                     if (selected == null) return;
                     java.nio.file.Path src = java.nio.file.Path.of(selected);
-                    String fname = src.getFileName().toString().toLowerCase();
-                    if (fname.contains("block")) {
+                    if (isBlockConfig(src)) {
                         VolumeConfig.BLOCKS.importFrom(src);
                     } else {
                         VolumeConfig.SOUNDS.importFrom(src);
@@ -605,6 +607,27 @@ public class SoundTweaksScreen extends Screen {
         this.objectDropdown.clearSelection();
         this.objectDropdown.setActive(false);
         refreshList();
+    }
+
+    // ── Import helpers ────────────────────────────────────────────────────────
+
+    /**
+     * Detects whether a JSON config file contains block IDs or sound IDs by
+     * inspecting the first key in the map.
+     * Sound IDs contain a dot after the namespace colon ("minecraft:block.piston.extend");
+     * block IDs do not ("minecraft:piston"). Falls back to false (sounds) on any error.
+     */
+    private static boolean isBlockConfig(java.nio.file.Path file) {
+        try {
+            JsonObject obj = JsonParser.parseString(Files.readString(file)).getAsJsonObject();
+            if (obj.entrySet().isEmpty()) return false;
+            String firstKey = obj.entrySet().iterator().next().getKey();
+            int colon = firstKey.indexOf(':');
+            String afterColon = colon >= 0 ? firstKey.substring(colon + 1) : firstKey;
+            return !afterColon.contains(".");
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     // ── Close ─────────────────────────────────────────────────────────────────
