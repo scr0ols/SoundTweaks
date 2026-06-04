@@ -49,13 +49,16 @@ public class SoundTweaksClient implements ClientModInitializer {
                 soundTweaksCategory
         ));
 
-        // Flush async saves before the client stops
+        // Flush async saves before the client stops.
+        // Executors are shut down first (drains any queued saves), then a final
+        // synchronous save captures the very latest state with no risk of being
+        // overwritten by a stale queued task.
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
+            VolumeConfig.shutdownSaveExecutor();
+            PresetConfig.shutdownSaveExecutor();
             VolumeConfig.SOUNDS.save();
             VolumeConfig.BLOCKS.save();
             PresetConfig.save();
-            VolumeConfig.shutdownSaveExecutor();
-            PresetConfig.shutdownSaveExecutor();
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {

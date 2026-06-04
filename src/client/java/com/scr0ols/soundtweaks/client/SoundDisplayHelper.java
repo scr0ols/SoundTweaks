@@ -15,7 +15,8 @@ public class SoundDisplayHelper {
 
     // Override map: "minecraft:block.note_block.basedrum" → "Note Block (Base Drum)"
     // Loaded once on startup — null means not yet loaded
-    private static Map<String, String> overrides = null;
+    // volatile: lazy-init read in ensureOverridesLoaded() may race with loadOverrides() write
+    private static volatile Map<String, String> overrides = null;
 
     // --- Public API ---
 

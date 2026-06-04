@@ -94,7 +94,8 @@ public class PresetConfig {
      */
     private static volatile List<Preset> cachedActivePresets = Collections.emptyList();
 
-    private static void rebuildActivePresetsCache() {
+    // synchronized: activeNames (synchronizedSet) iteration + volatile write must be atomic
+    private static synchronized void rebuildActivePresetsCache() {
         List<Preset> result = new ArrayList<>();
         for (Preset p : presets) if (activeNames.contains(p.name)) result.add(p);
         cachedActivePresets = Collections.unmodifiableList(result);
