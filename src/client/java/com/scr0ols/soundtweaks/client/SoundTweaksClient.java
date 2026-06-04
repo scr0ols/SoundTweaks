@@ -1,7 +1,7 @@
 package com.scr0ols.soundtweaks.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import com.scr0ols.soundtweaks.PerfStats;
+//import com.scr0ols.soundtweaks.PerfStats;
 import com.scr0ols.soundtweaks.PresetConfig;
 import com.scr0ols.soundtweaks.SoundRegistry;
 import com.scr0ols.soundtweaks.VolumeConfig;
@@ -12,7 +12,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.network.chat.Component;
+//import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
@@ -23,7 +23,7 @@ public class SoundTweaksClient implements ClientModInitializer {
 
     public static KeyMapping openMenuKey;
     public static KeyMapping openPresetsKey;
-    public static KeyMapping perfReportKey;
+    //public static KeyMapping perfReportKey;
 
     // Preset names whose trigger was held on the previous tick (rising-edge detection).
     // Only accessed from ClientTickEvents.END_CLIENT_TICK (render thread) — no synchronisation needed.
@@ -53,12 +53,12 @@ public class SoundTweaksClient implements ClientModInitializer {
                 soundTweaksCategory
         ));
 
-        perfReportKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+        /*perfReportKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.soundtweaks.perf_report",
                 InputConstants.Type.KEYSYM,
                 InputConstants.UNKNOWN.getValue(),
                 soundTweaksCategory
-        ));
+        ));*/
 
         // Flush async saves before the client stops.
         // Executors are shut down first (drains any queued saves), then a final
@@ -119,11 +119,11 @@ public class SoundTweaksClient implements ClientModInitializer {
             while (openPresetsKey.consumeClick()) {
                 client.setScreen(new PresetsScreen(client.screen));
             }
-            while (perfReportKey.consumeClick()) {
+            /*while (perfReportKey.consumeClick()) {
                 String report = PerfStats.reportAndReset();
                 if (client.player != null)
                     client.player.sendSystemMessage(Component.literal(report));
-            }
+            }*/
         });
     }
 }

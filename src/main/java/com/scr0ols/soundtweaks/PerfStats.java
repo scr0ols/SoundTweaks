@@ -1,18 +1,14 @@
 package com.scr0ols.soundtweaks;
 
+/*
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * Lightweight hot-path profiler for SoundTweaks.
- *
- * Collects call counts and nanosecond timing for getVolume() invocations.
- * Thread-safe via AtomicLong — minimal overhead on the audio thread.
- * Reset + report triggered by keybind from the render thread.
- */
+// Lightweight hot-path profiler for SoundTweaks.
+// Activate by uncommenting this class + usages in AbstractSoundInstanceMixin and SoundTweaksClient.
 public class PerfStats {
 
     private static final AtomicLong totalCalls     = new AtomicLong();
-    private static final AtomicLong modifiedCalls  = new AtomicLong(); // mult != 1.0
+    private static final AtomicLong modifiedCalls  = new AtomicLong();
     private static final AtomicLong totalNanos      = new AtomicLong();
     private static volatile long    windowStartNs   = System.nanoTime();
 
@@ -22,7 +18,6 @@ public class PerfStats {
         if (modified) modifiedCalls.incrementAndGet();
     }
 
-    /** Returns a summary string and resets all counters. */
     public static String reportAndReset() {
         long calls    = totalCalls.getAndSet(0);
         long modified = modifiedCalls.getAndSet(0);
@@ -46,3 +41,4 @@ public class PerfStats {
         );
     }
 }
+*/
