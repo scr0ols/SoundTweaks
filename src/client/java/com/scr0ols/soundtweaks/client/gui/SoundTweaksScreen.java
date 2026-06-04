@@ -235,7 +235,7 @@ public class SoundTweaksScreen extends Screen {
 
         // Sidebar background before super — so the Manage button (widget) renders on top
         if (sidebarOpen) {
-            graphics.fill(this.width - SIDE_W, 0, this.width, this.height, 0x771A1A1E);
+            graphics.fill(this.width - SIDE_W, 0, this.width, this.height - 36, 0x771A1A1E);
         }
 
         super.extractRenderState(graphics, mouseX, mouseY, a);
@@ -255,11 +255,14 @@ public class SoundTweaksScreen extends Screen {
         // Vertical separator line — only when sidebar is open (closed tab has its own separator)
         if (sidebarOpen) {
             int sepX = this.width - SIDE_W - 1;
-            graphics.fill(sepX, 0, sepX + 1, this.height, 0xFF333355);
+            graphics.fill(sepX, 0, sepX + 1, this.height - 36, 0xFF333355);
         }
 
-        // Footer
-        graphics.fill(8, this.height - 34, this.width - 8, this.height - 33, 0xFF555555);
+        // Footer — 3-pixel separator (stops before sidebar when open)
+        int footerRight = sidebarOpen ? (this.width - SIDE_W) : this.width;
+        graphics.fill(0, this.height - 36, footerRight, this.height - 35, 0xFF111111);
+        graphics.fill(0, this.height - 35, footerRight, this.height - 34, 0xFF444444);
+        graphics.fill(0, this.height - 34, footerRight, this.height - 33, 0xFF888888);
         int total = SoundRegistry.count();
         boolean hasFilter = selectedCategory != null || selectedObject != null || !searchQuery.isBlank();
         String countText = hasFilter
@@ -291,6 +294,11 @@ public class SoundTweaksScreen extends Screen {
         // Close arrow (◀) on the left corner of the header
         graphics.text(this.font, "◄", sideX + 4, 8, hovHeader ? 0xFFFFFFFF : 0xFF888899);
         graphics.fill(sideX, 24, this.width, 25, 0xFF444466);
+
+        // Footer — 3-pixel separator to match the main footer
+        graphics.fill(sideX, this.height - 36, this.width, this.height - 35, 0xFF111111);
+        graphics.fill(sideX, this.height - 35, this.width, this.height - 34, 0xFF444444);
+        graphics.fill(sideX, this.height - 34, this.width, this.height - 33, 0xFF888888);
 
         // Available area for presets (between header and Manage button — now a native widget)
         int manageY        = this.height - MANAGE_H - 4;

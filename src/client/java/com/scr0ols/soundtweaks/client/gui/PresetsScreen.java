@@ -314,20 +314,21 @@ public class PresetsScreen extends Screen {
             int lx = (this.width - lw) / 2;
             presetList = new PresetListWidget(this.minecraft, lw, listHeight, listTop, 24);
             presetList.setX(lx);
-            // Row 1: Import | Export | Open Config — ratio 1:1:2
-            int gap = 4, available = lw - 8 - gap * 2;
-            int bwSmall = available / 4;           // Import and Export
-            int bwLarge = available - bwSmall * 2; // Open Config (remainder)
-            int b1x = lx + 4, b2x = b1x + bwSmall + gap, b3x = b2x + bwSmall + gap;
+            // Row 1: Import | Export | Open Config
+            // Left half (Import+Export) and right half (Open Config) align with Row 2 split
+            int gap = 4;
+            int halfW  = lw / 2 - 6;                      // same width as New Preset / Done
+            int bwSmall = (halfW - gap) / 2;               // Import and Export share the left half
+            int b1x = lx + 4, b2x = b1x + bwSmall + gap, b3x = lx + lw / 2 + 2;
             importPresetsBtn.setX(b1x);  importPresetsBtn.setWidth(bwSmall);  importPresetsBtn.setHeight(20);
             exportPresetsBtn.setX(b2x);  exportPresetsBtn.setWidth(bwSmall);  exportPresetsBtn.setHeight(20);
-            openConfigBtn.setX(b3x);     openConfigBtn.setWidth(bwLarge);     openConfigBtn.setHeight(20);
+            openConfigBtn.setX(b3x);     openConfigBtn.setWidth(halfW);       openConfigBtn.setHeight(20);
             importPresetsBtn.setY(this.height - 50);
             exportPresetsBtn.setY(this.height - 50);
             openConfigBtn.setY(this.height - 50);
             // Row 2: New Preset | Done
-            newPresetBtn.setX(lx + 4);             newPresetBtn.setWidth(lw / 2 - 6);
-            doneBtn.setX(lx + lw / 2 + 2);        doneBtn.setWidth(lw / 2 - 6);
+            newPresetBtn.setX(lx + 4);             newPresetBtn.setWidth(halfW);
+            doneBtn.setX(lx + lw / 2 + 2);        doneBtn.setWidth(halfW);
             newPresetBtn.setY(this.height - 26);   doneBtn.setY(this.height - 26);
         } else {
             presetList = new PresetListWidget(this.minecraft, LIST_W, listHeight, listTop, 24);
