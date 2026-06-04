@@ -31,5 +31,6 @@
 
   "key.category.soundtweaks.soundtweaks": "Sound Tweaks",
   "key.soundtweaks.open_menu":    "Open Sound Tweaks",
-  "key.soundtweaks.open_presets": "Open Presets Menu"
+  "key.soundtweaks.open_presets": "Open Presets Menu",
+  "key.soundtweaks.perf_report":  "Print Perf Report"
 }

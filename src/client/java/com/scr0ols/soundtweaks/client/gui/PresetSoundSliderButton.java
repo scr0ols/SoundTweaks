@@ -6,8 +6,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 
 /**
- * Slider que escreve directamente para o mapa de sons de um preset específico
- * (em vez de escrever para SoundConfig como o SoundSliderButton normal).
+ * Slider that writes directly to a specific preset's sound map
+ * (instead of writing to SoundConfig like the regular SoundSliderButton).
  */
 public class PresetSoundSliderButton extends AbstractSliderButton {
 
@@ -33,7 +33,7 @@ public class PresetSoundSliderButton extends AbstractSliderButton {
     protected void applyValue() {
         float vol = (float) this.value;
         if (vol >= 1.0f) {
-            preset.sounds.remove(soundId); // 100% = sem override = remover do preset
+            preset.sounds.remove(soundId); // 100% = no override = remove from preset
         } else {
             preset.sounds.put(soundId, vol);
         }
@@ -46,7 +46,7 @@ public class PresetSoundSliderButton extends AbstractSliderButton {
         this.updateMessage();
     }
 
-    /** Sincroniza o display sem escrever no preset (chamado em cada frame). */
+    /** Syncs the display without writing to the preset (called every frame). */
     public void syncDisplay() {
         double current = Math.min(preset.sounds.getOrDefault(soundId, 1.0f), 1.0);
         if (Math.abs(this.value - current) > 0.001) {

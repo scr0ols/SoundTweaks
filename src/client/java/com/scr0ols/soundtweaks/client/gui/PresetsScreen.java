@@ -28,8 +28,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
- * Ecrã de gestão de presets — layout master-detail.
- * Esquerda: lista simplificada. Direita: painel de configuração inline.
+ * Preset management screen — master-detail layout.
+ * Left: simplified list. Right: inline configuration panel.
  * Tabs: Color | Rename | Shortcut | Edit Sounds | Delete
  */
 public class PresetsScreen extends Screen {
@@ -44,22 +44,22 @@ public class PresetsScreen extends Screen {
     private static final int TAB_H           = 20;
     private static final int CONTENT_Y       = 56;
 
-    // Filtros do painel Sounds — posicionados logo abaixo dos tabs
+    // Sounds panel filters — positioned immediately below the tabs
     private static final int SOUNDS_FILTER_Y = 56;  // HDR + TAB + 8
     private static final int SOUNDS_LIST_Y   = 82;  // SOUNDS_FILTER_Y + 20 + 6
 
     private int panelX() { return LIST_W + 1; }
     private int panelW() { return this.width - LIST_W - 1; }
 
-    // Botões do footer (guardados para rebuildLayout)
+    // Footer buttons (kept for rebuildLayout)
     private Button newPresetBtn, doneBtn, importPresetsBtn, exportPresetsBtn, openConfigBtn;
 
-    // ── Create overlay ────────────────────────────────────────────────────────
+    // ── Create overlay ─────────────────────────────────────────────────────────
     private boolean creating = false;
     private EditBox createBox;
     private Button  createConfirmBtn, createCancelBtn;
 
-    // ── Painel de detalhe ─────────────────────────────────────────────────────
+    // ── Detail panel ──────────────────────────────────────────────────────────
     private enum EditMode { NONE, COLOR, RENAME, SHORTCUT, SOUNDS }
     private EditMode editMode = EditMode.NONE;
     @Nullable private PresetConfig.Preset editingPreset = null;
@@ -91,7 +91,7 @@ public class PresetsScreen extends Screen {
     @Nullable private String        soundsObj = null;
     private           String        soundsQuery = "";
 
-    // ── Construtor ────────────────────────────────────────────────────────────
+    // ── Constructor ───────────────────────────────────────────────────────────
 
     public PresetsScreen(Screen parent) {
         super(Component.translatable("soundtweaks.presets.title"));
@@ -105,7 +105,7 @@ public class PresetsScreen extends Screen {
         int listTop    = PANEL_HDR_H;
         int listBottom = this.height - 56;
 
-        // presetList será criada por rebuildLayout() no final do init
+        // presetList will be created by rebuildLayout() at the end of init
 
         // ── Footer ───────────────────────────────────────────────────────────
         this.newPresetBtn = Button.builder(
@@ -154,6 +154,7 @@ public class PresetsScreen extends Screen {
                     if (target == null) return;
                     PresetConfig.exportTo(java.nio.file.Path.of(target));
                 }
+        // Provisional bounds — corrected by rebuildLayout() at the end of init().
         ).bounds(4, this.height - 26, LIST_W / 2 - 6, 20).build();
         this.exportPresetsBtn.setTooltip(Tooltip.create(Component.literal(
                 "Export all current presets to a JSON file.")));
@@ -230,7 +231,7 @@ public class PresetsScreen extends Screen {
 
         // ── Widgets do painel de sons (SOUNDS mode) ───────────────────────────
         initSoundsWidgets();
-        // rebuildLayout() já foi chamado acima (após os botões footer)
+        // rebuildLayout() was already called above (after the footer buttons)
     }
 
     private void initSoundsWidgets() {
@@ -251,7 +252,7 @@ public class PresetsScreen extends Screen {
         this.soundsClear.visible = false;
         this.addRenderableWidget(this.soundsClear);
 
-        // Mute no header, à esquerda do viewToggle
+        // Mute in the header, to the left of viewToggle
         this.soundsMute = Button.builder(Component.empty(), btn -> {
             if (soundsWidget != null) {
                 soundsWidget.toggleMute();
@@ -276,7 +277,7 @@ public class PresetsScreen extends Screen {
         this.soundsViewToggle.visible = false;
         this.addRenderableWidget(this.soundsViewToggle);
 
-        // Search box mais curta para dar espaço ao botão mute
+        // Shorter search box to leave room for the mute button
         int searchX = px + 234, searchW = Math.max(40, pw - 352);
         this.soundsSearch = new EditBox(this.font, searchX, fy, searchW, fh,
                 Component.translatable("soundtweaks.gui.search_hint"));
@@ -285,7 +286,7 @@ public class PresetsScreen extends Screen {
         this.soundsSearch.visible = false;
         this.addRenderableWidget(this.soundsSearch);
 
-        // Import no footer, à esquerda do Done (doneBtn fica em panelX+panelW/2-60)
+        // Import in the footer, to the left of Done (doneBtn is at panelX+panelW/2-60)
         int importX = px + pw / 2 - 117;
         this.soundsImport = Button.builder(Component.literal("Import from config"), btn -> {
             if (editingPreset == null) return;
@@ -305,32 +306,33 @@ public class PresetsScreen extends Screen {
         int listTop    = PANEL_HDR_H;
         int listHeight = this.height - 58 - listTop;
 
-        // Recriar a lista com as dimensões correctas
-        // (setWidth/setX do AbstractSelectionList não actualiza o clip interno)
+        // Recreate the list with the correct dimensions
+        // (setWidth/setX on AbstractSelectionList does not update the internal clip)
         if (presetList != null) this.removeWidget(presetList);
         if (centered) {
             int lw = Math.min(LIST_W_CENTERED, this.width - 40);
             int lx = (this.width - lw) / 2;
             presetList = new PresetListWidget(this.minecraft, lw, listHeight, listTop, 24);
             presetList.setX(lx);
-            // Linha 1: Import | Export | Open Config — proporção 1:1:2
-            int gap = 4, available = lw - 8 - gap * 2;
-            int bwSmall = available / 4;          // Import e Export
-            int bwLarge = available - bwSmall * 2; // Open Config (resto)
-            int b1x = lx + 4, b2x = b1x + bwSmall + gap, b3x = b2x + bwSmall + gap;
+            // Row 1: Import | Export | Open Config
+            // Left half (Import+Export) and right half (Open Config) align with Row 2 split
+            int gap = 4;
+            int halfW  = lw / 2 - 6;                      // same width as New Preset / Done
+            int bwSmall = (halfW - gap) / 2;               // Import and Export share the left half
+            int b1x = lx + 4, b2x = b1x + bwSmall + gap, b3x = lx + lw / 2 + 2;
             importPresetsBtn.setX(b1x);  importPresetsBtn.setWidth(bwSmall);  importPresetsBtn.setHeight(20);
             exportPresetsBtn.setX(b2x);  exportPresetsBtn.setWidth(bwSmall);  exportPresetsBtn.setHeight(20);
-            openConfigBtn.setX(b3x);     openConfigBtn.setWidth(bwLarge);     openConfigBtn.setHeight(20);
+            openConfigBtn.setX(b3x);     openConfigBtn.setWidth(halfW);       openConfigBtn.setHeight(20);
             importPresetsBtn.setY(this.height - 50);
             exportPresetsBtn.setY(this.height - 50);
             openConfigBtn.setY(this.height - 50);
-            // Linha 2: New Preset | Done
-            newPresetBtn.setX(lx + 4);             newPresetBtn.setWidth(lw / 2 - 6);
-            doneBtn.setX(lx + lw / 2 + 2);        doneBtn.setWidth(lw / 2 - 6);
+            // Row 2: New Preset | Done
+            newPresetBtn.setX(lx + 4);             newPresetBtn.setWidth(halfW);
+            doneBtn.setX(lx + lw / 2 + 2);        doneBtn.setWidth(halfW);
             newPresetBtn.setY(this.height - 26);   doneBtn.setY(this.height - 26);
         } else {
             presetList = new PresetListWidget(this.minecraft, LIST_W, listHeight, listTop, 24);
-            // Linha 1: Import | Export | Open Config — proporção 1:1:2
+            // Row 1: Import | Export | Open Config — ratio 1:1:2
             int gap = 4, available = LIST_W - 8 - gap * 2;
             int bwSmall = available / 4;
             int bwLarge = available - bwSmall * 2;
@@ -341,7 +343,7 @@ public class PresetsScreen extends Screen {
             importPresetsBtn.setY(this.height - 50);
             exportPresetsBtn.setY(this.height - 50);
             openConfigBtn.setY(this.height - 50);
-            // Linha 2: New Preset (esquerda) | Done (direita, no painel)
+            // Row 2: New Preset (left) | Done (right, in the panel)
             newPresetBtn.setX(4);                  newPresetBtn.setWidth(LIST_W - 8);
             doneBtn.setX(panelX() + panelW() / 2 - 60); doneBtn.setWidth(120);
             newPresetBtn.setY(this.height - 26);   doneBtn.setY(this.height - 26);
@@ -389,12 +391,12 @@ public class PresetsScreen extends Screen {
                 && editingPreset.colorIndex == PresetConfig.CUSTOM_COLOR_INDEX)
             colorHexBox.visible = true;
 
-        // ── Separador de footer — começa no divisor vertical quando painel aberto
+        // ── Footer separator — starts at the vertical divider when the panel is open
         int footerSepX = (editingPreset != null) ? LIST_W + 1 : 8;
         g.fill(footerSepX, this.height - 58, this.width - 8, this.height - 57, 0xFF111111);
         g.fill(footerSepX, this.height - 57, this.width - 8, this.height - 56, 0xFF555555);
 
-        // ── Título ────────────────────────────────────────────────────────────
+        // ── Title ─────────────────────────────────────────────────────────────
         if (editingPreset != null) {
             g.centeredText(this.font, I18n.get("soundtweaks.presets.title"), LIST_W / 2, 10, 0xFFFFFFFF);
             // ── Divisor ───────────────────────────────────────────────────────
@@ -436,7 +438,7 @@ public class PresetsScreen extends Screen {
 
     }
 
-    // ── Painel de detalhe ─────────────────────────────────────────────────────
+    // ── Detail panel ──────────────────────────────────────────────────────────
 
     private void renderDetailPanel(GuiGraphicsExtractor g, int mouseX, int mouseY, float a) {
         int px = panelX(), pw = panelW(), cx2 = px + pw / 2;
@@ -456,7 +458,7 @@ public class PresetsScreen extends Screen {
         int r = (pc >> 16) & 0xFF, gc = (pc >> 8) & 0xFF, bc = pc & 0xFF;
         int lum = (r * 299 + gc * 587 + bc * 114) / 1000;
         if (lum < 100) {
-            // clarear a cor do texto proporcionalmente à sua escuridão
+            // lighten the text colour proportionally to its darkness
             float boost = (1f - lum / 100f) * 0.6f;
             r  = (int)(r  + (255 - r)  * boost);
             gc = (int)(gc + (255 - gc) * boost);
@@ -580,7 +582,7 @@ public class PresetsScreen extends Screen {
                     soundsMute.getWidth(), soundsMute.getHeight(), soundsWidget.isMuteActive());
     }
 
-    // ── Visibilidade de widgets ───────────────────────────────────────────────
+    // ── Widget visibility ─────────────────────────────────────────────────────
 
     private void setCreateWidgetsVisible(boolean v) {
         createBox.visible = v; createConfirmBtn.visible = v; createCancelBtn.visible = v;
@@ -590,7 +592,7 @@ public class PresetsScreen extends Screen {
         renameBox.visible = v; renameConfirmBtn.visible = v; renameCancelBtn.visible = v;
     }
 
-    // ── Sons — filtros e lista ────────────────────────────────────────────────
+    // ── Sounds — filters and list ─────────────────────────────────────────────
 
     private void populateSoundsCategoryDropdown() {
         List<String[]> pairs = new ArrayList<>();
@@ -654,9 +656,9 @@ public class PresetsScreen extends Screen {
     public boolean keyPressed(KeyEvent event) {
         int key = event.key();
 
-        // O overlay de create é modal — tem prioridade sobre o painel de edição.
-        // Sem este check primeiro, quando editingPreset != null e creating == true,
-        // o bloco seguinte consome todas as teclas sem as passar ao createBox.
+        // The create overlay is modal — it takes priority over the edit panel.
+        // Without this check first, when editingPreset != null and creating == true,
+        // the block below would consume all keys without passing them to createBox.
         if (creating) {
             if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) { confirmCreate(); return true; }
             if (key == GLFW.GLFW_KEY_ESCAPE) { exitCreateMode(); return true; }
@@ -744,7 +746,7 @@ public class PresetsScreen extends Screen {
             return true;
         }
 
-        // Dropdowns de sons — prioridade quando SOUNDS mode
+        // Sounds dropdowns — priority when in SOUNDS mode
         if (editingPreset != null && editMode == EditMode.SOUNDS) {
             if (soundsCatDrop.mouseClicked(event)) { if (soundsCatDrop.isOpen()) soundsObjDrop.close(); return true; }
             if (soundsObjDrop.mouseClicked(event)) { if (soundsObjDrop.isOpen()) soundsCatDrop.close(); return true; }
@@ -752,7 +754,7 @@ public class PresetsScreen extends Screen {
 
         if (super.mouseClicked(event, consumed)) return true;
 
-        // Painel direito — áreas manuais
+        // Right panel — manual areas
         if (editingPreset != null && mx >= panelX()) {
             int px = panelX();
 
@@ -765,7 +767,7 @@ public class PresetsScreen extends Screen {
                 tabX += TAB_W[i] + 4;
             }
 
-            // Conteúdo por modo
+            // Content by mode
             if (editMode == EditMode.COLOR) {
                 if (colorHexBox.visible
                         && mx >= colorHexBox.getX() && mx < colorHexBox.getX() + colorHexBox.getWidth()
@@ -825,7 +827,7 @@ public class PresetsScreen extends Screen {
     private void openDeleteConfirm() {
         if (editingPreset == null) return;
         PresetConfig.Preset toDelete = editingPreset;
-        setEditMode(EditMode.COLOR); // reset antes de abrir overlay — garante estado limpo ao regressar
+        setEditMode(EditMode.COLOR); // reset before opening overlay — ensures clean state on return
         this.minecraft.setScreen(new ConfirmScreen(
             confirmed -> {
                 if (confirmed) {
@@ -865,7 +867,7 @@ public class PresetsScreen extends Screen {
         }
     }
 
-    // ── Painel: abrir / fechar / trocar modo ──────────────────────────────────
+    // ── Panel: open / close / switch mode ────────────────────────────────────
 
     void openEditOverlay(PresetConfig.Preset preset) {
         this.editingPreset = preset;
@@ -883,7 +885,7 @@ public class PresetsScreen extends Screen {
             this.setFocused(renameBox); renameBox.setFocused(true);
             doneBtn.setX(panelX() + panelW() / 2 - 60);
         } else if (mode == EditMode.SOUNDS) {
-            // Desloca Done para a direita para ficar lado a lado com Import from config
+            // Shift Done to the right to sit next to Import from config
             doneBtn.setX(panelX() + panelW() / 2 - 3);
             rebuildSoundsWidget();
             this.setFocused(null);
@@ -904,7 +906,7 @@ public class PresetsScreen extends Screen {
         rebuildLayout();
     }
 
-    // ── Criar preset ──────────────────────────────────────────────────────────
+    // ── Create preset ─────────────────────────────────────────────────────────
 
     private void enterCreateMode() {
         creating = true; createBox.setValue("");
@@ -937,7 +939,7 @@ public class PresetsScreen extends Screen {
     public void onClose() { this.minecraft.setScreen(parent); }
 
     // =========================================================================
-    // Lista de presets (painel esquerdo)
+    // Preset list (left panel)
     // =========================================================================
 
     class PresetListWidget extends AbstractSelectionList<PresetListWidget.PresetRow> {
@@ -991,14 +993,14 @@ public class PresetsScreen extends Screen {
 
                 int sx = starX();
                 boolean hovStar = mouseX >= sx && mouseX < sx+18 && mouseY >= getY()+4 && mouseY < getY()+20;
-                // Botão de favorito: preenchido com cor do preset (sem margem interior)
+                // Favourite button: filled with preset colour (no inner margin)
                 g.fill(sx-1, getY()+3, sx+19, getY()+21, fav ? 0xFFFFFFFF : 0xFF111111); // borda
                 if (fav) {
                     g.fill(sx, getY()+4, sx+18, getY()+20, pc | 0xFF000000);
                 } else {
                     g.fill(sx, getY()+4, sx+18, getY()+20, hovStar ? 0xFF4A4A4A : 0xFF2A2A2A);
                 }
-                // Label de hover
+                // Hover label
                 if (hovStar) {
                     String tip = fav ? "Remove favourite" : "Add to favourites";
                     g.text(PresetListWidget.this.minecraft.font, tip,
@@ -1036,7 +1038,7 @@ public class PresetsScreen extends Screen {
         }
     }
 
-    // ── Utilitário: teclas ────────────────────────────────────────────────────
+    // ── Key utilities ─────────────────────────────────────────────────────────
 
     static String keyDisplayLabel(PresetConfig.Preset preset) {
         if (preset.shortcutKey <= 0 && preset.shortcutHeldKey <= 0) return "---";

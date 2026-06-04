@@ -13,49 +13,50 @@ import java.util.Map;
 
 public class SoundDisplayHelper {
 
-    // Map de overrides: "minecraft:block.note_block.basedrum" → "Note Block (Base Drum)"
-    // Carregado uma vez no arranque — null significa ainda não carregado
-    private static Map<String, String> overrides = null;
+    // Override map: "minecraft:block.note_block.basedrum" → "Note Block (Base Drum)"
+    // Loaded once on startup — null means not yet loaded
+    // volatile: lazy-init read in ensureOverridesLoaded() may race with loadOverrides() write
+    private static volatile Map<String, String> overrides = null;
 
-    // --- API pública ---
+    // --- Public API ---
 
     /**
-     * Devolve o nome de display para a GUI.
-     * Tenta override primeiro; se não houver, usa auto-formatação.
-     * Exemplos:
-     *   "minecraft:block.piston.extend"       → "Piston (extend)"
+     * Returns the display name for the GUI.
+     * Checks overrides first; falls back to auto-formatting.
+     * Examples:
+     *   "minecraft:block.piston.extend"            → "Piston (extend)"
      *   "minecraft:entity.zombie_villager.ambient" → "Zombie Villager (ambient)"
-     *   "minecraft:music.creative"             → "Creative"
+     *   "minecraft:music.creative"                 → "Creative"
      */
     public static String getDisplayName(String soundId) {
         ensureOverridesLoaded();
 
-        // 1. Verificar overrides primeiro
+        // 1. Check overrides first
         String override = overrides.get(soundId);
         if (override != null) return override;
 
-        // 2. Auto-formatação
+        // 2. Auto-format
         return autoFormat(soundId);
     }
 
     /**
-     * Extrai o prefixo de categoria — o segmento antes do primeiro ponto,
-     * após remover o namespace.
-     * "minecraft:block.piston.extend" → "block"
-     * "create:mechanical.piston.extend" → "mechanical"
+     * Extracts the category prefix — the segment before the first dot,
+     * after removing the namespace.
+     * "minecraft:block.piston.extend"    → "block"
+     * "create:mechanical.piston.extend"  → "mechanical"
      */
     public static String getCategoryPrefix(String soundId) {
         String withoutNamespace = removeNamespace(soundId);
         int dotIndex = withoutNamespace.indexOf('.');
-        // Se não houver ponto (som malformado), a categoria é o próprio id
+        // If there is no dot (malformed sound), the category is the id itself
         return dotIndex >= 0 ? withoutNamespace.substring(0, dotIndex) : withoutNamespace;
     }
 
     /**
-     * Extrai o nome do objecto — parts[1], formatado.
+     * Extracts the object name — parts[1], formatted.
      * "minecraft:block.piston.extend"    → "Piston"
      * "minecraft:entity.zombie_villager" → "Zombie Villager"
-     * Se não houver parts[1], devolve string vazia.
+     * If there is no parts[1], returns an empty string.
      */
     public static String getObjectName(String soundId) {
         String withoutNamespace = removeNamespace(soundId);
@@ -64,29 +65,29 @@ public class SoundDisplayHelper {
         return formatWord(parts[1]);
     }
 
-    // --- Formatação interna ---
+    // --- Internal formatting ---
 
     /**
-     * Auto-formata um soundId para display.
-     * Lógica:
-     *   parts[0] = categoria (ignorado no display)
-     *   parts[1] = objecto  → capitalizado, underscores → espaços
-     *   parts[2+] = acção   → juntos com espaço, entre parênteses
+     * Auto-formats a soundId for display.
+     * Logic:
+     *   parts[0] = category (ignored in display)
+     *   parts[1] = object   → capitalised, underscores → spaces
+     *   parts[2+] = action  → joined with spaces, wrapped in parentheses
      */
     static String autoFormat(String soundId) {
         String withoutNamespace = removeNamespace(soundId);
         String[] parts = withoutNamespace.split("\\.");
 
-        // Casos de fallback: malformado ou sem partes suficientes
+        // Fallback cases: malformed or not enough parts
         if (parts.length == 0) return soundId;
-        if (parts.length == 1) return formatWord(parts[0]);  // ex: "intentionally_empty"
+        if (parts.length == 1) return formatWord(parts[0]);  // e.g. "intentionally_empty"
 
-        // parts[1] = objecto
+        // parts[1] = object
         String objectPart = formatWord(parts[1]);
 
-        // parts[2+] = acção (pode ser vazia se só houver 2 partes)
+        // parts[2+] = action (may be absent if only 2 parts)
         if (parts.length == 2) {
-            // "minecraft:music.creative" → "Creative"  (sem acção, não põe parênteses)
+            // "minecraft:music.creative" → "Creative"  (no action, no parentheses)
             return objectPart;
         }
 
@@ -95,7 +96,7 @@ public class SoundDisplayHelper {
         StringBuilder action = new StringBuilder();
         for (int i = 2; i < parts.length; i++) {
             if (i > 2) action.append(" ");
-            // A acção não é capitalizada — fica em lowercase para parecer descritiva
+            // Action is not capitalised — stays lowercase to read as a description
             action.append(parts[i].replace('_', ' '));
         }
 
@@ -103,14 +104,14 @@ public class SoundDisplayHelper {
     }
 
     /**
-     * Capitaliza a primeira letra e substitui underscores por espaços.
+     * Capitalises the first letter and replaces underscores with spaces.
      * "zombie_villager" → "Zombie Villager"
      * "note_block"      → "Note Block"
      */
     private static String formatWord(String word) {
         if (word == null || word.isEmpty()) return word;
 
-        // Substituir underscores por espaços e capitalizar cada palavra
+        // Replace underscores with spaces and capitalise each word
         String[] words = word.split("_");
         StringBuilder result = new StringBuilder();
         for (String w : words) {
@@ -124,8 +125,8 @@ public class SoundDisplayHelper {
     }
 
     /**
-     * Remove o namespace ("minecraft:", "create:", etc.).
-     * Se não houver ":", devolve o id original.
+     * Removes the namespace ("minecraft:", "create:", etc.).
+     * If there is no ":", returns the original id.
      */
     private static String removeNamespace(String soundId) {
         int colonIndex = soundId.indexOf(':');
@@ -135,19 +136,21 @@ public class SoundDisplayHelper {
     // --- Overrides ---
 
     /**
-     * Garante que os overrides estão carregados.
-     * Chamado lazy — só lê o ficheiro na primeira invocação.
+     * Ensures overrides are loaded.
+     * Lazy — only reads the file on the first call.
      */
     private static void ensureOverridesLoaded() {
         if (overrides == null) {
-            loadOverrides();
+            synchronized (SoundDisplayHelper.class) {
+                if (overrides == null) loadOverrides(); // double-checked locking
+            }
         }
     }
 
     /**
-     * Lê soundtweaks_name_overrides.json da pasta config.
-     * Se o ficheiro não existir, inicia o map vazio (sem erro).
-     * Se o JSON for inválido, loga aviso e usa map vazio.
+     * Reads soundtweaks_name_overrides.json from the config folder.
+     * If the file does not exist, initialises an empty map (no error).
+     * If the JSON is invalid, logs a warning and uses an empty map.
      */
     static void loadOverrides() {
         Path file = FabricLoader.getInstance().getConfigDir()
@@ -170,7 +173,7 @@ public class SoundDisplayHelper {
     }
 
     /**
-     * Força o recarregamento dos overrides — útil para testes.
+     * Forces a reload of overrides — useful for tests.
      */
     public static void resetOverrides() {
         overrides = null;

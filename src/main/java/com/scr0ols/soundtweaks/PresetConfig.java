@@ -20,11 +20,11 @@ public class PresetConfig {
     public static final int CUSTOM_COLOR_INDEX = 18;
 
     public static final int[] PRESET_COLORS = {
-        // Retro Game — linha 1: Vermelho, Dourado, Verde Néon, Azul Vivo, Roxo, Azul Elétrico
+        // Retro Game — row 1: Red, Gold, Neon Green, Vivid Blue, Purple, Electric Blue
         0xFFE84118, 0xFFFBC531, 0xFF4CD137, 0xFF0097E6, 0xFF8C7AE6, 0xFF00A8FF,
-        // linha 2: Ocre, Lime, Denim, Tijolo, Azul Marinho, Noite
+        // row 2: Ochre, Lime, Denim, Brick, Navy, Night
         0xFFE1B12C, 0xFF44BD32, 0xFF487EB0, 0xFFC23616, 0xFF273C75, 0xFF192A56,
-        // linha 3: Laranja, Burnt, Petróleo, Orquídea, Lavanda, Violeta
+        // row 3: Orange, Burnt, Teal, Orchid, Lavender, Violet
         0xFFF79F1F, 0xFFEE5A24, 0xFF1289A7, 0xFFD980FA, 0xFF9980FA, 0xFF5758BB
     };
 
@@ -69,14 +69,14 @@ public class PresetConfig {
     private static final List<String> favoriteNames = new CopyOnWriteArrayList<>();
     private static volatile long      lastSaveRequest = 0;
 
-    /** Executor dedicado para saves assíncronos — não bloqueia a render thread. */
+    /** Dedicated executor for async saves — never blocks the render thread. */
     private static final ExecutorService SAVE_EXECUTOR = Executors.newSingleThreadExecutor(r -> {
         Thread t = new Thread(r, "SoundTweaks-Preset-Save");
         t.setDaemon(true);
         return t;
     });
 
-    /** Flush e shutdown do executor — chamar quando o cliente fecha. */
+    /** Flush and shutdown the executor — call when the client stops. */
     public static void shutdownSaveExecutor() {
         SAVE_EXECUTOR.shutdown();
         try {
@@ -89,25 +89,26 @@ public class PresetConfig {
     }
 
     /**
-     * Cache imutável dos presets activos — rebuilt apenas quando activeNames muda.
-     * Evita new ArrayList<>() no hot path de áudio (chamado por cada som reproduzido).
+     * Immutable cache of active presets — rebuilt only when activeNames changes.
+     * Avoids new ArrayList<>() in the audio hot path (called for every sound played).
      */
     private static volatile List<Preset> cachedActivePresets = Collections.emptyList();
 
-    private static void rebuildActivePresetsCache() {
+    // synchronized: activeNames (synchronizedSet) iteration + volatile write must be atomic
+    private static synchronized void rebuildActivePresetsCache() {
         List<Preset> result = new ArrayList<>();
         for (Preset p : presets) if (activeNames.contains(p.name)) result.add(p);
         cachedActivePresets = Collections.unmodifiableList(result);
     }
 
-    // ── Leitura ───────────────────────────────────────────────────────────────
+    // ── Read ──────────────────────────────────────────────────────────────────
 
     public static List<Preset> getPresets() { return Collections.unmodifiableList(presets); }
 
     public static boolean isActive(String name)   { return activeNames.contains(name); }
     public static boolean isFavorite(String name) { return favoriteNames.contains(name); }
 
-    /** Devolve snapshot imutável dos presets activos. Zero alocações no hot path. */
+    /** Returns an immutable snapshot of active presets. Zero allocations in the hot path. */
     public static List<Preset> getActivePresets() {
         return cachedActivePresets;
     }
@@ -119,7 +120,7 @@ public class PresetConfig {
                 .collect(Collectors.toList());
     }
 
-    // ── Mutação ───────────────────────────────────────────────────────────────
+    // ── Mutation ──────────────────────────────────────────────────────────────
 
     public static void setActive(String name, boolean active) {
         if (active) activeNames.add(name);
@@ -158,22 +159,24 @@ public class PresetConfig {
         for (Preset p : presets) {
             if (p.name.equals(oldName)) { p.name = unique; break; }
         }
-        if (activeNames.remove(oldName))  activeNames.add(unique);
+        synchronized (activeNames) {
+            if (activeNames.remove(oldName)) activeNames.add(unique); // atomic remove+add
+        }
         int fi = favoriteNames.indexOf(oldName);
         if (fi >= 0) favoriteNames.set(fi, unique);
         rebuildActivePresetsCache();
         markDirty();
     }
 
-    // ── Persistência ──────────────────────────────────────────────────────────
+    // ── Persistence ───────────────────────────────────────────────────────────
 
     public static void markDirty() { lastSaveRequest = System.currentTimeMillis(); }
 
     public static void tickSave() {
         if (lastSaveRequest > 0 && System.currentTimeMillis() - lastSaveRequest > 300) {
             lastSaveRequest = 0;
-            // save() usa colecções thread-safe (CopyOnWriteArrayList, synchronizedSet)
-            // — seguro chamar de thread de background
+            // save() uses thread-safe collections (CopyOnWriteArrayList, synchronizedSet)
+            // — safe to call from a background thread
             SAVE_EXECUTOR.submit(PresetConfig::save);
         }
     }
@@ -213,15 +216,15 @@ public class PresetConfig {
                 SoundTweaks.LOGGER.info("SoundTweaks: {} presets carregados", presets.size());
             }
 
-            // Limpar referências órfãs (preset eliminado mas ainda em favoriteNames/activeNames)
+            // Remove orphan references (preset deleted but still in favoriteNames/activeNames)
             Set<String> existingNames = new HashSet<>();
             for (Preset p : presets) existingNames.add(p.name);
             boolean hadOrphans = favoriteNames.removeIf(n -> !existingNames.contains(n));
             hadOrphans |= activeNames.removeIf(n -> !existingNames.contains(n));
-            // Se havia órfãos, persistir a limpeza imediatamente para o ficheiro ficar consistente
+            // If there were orphans, persist the cleanup immediately so the file stays consistent
             if (hadOrphans) {
                 SoundTweaks.LOGGER.info("SoundTweaks: referências órfãs removidas de presets config");
-                save();
+                SAVE_EXECUTOR.submit(PresetConfig::save); // async — load() runs on the render thread
             }
 
             rebuildActivePresetsCache();
@@ -263,7 +266,7 @@ public class PresetConfig {
             }
         rebuildActivePresetsCache();
         SoundTweaks.LOGGER.info("SoundTweaks: {} presets migrados do formato antigo", presets.size());
-        save();
+        SAVE_EXECUTOR.submit(PresetConfig::save); // async — migrateFromLegacy() is called from load() on the render thread
     }
 
     public static void save() {
@@ -284,11 +287,11 @@ public class PresetConfig {
         }
     }
 
-    // ── Export ───────────────────────────────────────────────────────────────
+    // ── Export ────────────────────────────────────────────────────────────────
 
     /**
-     * Exporta todos os presets actuais para um ficheiro JSON externo.
-     * @return número de presets exportados, ou -1 em caso de erro
+     * Exports all current presets to an external JSON file.
+     * @return number of presets exported, or -1 on error
      */
     public static int exportTo(Path file) {
         try {
@@ -305,7 +308,7 @@ public class PresetConfig {
         }
     }
 
-    // ── Import ────────────────────────────────────────────────────────────────
+    // ── Import ─────────────────────────────────────────────────────────────────
 
     public static int importFrom(Path file) {
         try {
@@ -346,7 +349,7 @@ public class PresetConfig {
                 activeNames.add(name);
                 added++;
             }
-            if (added > 0) { rebuildActivePresetsCache(); save(); }
+            if (added > 0) { rebuildActivePresetsCache(); SAVE_EXECUTOR.submit(PresetConfig::save); }
             return added;
         } catch (Exception e) {
             SoundTweaks.LOGGER.error("SoundTweaks: erro ao importar presets de {}", file, e);
@@ -354,7 +357,7 @@ public class PresetConfig {
         }
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // ── Helpers ────────────────────────────────────────────────────────────────
 
     private static String uniqueName(String base) {
         Set<String> names = new HashSet<>();
@@ -395,7 +398,7 @@ public class PresetConfig {
         if (src == null) return;
         src.entrySet().forEach(e -> {
             JsonElement val = e.getValue();
-            // Ignorar nulls e não-primitivos (ex: arrays/objectos mal-formados)
+            // Ignore nulls and non-primitives (e.g. malformed arrays/objects)
             if (val == null || !val.isJsonPrimitive()) return;
             float v = val.getAsFloat();
             if (Float.isFinite(v)) dst.put(e.getKey(), Mth.clamp(v, 0f, 2f));

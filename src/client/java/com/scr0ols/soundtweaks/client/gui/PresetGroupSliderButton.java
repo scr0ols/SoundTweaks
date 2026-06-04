@@ -8,8 +8,8 @@ import net.minecraft.util.Mth;
 import java.util.List;
 
 /**
- * Slider que controla um grupo de sons em simultâneo dentro de um preset.
- * Ao chegar a 100% remove todos os overrides do grupo.
+ * Slider that controls a group of sounds simultaneously within a preset.
+ * At 100% it removes all overrides for the group.
  */
 public class PresetGroupSliderButton extends AbstractSliderButton {
 
@@ -54,7 +54,7 @@ public class PresetGroupSliderButton extends AbstractSliderButton {
         this.updateMessage();
     }
 
-    /** Sincroniza o display sem escrever no preset (chamado em cada frame). */
+    /** Syncs the display without writing to the preset (called every frame). */
     public void syncDisplay() {
         float min = 1.0f;
         for (String id : children) { Float v = preset.sounds.get(id); if (v != null) min = Math.min(min, v); }

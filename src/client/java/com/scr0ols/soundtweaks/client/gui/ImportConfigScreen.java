@@ -17,8 +17,8 @@ import org.lwjgl.util.tinyfd.TinyFileDialogs;
 import java.nio.file.Path;
 
 /**
- * Ecrã de importação de configs de outras instâncias.
- * O utilizador cola o caminho do ficheiro JSON e confirma.
+ * Screen for importing configs from other instances.
+ * The user pastes the JSON file path and confirms.
  */
 public class ImportConfigScreen extends Screen {
 
@@ -50,7 +50,7 @@ public class ImportConfigScreen extends Screen {
     private EditBox pathBox;
     private Button  confirmBtn, exportBtn, cancelBtn;
 
-    // Feedback após tentativa de import
+    // Feedback after an import attempt
     private String feedbackMsg  = "";
     private int    feedbackColor = 0xFFAAAAAA;
 
@@ -77,7 +77,7 @@ public class ImportConfigScreen extends Screen {
         this.setFocused(pathBox);
         this.pathBox.setFocused(true);
 
-        // três botões centrados: [ Import ] [ Export ] [ Cancel ]
+        // three centred buttons: [ Import ] [ Export ] [ Cancel ]
         int btnW = 90, btnGap = 6;
         int totalBtns = btnW * 3 + btnGap * 2;
         int btnStartX = px + pw / 2 - totalBtns / 2;
@@ -115,18 +115,18 @@ public class ImportConfigScreen extends Screen {
         g.fill(px, py, px + 1, py + ph,  0xFF444466);
         g.fill(px + pw - 1, py, px + pw, py + ph, 0xFF444466);
 
-        // Título
+        // Title
         g.centeredText(this.font, type.title, this.width / 2, py + 10, 0xFFCCCCFF);
         g.fill(px + 8, py + 22, px + pw - 8, py + 23, 0xFF333355);
 
-        // Descrição
+        // Description
         g.centeredText(this.font, type.line1, this.width / 2, py + 32, 0xFFAAAAAA);
         g.centeredText(this.font, type.line2, this.width / 2, py + 46, 0xFF777788);
 
         // Label do campo
         g.text(this.font, "File path:", px + 10, py + 68, 0xFF888899);
 
-        // Pasta config atual (hint para o utilizador)
+        // Current config folder (hint for the user)
         String cfgDir = ConfigFileUtil.getConfigDirString();
         g.text(this.font, "Config folder: " + cfgDir, px + 10, py + 112, 0xFF555566);
 
@@ -189,8 +189,7 @@ public class ImportConfigScreen extends Screen {
             feedbackMsg   = "Success! Imported " + result + " entries.";
             feedbackColor = 0xFF88FF88;
             if (onSuccess != null) onSuccess.run();
-            // Fechar após breve delay — deixar o utilizador ver o feedback
-            // (ou fechar imediatamente; escolha: fechar)
+            // Close immediately after success
             this.minecraft.setScreen(parent);
         }
     }

@@ -20,8 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Ecrã de edição dos sons de um preset (versão fullscreen, acessível via PresetEditorScreen).
- * A lista de sons usa PresetSoundList, reutilizável também no painel inline da PresetsScreen.
+ * Fullscreen preset sound editor (accessible via PresetsScreen).
+ * The sound list uses PresetSoundList, also reused in the inline panel of PresetsScreen.
  */
 public class PresetEditorScreen extends Screen {
 
@@ -62,7 +62,7 @@ public class PresetEditorScreen extends Screen {
         this.soundList.refresh();
         this.addRenderableWidget(this.soundList);
 
-        // ── Filtros ──────────────────────────────────────────────────────────
+        // ── Filters ──────────────────────────────────────────────────────────
         int fY = 28, fH = 20;
 
         this.categoryDropdown = new FilterDropdown(4, fY, 120,

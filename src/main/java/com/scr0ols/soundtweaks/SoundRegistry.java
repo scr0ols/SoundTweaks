@@ -18,34 +18,34 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SoundRegistry {
 
     /**
-     * Set thread-safe de sons conhecidos.
-     * ConcurrentHashMap.newKeySet() dá O(1) insert/contains vs O(log n) do TreeSet,
-     * e é seguro para acesso concorrente entre a thread de áudio (addDiscovered)
-     * e a thread de render (getAll/getByCategory).
+     * Thread-safe set of known sounds.
+     * ConcurrentHashMap.newKeySet() gives O(1) insert/contains vs O(log n) for TreeSet,
+     * and is safe for concurrent access between the audio thread (addDiscovered)
+     * and the render thread (getAll/getByCategory).
      */
     private static final Set<String> knownSounds = ConcurrentHashMap.newKeySet();
 
-    // Chamado no arranque — percorre todos os SoundEvents registados no jogo
+    // Called on startup — iterates all SoundEvents registered in the game
     public static void populate() {
         BuiltInRegistries.SOUND_EVENT.keySet().forEach(id -> knownSounds.add(id.toString()));
         SoundTweaks.LOGGER.info("SoundTweaks: {} sons encontrados no registo", knownSounds.size());
         exportSoundList();
     }
 
-    // Chamado pelo Mixin quando um som toca — captura sons de resource packs
-    // que possam não estar no registo base
+    // Called by the Mixin when a sound plays — captures sounds from resource packs
+    // that may not be in the base registry
     public static void addDiscovered(String soundId) {
         knownSounds.add(soundId);
     }
 
-    // Devolve todos os sons conhecidos ordenados (para a GUI)
+    // Returns all known sounds sorted (for the GUI)
     public static List<String> getAll() {
         List<String> list = new ArrayList<>(knownSounds);
         Collections.sort(list);
         return list;
     }
 
-    // Pesquisa por texto — usado pela barra de pesquisa da GUI
+    // Text search — used by the GUI search bar
     public static List<String> search(String query) {
         if (query == null || query.isBlank()) {
             return getAll();
@@ -61,21 +61,21 @@ public class SoundRegistry {
     }
 
     /**
-     * Devolve todos os sons de uma categoria específica.
+     * Returns all sounds for a specific category.
      *
-     * Para categorias normais: filtra por prefixo (ex: "block" → sons que começam com "...block.")
-     * Para OTHERS: devolve sons cujo prefixo não encaixa em nenhuma categoria conhecida
-     * Para HIDDEN: nunca deveria ser chamado, mas devolve lista vazia por segurança
+     * For normal categories: filters by prefix (e.g. "block" → sounds starting with "...block.")
+     * For OTHERS: returns sounds whose prefix does not match any known category
+     * For HIDDEN: should never be called, but returns an empty list for safety
      */
     public static List<String> getByCategory(SoundCategory category) {
         if (category == null) return getAll();
 
-        // Recolher os prefixos de todas as categorias conhecidas (exceto OTHERS e HIDDEN)
-        // Usados para detetar o que "não encaixa" na categoria OTHERS
+        // Collect prefixes of all known categories (except OTHERS and HIDDEN)
+        // Used to detect what "doesn't fit" in the OTHERS category
         Set<String> knownPrefixes = new TreeSet<>();
         for (SoundCategory cat : SoundCategory.values()) {
-            // Não adicionar prefixos de categorias com filtro extra (ex: REDSTONE usa "block"
-            // mas não é a mesma coisa que BLOCK — os sons redstone já estão em BLOCK)
+            // Skip categories with an extra filter (e.g. REDSTONE uses "block"
+            // but is not the same as BLOCK — redstone sounds are already in BLOCK)
             if (cat.getPrefix() != null && cat.getExtraFilter() == null) {
                 knownPrefixes.add(cat.getPrefix());
             }
@@ -90,20 +90,20 @@ public class SoundRegistry {
     }
 
     /**
-     * Devolve os objectos únicos de uma categoria (parts[1] de cada soundId),
-     * ordenados alfabeticamente — usado para popular o segundo dropdown.
+     * Returns unique objects for a category (parts[1] of each soundId),
+     * sorted alphabetically — used to populate the second dropdown.
      *
-     * Exemplo com categoria BLOCK:
+     * Example with category BLOCK:
      *   "minecraft:block.piston.extend"   → "piston"
-     *   "minecraft:block.piston.contract" → "piston"  (duplicado, ignorado)
+     *   "minecraft:block.piston.contract" → "piston"  (duplicate, ignored)
      *   "minecraft:block.note_block.hit"  → "note_block"
-     *   → resultado: ["note_block", "piston", ...]
+     *   → result: ["note_block", "piston", ...]
      *
-     * O display name ("Piston", "Note Block") é responsabilidade do SoundDisplayHelper.
+     * Display name ("Piston", "Note Block") is the responsibility of SoundDisplayHelper.
      */
     public static List<String> getObjectsByCategory(SoundCategory category) {
         List<String> sounds = getByCategory(category);
-        TreeSet<String> objects = new TreeSet<>(); // TreeSet: deduplica e ordena automaticamente
+        TreeSet<String> objects = new TreeSet<>(); // TreeSet: deduplicates and sorts automatically
 
         for (String soundId : sounds) {
             int ci = soundId.indexOf(':');
@@ -122,8 +122,8 @@ public class SoundRegistry {
     }
 
     /**
-     * Extrai o prefixo de categoria de um soundId (o segmento após o namespace e antes do primeiro ponto).
-     * Privado — lógica interna do registry.
+     * Extracts the category prefix from a soundId (the segment after the namespace and before the first dot).
+     * Private — internal registry logic.
      * "minecraft:block.piston.extend" → "block"
      */
     private static String extractPrefix(String soundId) {
@@ -134,9 +134,9 @@ public class SoundRegistry {
     }
 
     /**
-     * Agrupa uma lista de soundIds pelo "group key" (prefix.object).
-     * Só devolve grupos com 2+ membros.
-     * Exemplo: ["entity.horse.angry", "entity.horse.hurt", "entity.pig.ambient"]
+     * Groups a list of soundIds by "group key" (prefix.object).
+     * Only returns groups with 2+ members.
+     * Example: ["entity.horse.angry", "entity.horse.hurt", "entity.pig.ambient"]
      *   → {"entity.horse": ["entity.horse.angry", "entity.horse.hurt"]}
      */
     public static Map<String, List<String>> getGroups(List<String> soundIds) {
@@ -149,7 +149,7 @@ public class SoundRegistry {
         return groups;
     }
 
-    /** Extrai a chave de grupo de um soundId: "minecraft:entity.horse.angry" → "entity.horse". */
+    /** Extracts the group key from a soundId: "minecraft:entity.horse.angry" → "entity.horse". */
     public static String extractGroupKey(String soundId) {
         int ci = soundId.indexOf(':');
         String withoutNs = ci >= 0 ? soundId.substring(ci + 1) : soundId;
@@ -160,7 +160,7 @@ public class SoundRegistry {
         return withoutNs.substring(0, dot2); // ex: "entity.horse"
     }
 
-    // Exporta a lista completa de sons para um ficheiro .txt — útil para referência e mapeamento manual
+    // Exports the full sound list to a .txt file — useful for reference and manual mapping
     private static void exportSoundList() {
         Path outFile = FabricLoader.getInstance().getConfigDir().resolve("soundtweaks_sounds.txt");
         try {
