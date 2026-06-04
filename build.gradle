@@ -8,6 +8,12 @@ group = project.mod_group
 neoForge {
     version = project.neoforge_version
 
+    runs {
+        client {
+            client()
+        }
+    }
+
     mods {
         soundtweaks {
             sourceSet sourceSets.main

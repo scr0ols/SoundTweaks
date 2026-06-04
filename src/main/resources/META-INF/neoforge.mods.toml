@@ -1,5 +1,4 @@
 modLoader = "javafml"
-mixins = ["soundtweaks.mixins.json"]
 loaderVersion = "[4,)"
 license = "CC0-1.0"
 
@@ -18,6 +17,9 @@ Per-sound volume control — mute, amplify or individually adjust any sound in t
     [mods.properties]
         homepage = "https://github.com/scr0ols/SoundTweaks/wiki"
         issues = "https://github.com/scr0ols/SoundTweaks/issues"
+
+[[mixins]]
+    config = "soundtweaks.mixins.json"
 
 [[dependencies.soundtweaks]]
     modId = "neoforge"
