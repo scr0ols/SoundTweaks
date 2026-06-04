@@ -1,0 +1,36 @@
+{
+  "soundtweaks.gui.title":            "SoundTweaks",
+  "soundtweaks.gui.search_hint":      "Buscar som...",
+  "soundtweaks.gui.done":             "Concluído",
+  "soundtweaks.gui.category":         "Categoria",
+  "soundtweaks.gui.object":           "Objeto",
+  "soundtweaks.gui.all":              "(Todos)",
+  "soundtweaks.gui.sounds":           "%d sons",
+  "soundtweaks.gui.sounds_filtered":  "%d / %d sons",
+  "soundtweaks.gui.blocks":           "%d blocos",
+
+  "soundtweaks.category.block":       "Blocos",
+  "soundtweaks.category.entity":      "Entidades",
+  "soundtweaks.category.item":        "Itens",
+  "soundtweaks.category.ambient":     "Ambiente",
+  "soundtweaks.category.music":       "Música",
+  "soundtweaks.category.music_disc":  "Discos",
+  "soundtweaks.category.ui":          "Interface",
+  "soundtweaks.category.weather":     "Clima",
+  "soundtweaks.category.enchant":     "Encantamentos",
+  "soundtweaks.category.event":       "Eventos",
+  "soundtweaks.category.others":      "Outros",
+  "soundtweaks.category.redstone":    "Redstone",
+
+  "soundtweaks.presets.title":        "Presets",
+  "soundtweaks.presets.new":          "+ Novo Preset",
+  "soundtweaks.presets.confirm":      "Salvar Preset",
+  "soundtweaks.presets.manage":       "Gerenciar Presets",
+  "soundtweaks.presets.name_hint":    "Nome do preset...",
+  "soundtweaks.presets.no_favorites": "Nenhum favorito ainda — vá em Gerenciar Presets para adicionar alguns",
+
+  "key.category.soundtweaks.soundtweaks": "Sound Tweaks",
+  "key.soundtweaks.open_menu":    "Abrir Sound Tweaks",
+  "key.soundtweaks.open_presets": "Abrir Menu de Presets",
+  "key.soundtweaks.perf_report":  "Imprimir Relatório de Desempenho"
+}
