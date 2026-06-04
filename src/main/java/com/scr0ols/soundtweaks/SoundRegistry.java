@@ -7,16 +7,23 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SoundRegistry {
 
-    // TreeSet mantém os sons ordenados alfabeticamente automaticamente
-    private static final TreeSet<String> knownSounds = new TreeSet<>();
+    /**
+     * Set thread-safe de sons conhecidos.
+     * ConcurrentHashMap.newKeySet() dá O(1) insert/contains vs O(log n) do TreeSet,
+     * e é seguro para acesso concorrente entre a thread de áudio (addDiscovered)
+     * e a thread de render (getAll/getByCategory).
+     */
+    private static final Set<String> knownSounds = ConcurrentHashMap.newKeySet();
 
     // Chamado no arranque — percorre todos os SoundEvents registados no jogo
     public static void populate() {
@@ -31,9 +38,11 @@ public class SoundRegistry {
         knownSounds.add(soundId);
     }
 
-    // Devolve todos os sons conhecidos (para a GUI)
+    // Devolve todos os sons conhecidos ordenados (para a GUI)
     public static List<String> getAll() {
-        return new ArrayList<>(knownSounds);
+        List<String> list = new ArrayList<>(knownSounds);
+        Collections.sort(list);
+        return list;
     }
 
     // Pesquisa por texto — usado pela barra de pesquisa da GUI
@@ -97,10 +106,15 @@ public class SoundRegistry {
         TreeSet<String> objects = new TreeSet<>(); // TreeSet: deduplica e ordena automaticamente
 
         for (String soundId : sounds) {
-            String withoutNamespace = soundId.contains(":") ? soundId.split(":")[1] : soundId;
-            String[] parts = withoutNamespace.split("\\.");
-            if (parts.length >= 2) {
-                objects.add(parts[1]); // ex: "piston", "note_block", "zombie_villager"
+            int ci = soundId.indexOf(':');
+            String withoutNamespace = ci >= 0 ? soundId.substring(ci + 1) : soundId;
+            int dot1 = withoutNamespace.indexOf('.');
+            if (dot1 >= 0) {
+                int dot2 = withoutNamespace.indexOf('.', dot1 + 1);
+                String obj = dot2 >= 0
+                        ? withoutNamespace.substring(dot1 + 1, dot2)
+                        : withoutNamespace.substring(dot1 + 1);
+                if (!obj.isEmpty()) objects.add(obj);
             }
         }
 
@@ -113,7 +127,8 @@ public class SoundRegistry {
      * "minecraft:block.piston.extend" → "block"
      */
     private static String extractPrefix(String soundId) {
-        String withoutNamespace = soundId.contains(":") ? soundId.split(":")[1] : soundId;
+        int ci = soundId.indexOf(':');
+        String withoutNamespace = ci >= 0 ? soundId.substring(ci + 1) : soundId;
         int dotIndex = withoutNamespace.indexOf('.');
         return dotIndex >= 0 ? withoutNamespace.substring(0, dotIndex) : withoutNamespace;
     }
@@ -136,10 +151,13 @@ public class SoundRegistry {
 
     /** Extrai a chave de grupo de um soundId: "minecraft:entity.horse.angry" → "entity.horse". */
     public static String extractGroupKey(String soundId) {
-        String withoutNs = soundId.contains(":") ? soundId.split(":")[1] : soundId;
-        String[] parts = withoutNs.split("\\.");
-        if (parts.length >= 2) return parts[0] + "." + parts[1];
-        return null;
+        int ci = soundId.indexOf(':');
+        String withoutNs = ci >= 0 ? soundId.substring(ci + 1) : soundId;
+        int dot1 = withoutNs.indexOf('.');
+        if (dot1 < 0) return null;
+        int dot2 = withoutNs.indexOf('.', dot1 + 1);
+        if (dot2 < 0) return null;
+        return withoutNs.substring(0, dot2); // ex: "entity.horse"
     }
 
     // Exporta a lista completa de sons para um ficheiro .txt — útil para referência e mapeamento manual

@@ -10,6 +10,9 @@ import net.minecraft.util.Mth;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class PresetConfig {
@@ -17,9 +20,12 @@ public class PresetConfig {
     public static final int CUSTOM_COLOR_INDEX = 18;
 
     public static final int[] PRESET_COLORS = {
-        0xFF555566, 0xFF993333, 0xFF336633, 0xFF2255AA, 0xFF886622, 0xFF7733AA,
-        0xFF227788, 0xFFCC5522, 0xFF996688, 0xFF44AA55, 0xFF2277AA, 0xFFAA9933,
-        0xFF884444, 0xFF337755, 0xFF553366, 0xFF888844, 0xFFAA4488, 0xFF445533
+        // Retro Game — linha 1: Vermelho, Dourado, Verde Néon, Azul Vivo, Roxo, Azul Elétrico
+        0xFFE84118, 0xFFFBC531, 0xFF4CD137, 0xFF0097E6, 0xFF8C7AE6, 0xFF00A8FF,
+        // linha 2: Ocre, Lime, Denim, Tijolo, Azul Marinho, Noite
+        0xFFE1B12C, 0xFF44BD32, 0xFF487EB0, 0xFFC23616, 0xFF273C75, 0xFF192A56,
+        // linha 3: Laranja, Burnt, Petróleo, Orquídea, Lavanda, Violeta
+        0xFFF79F1F, 0xFFEE5A24, 0xFF1289A7, 0xFFD980FA, 0xFF9980FA, 0xFF5758BB
     };
 
     public static class Preset {
@@ -63,6 +69,37 @@ public class PresetConfig {
     private static final List<String> favoriteNames = new CopyOnWriteArrayList<>();
     private static volatile long      lastSaveRequest = 0;
 
+    /** Executor dedicado para saves assíncronos — não bloqueia a render thread. */
+    private static final ExecutorService SAVE_EXECUTOR = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "SoundTweaks-Preset-Save");
+        t.setDaemon(true);
+        return t;
+    });
+
+    /** Flush e shutdown do executor — chamar quando o cliente fecha. */
+    public static void shutdownSaveExecutor() {
+        SAVE_EXECUTOR.shutdown();
+        try {
+            if (!SAVE_EXECUTOR.awaitTermination(3, TimeUnit.SECONDS))
+                SAVE_EXECUTOR.shutdownNow();
+        } catch (InterruptedException e) {
+            SAVE_EXECUTOR.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    /**
+     * Cache imutável dos presets activos — rebuilt apenas quando activeNames muda.
+     * Evita new ArrayList<>() no hot path de áudio (chamado por cada som reproduzido).
+     */
+    private static volatile List<Preset> cachedActivePresets = Collections.emptyList();
+
+    private static void rebuildActivePresetsCache() {
+        List<Preset> result = new ArrayList<>();
+        for (Preset p : presets) if (activeNames.contains(p.name)) result.add(p);
+        cachedActivePresets = Collections.unmodifiableList(result);
+    }
+
     // ── Leitura ───────────────────────────────────────────────────────────────
 
     public static List<Preset> getPresets() { return Collections.unmodifiableList(presets); }
@@ -70,10 +107,9 @@ public class PresetConfig {
     public static boolean isActive(String name)   { return activeNames.contains(name); }
     public static boolean isFavorite(String name) { return favoriteNames.contains(name); }
 
+    /** Devolve snapshot imutável dos presets activos. Zero alocações no hot path. */
     public static List<Preset> getActivePresets() {
-        List<Preset> result = new ArrayList<>();
-        for (Preset p : presets) if (activeNames.contains(p.name)) result.add(p);
-        return result;
+        return cachedActivePresets;
     }
 
     public static List<Preset> getFavoritePresets() {
@@ -88,6 +124,7 @@ public class PresetConfig {
     public static void setActive(String name, boolean active) {
         if (active) activeNames.add(name);
         else        activeNames.remove(name);
+        rebuildActivePresetsCache();
         markDirty();
     }
 
@@ -111,6 +148,7 @@ public class PresetConfig {
         presets.removeIf(p -> p.name.equals(name));
         activeNames.remove(name);
         favoriteNames.remove(name);
+        rebuildActivePresetsCache();
         markDirty();
     }
 
@@ -123,6 +161,7 @@ public class PresetConfig {
         if (activeNames.remove(oldName))  activeNames.add(unique);
         int fi = favoriteNames.indexOf(oldName);
         if (fi >= 0) favoriteNames.set(fi, unique);
+        rebuildActivePresetsCache();
         markDirty();
     }
 
@@ -132,8 +171,10 @@ public class PresetConfig {
 
     public static void tickSave() {
         if (lastSaveRequest > 0 && System.currentTimeMillis() - lastSaveRequest > 300) {
-            save();
             lastSaveRequest = 0;
+            // save() usa colecções thread-safe (CopyOnWriteArrayList, synchronizedSet)
+            // — seguro chamar de thread de background
+            SAVE_EXECUTOR.submit(PresetConfig::save);
         }
     }
 
@@ -171,6 +212,19 @@ public class PresetConfig {
                 }
                 SoundTweaks.LOGGER.info("SoundTweaks: {} presets carregados", presets.size());
             }
+
+            // Limpar referências órfãs (preset eliminado mas ainda em favoriteNames/activeNames)
+            Set<String> existingNames = new HashSet<>();
+            for (Preset p : presets) existingNames.add(p.name);
+            boolean hadOrphans = favoriteNames.removeIf(n -> !existingNames.contains(n));
+            hadOrphans |= activeNames.removeIf(n -> !existingNames.contains(n));
+            // Se havia órfãos, persistir a limpeza imediatamente para o ficheiro ficar consistente
+            if (hadOrphans) {
+                SoundTweaks.LOGGER.info("SoundTweaks: referências órfãs removidas de presets config");
+                save();
+            }
+
+            rebuildActivePresetsCache();
         } catch (IOException e) {
             SoundTweaks.LOGGER.error("SoundTweaks: erro ao carregar presets", e);
         }
@@ -207,6 +261,7 @@ public class PresetConfig {
                 String n = uuidToName.get(el.getAsString());
                 if (n != null && !favoriteNames.contains(n)) favoriteNames.add(n);
             }
+        rebuildActivePresetsCache();
         SoundTweaks.LOGGER.info("SoundTweaks: {} presets migrados do formato antigo", presets.size());
         save();
     }
@@ -226,6 +281,27 @@ public class PresetConfig {
             Files.writeString(CONFIG_FILE, GSON.toJson(root));
         } catch (IOException e) {
             SoundTweaks.LOGGER.error("SoundTweaks: erro ao guardar presets", e);
+        }
+    }
+
+    // ── Export ───────────────────────────────────────────────────────────────
+
+    /**
+     * Exporta todos os presets actuais para um ficheiro JSON externo.
+     * @return número de presets exportados, ou -1 em caso de erro
+     */
+    public static int exportTo(Path file) {
+        try {
+            JsonObject root = new JsonObject();
+            JsonArray presetsArr = new JsonArray();
+            for (Preset p : presets) presetsArr.add(serializePreset(p));
+            root.add("presets", presetsArr);
+            Files.writeString(file, GSON.toJson(root));
+            SoundTweaks.LOGGER.info("SoundTweaks: exportados {} presets para {}", presets.size(), file);
+            return presets.size();
+        } catch (Exception e) {
+            SoundTweaks.LOGGER.error("SoundTweaks: erro ao exportar presets para {}", file, e);
+            return -1;
         }
     }
 
@@ -270,7 +346,7 @@ public class PresetConfig {
                 activeNames.add(name);
                 added++;
             }
-            if (added > 0) save();
+            if (added > 0) { rebuildActivePresetsCache(); save(); }
             return added;
         } catch (Exception e) {
             SoundTweaks.LOGGER.error("SoundTweaks: erro ao importar presets de {}", file, e);
@@ -318,7 +394,10 @@ public class PresetConfig {
     private static void readFloatMap(JsonObject src, Map<String, Float> dst) {
         if (src == null) return;
         src.entrySet().forEach(e -> {
-            float v = e.getValue().getAsFloat();
+            JsonElement val = e.getValue();
+            // Ignorar nulls e não-primitivos (ex: arrays/objectos mal-formados)
+            if (val == null || !val.isJsonPrimitive()) return;
+            float v = val.getAsFloat();
             if (Float.isFinite(v)) dst.put(e.getKey(), Mth.clamp(v, 0f, 2f));
         });
     }

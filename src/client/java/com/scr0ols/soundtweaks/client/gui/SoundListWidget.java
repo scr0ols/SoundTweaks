@@ -60,11 +60,6 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
             }
         }
 
-        for (String blockId : blockIds) {
-            BlockEntry be = new BlockEntry(blockId);
-            slots.add(new Object[]{ be.getDisplayName().toLowerCase(), be, new ArrayList<>() });
-        }
-
         slots.sort((a, b) -> {
             String ka = (String) a[0], kb = (String) b[0];
             boolean aD = !ka.isEmpty() && Character.isDigit(ka.charAt(0));
@@ -78,6 +73,12 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
             @SuppressWarnings("unchecked")
             List<BaseEntry> children = (List<BaseEntry>) slot[2];
             children.forEach(this::addEntry);
+        }
+
+        // Blocos sempre depois dos sons, separados por um divisor
+        if (!blockIds.isEmpty()) {
+            this.addEntry(new DividerEntry());
+            for (String blockId : blockIds) this.addEntry(new BlockEntry(blockId));
         }
 
         this.lastJumpLetter = 0;
@@ -151,20 +152,23 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
         public GroupEntry(String groupKey, List<String> children) {
             this.children    = children;
             this.displayName = SoundDisplayHelper.getObjectName("x:" + groupKey + ".x");
-            float minVol = children.stream()
-                    .map(id -> Math.min(VolumeResolver.getEffectiveVolume(id), 1.0f))
-                    .min(Float::compare).orElse(1.0f);
-            this.slider = new GroupSliderButton(children, 0, 0, 90, 14, minVol);
+            this.slider = new GroupSliderButton(children, 0, 0, 90, 14, minEffectiveVol(children));
+        }
+
+        private static float minEffectiveVol(List<String> ids) {
+            float min = 1.0f;
+            for (String id : ids) {
+                float v = Math.min(VolumeResolver.getEffectiveVolume(id), 1.0f);
+                if (v < min) min = v;
+            }
+            return min;
         }
 
         @Override public String getDisplayName() { return displayName; }
 
         @Override
         public void adjustVolume(float delta) {
-            float cur = children.stream()
-                    .map(id -> Math.min(VolumeResolver.getEffectiveVolume(id), 1.0f))
-                    .min(Float::compare).orElse(1.0f);
-            slider.setSliderValue(Mth.clamp(cur + delta, 0.0f, 1.0f));
+            slider.setSliderValue(Mth.clamp(minEffectiveVol(children) + delta, 0.0f, 1.0f));
         }
 
         @Override
@@ -176,9 +180,8 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
                 g.fill(getX(), getY(), getX() + rowW, getY() + 20, 0x22AAAAFF);
 
             slider.refreshFromChildren();
-            float vol = children.stream()
-                    .map(id -> Math.min(VolumeResolver.getEffectiveVolume(id), 1.0f))
-                    .min(Float::compare).orElse(1.0f);
+            // Loop simples em vez de stream — elimina alocação de lambda/Stream por frame
+            float vol = minEffectiveVol(children);
             g.text(SoundListWidget.this.minecraft.font,
                     "* " + displayName, getX() + 4, getY() + 5, volumeColor(vol));
             slider.setX(getX() + rowW - 94);
@@ -193,10 +196,7 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
             boolean dbl = (now - lastClickTime) < DOUBLE_CLICK_MS;
             lastClickTime = now;
             if (dbl) {
-                float cur = children.stream()
-                        .map(id -> Math.min(VolumeResolver.getEffectiveVolume(id), 1.0f))
-                        .min(Float::compare).orElse(1.0f);
-                slider.setSliderValue(cur >= 1.0f ? 0.0f : 1.0f);
+                slider.setSliderValue(minEffectiveVol(children) >= 1.0f ? 0.0f : 1.0f);
                 return true;
             }
             return slider.mouseClicked(event, consumed);
