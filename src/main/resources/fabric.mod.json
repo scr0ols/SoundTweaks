@@ -3,11 +3,14 @@
 	"id": "soundtweaks",
 	"version": "${version}",
 	"name": "SoundTweaks",
-	"description": "Controlo de volume por som — silencia, amplifica ou ajusta individualmente qualquer som do jogo.",
+	"description": "Per-sound volume control — mute, amplify or individually adjust any sound in the game.",
 	"authors": [
 		"scr0ols"
 	],
-	"contact": {},
+	"contact": {
+		"homepage": "https://github.com/scr0ols/SoundTweaks/wiki",
+		"issues": "https://github.com/scr0ols/SoundTweaks/issues"
+	},
 	"license": "CC0-1.0",
 	"icon": "assets/soundtweaks/icon.png",
 	"environment": "client",
