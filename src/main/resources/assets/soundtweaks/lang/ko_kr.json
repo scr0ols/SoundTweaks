@@ -1,0 +1,36 @@
+{
+  "soundtweaks.gui.title":            "SoundTweaks",
+  "soundtweaks.gui.search_hint":      "사운드 검색...",
+  "soundtweaks.gui.done":             "완료",
+  "soundtweaks.gui.category":         "카테고리",
+  "soundtweaks.gui.object":           "오브젝트",
+  "soundtweaks.gui.all":              "(전체)",
+  "soundtweaks.gui.sounds":           "%d개의 사운드",
+  "soundtweaks.gui.sounds_filtered":  "%d / %d개의 사운드",
+  "soundtweaks.gui.blocks":           "%d개의 블록",
+
+  "soundtweaks.category.block":       "블록",
+  "soundtweaks.category.entity":      "엔티티",
+  "soundtweaks.category.item":        "아이템",
+  "soundtweaks.category.ambient":     "환경",
+  "soundtweaks.category.music":       "음악",
+  "soundtweaks.category.music_disc":  "디스크",
+  "soundtweaks.category.ui":          "인터페이스",
+  "soundtweaks.category.weather":     "날씨",
+  "soundtweaks.category.enchant":     "인챈트",
+  "soundtweaks.category.event":       "이벤트",
+  "soundtweaks.category.others":      "기타",
+  "soundtweaks.category.redstone":    "레드스톤",
+
+  "soundtweaks.presets.title":        "Presets",
+  "soundtweaks.presets.new":          "+ 새 Preset",
+  "soundtweaks.presets.confirm":      "Preset 저장",
+  "soundtweaks.presets.manage":       "Presets 관리",
+  "soundtweaks.presets.name_hint":    "Preset 이름...",
+  "soundtweaks.presets.no_favorites": "즐겨찾기가 없습니다 — Presets 관리에서 추가해 보세요",
+
+  "key.category.soundtweaks.soundtweaks": "Sound Tweaks",
+  "key.soundtweaks.open_menu":    "Sound Tweaks 열기",
+  "key.soundtweaks.open_presets": "Presets 메뉴 열기",
+  "key.soundtweaks.perf_report":  "성능 보고서 출력"
+}
