@@ -260,11 +260,11 @@ public class SoundTweaksScreen extends Screen {
 
         // Footer
         graphics.fill(8, this.height - 34, this.width - 8, this.height - 33, 0xFF555555);
-        int total   = SoundRegistry.count();
-        int visible = this.soundList != null ? this.soundList.children().size() : 0;
-        String countText = visible == total
-                ? I18n.get("soundtweaks.gui.sounds", total)
-                : I18n.get("soundtweaks.gui.sounds_filtered", visible, total);
+        int total = SoundRegistry.count();
+        boolean hasFilter = selectedCategory != null || selectedObject != null || !searchQuery.isBlank();
+        String countText = hasFilter
+                ? I18n.get("soundtweaks.gui.sounds_filtered", getFilteredSounds().size(), total)
+                : I18n.get("soundtweaks.gui.sounds", total);
         graphics.text(this.font, countText, 8, this.height - 22, 0xFFAAAAAA);
 
         // Sidebar
