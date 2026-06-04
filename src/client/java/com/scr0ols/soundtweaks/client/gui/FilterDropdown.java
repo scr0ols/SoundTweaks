@@ -42,7 +42,6 @@ public class FilterDropdown {
 
     // --- Text ---
     private final String placeholder;         // text when nothing is selected (e.g. "Category")
-    private final boolean enabled;            // disabled = grey button, popup does not open
     private boolean active           = true;  // can be disabled dynamically
 
     // --- Letter navigation ---
@@ -70,7 +69,6 @@ public class FilterDropdown {
         this.placeholder = placeholder;
         this.onSelect    = onSelect;
         this.font        = Minecraft.getInstance().font;
-        this.enabled     = true;
     }
 
     // -------------------------------------------------------------------------

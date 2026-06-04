@@ -16,7 +16,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ClientLevel.class)
 public abstract class LevelMixin {
 
-    // Prevents infinite loop when re-invoking playLocalSound with a modified volume
+    // Prevents infinite loop when re-invoking playLocalSound with a modified volume.
+    // static final is safe here: the field lives for the entire game session and is
+    // always cleaned up by the try/finally in onPlayLocalSound — no leak risk in prod.
     private static final ThreadLocal<Boolean> applying = ThreadLocal.withInitial(() -> false);
 
     // In 26.1.2 there is no playLocalSound(BlockPos, ...) — the method uses double coordinates.

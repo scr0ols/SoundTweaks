@@ -154,6 +154,7 @@ public class PresetsScreen extends Screen {
                     if (target == null) return;
                     PresetConfig.exportTo(java.nio.file.Path.of(target));
                 }
+        // Provisional bounds — corrected by rebuildLayout() at the end of init().
         ).bounds(4, this.height - 26, LIST_W / 2 - 6, 20).build();
         this.exportPresetsBtn.setTooltip(Tooltip.create(Component.literal(
                 "Export all current presets to a JSON file.")));

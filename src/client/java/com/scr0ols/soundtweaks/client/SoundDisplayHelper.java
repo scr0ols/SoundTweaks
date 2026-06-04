@@ -141,7 +141,9 @@ public class SoundDisplayHelper {
      */
     private static void ensureOverridesLoaded() {
         if (overrides == null) {
-            loadOverrides();
+            synchronized (SoundDisplayHelper.class) {
+                if (overrides == null) loadOverrides(); // double-checked locking
+            }
         }
     }
 

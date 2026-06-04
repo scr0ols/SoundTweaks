@@ -22,7 +22,8 @@ public class SoundTweaksClient implements ClientModInitializer {
     public static KeyMapping openMenuKey;
     public static KeyMapping openPresetsKey;
 
-    // Preset names whose trigger was held on the previous tick (rising-edge detection)
+    // Preset names whose trigger was held on the previous tick (rising-edge detection).
+    // Only accessed from ClientTickEvents.END_CLIENT_TICK (render thread) — no synchronisation needed.
     private static final Set<String> shortcutKeysHeld = new HashSet<>();
 
     @Override

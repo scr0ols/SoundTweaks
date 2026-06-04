@@ -102,6 +102,7 @@ public class VolumeConfig {
         }
     }
 
+    /** Synchronous save — only call from SAVE_EXECUTOR or during client shutdown. */
     public void save() {
         try {
             Files.writeString(configFile, GSON.toJson(volumes));

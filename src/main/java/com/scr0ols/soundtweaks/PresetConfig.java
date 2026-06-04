@@ -159,7 +159,9 @@ public class PresetConfig {
         for (Preset p : presets) {
             if (p.name.equals(oldName)) { p.name = unique; break; }
         }
-        if (activeNames.remove(oldName))  activeNames.add(unique);
+        synchronized (activeNames) {
+            if (activeNames.remove(oldName)) activeNames.add(unique); // atomic remove+add
+        }
         int fi = favoriteNames.indexOf(oldName);
         if (fi >= 0) favoriteNames.set(fi, unique);
         rebuildActivePresetsCache();
@@ -347,7 +349,7 @@ public class PresetConfig {
                 activeNames.add(name);
                 added++;
             }
-            if (added > 0) { rebuildActivePresetsCache(); save(); }
+            if (added > 0) { rebuildActivePresetsCache(); SAVE_EXECUTOR.submit(PresetConfig::save); }
             return added;
         } catch (Exception e) {
             SoundTweaks.LOGGER.error("SoundTweaks: erro ao importar presets de {}", file, e);

@@ -1,6 +1,7 @@
 package com.scr0ols.soundtweaks;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.loader.api.FabricLoader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +13,10 @@ public class SoundTweaks implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		LOGGER.info("SoundTweaks {} loaded", "1.0.0");
+		String version = FabricLoader.getInstance()
+				.getModContainer(MOD_ID)
+				.map(c -> c.getMetadata().getVersion().getFriendlyString())
+				.orElse("?");
+		LOGGER.info("SoundTweaks {} loaded", version);
 	}
 }
