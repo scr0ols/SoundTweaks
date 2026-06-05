@@ -65,6 +65,6 @@ Output: `build/libs/soundtweaks-1.0.0.jar`
 
 ## License
 
-[CC0-1.0](LICENSE) — public domain. Do whatever you want with it.
+[MIT](LICENSE) — free to use, modify and redistribute with credit.
 
 **Author:** scr0ols
