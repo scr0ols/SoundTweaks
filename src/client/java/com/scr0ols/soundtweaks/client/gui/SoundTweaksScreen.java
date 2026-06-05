@@ -85,31 +85,25 @@ public class SoundTweaksScreen extends Screen {
         // ── Row 1 (Y=4): [speaker] [Simple/Detail View] [Presets ▶/◄] ... title ...
         this.muteSoundsBtn = Button.builder(Component.empty(), btn -> toggleMuteVisible())
                 .bounds(4, 2, 20, 20).build();
-        this.muteSoundsBtn.setTooltip(Tooltip.create(Component.literal(
-                "Mute / restore all currently visible sounds")));
+        this.muteSoundsBtn.setTooltip(Tooltip.create(Component.translatable("soundtweaks.gui.mute_all")));
         this.addRenderableWidget(this.muteSoundsBtn);
 
         this.viewToggleButton = Button.builder(
-                Component.literal(detailedView ? "Detail View" : "Simple View"),
+                detailedView ? Component.translatable("soundtweaks.gui.view_detail") : Component.translatable("soundtweaks.gui.view_simple"),
                 btn -> {
                     detailedView = !detailedView;
-                    btn.setMessage(Component.literal(detailedView ? "Detail View" : "Simple View"));
+                    btn.setMessage(detailedView ? Component.translatable("soundtweaks.gui.view_detail") : Component.translatable("soundtweaks.gui.view_simple"));
                     refreshList();
                 }
         ).bounds(28, 2, 78, 20).build();
-        this.viewToggleButton.setTooltip(Tooltip.create(Component.literal(
-                "Simple View: grouped by sound event\n" +
-                "Detail View: individual sound files")));
+        this.viewToggleButton.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.view_toggle")));
         this.addRenderableWidget(this.viewToggleButton);
 
         this.presetsBtn = Button.builder(
-                Component.literal("Presets"),
+                Component.translatable("soundtweaks.presets.title"),
                 btn -> toggleSidebar()
         ).bounds(110, 2, 68, 20).build();
-        this.presetsBtn.setTooltip(Tooltip.create(Component.literal(
-                "Toggle the presets sidebar.\n" +
-                "Presets let you save and quickly switch\n" +
-                "between different volume configurations.")));
+        this.presetsBtn.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.presets_sidebar")));
         this.addRenderableWidget(this.presetsBtn);
 
         // ── Row 2 (Y=22): [Category] [Object] [×] [search bar (fills remaining space)]
@@ -123,7 +117,7 @@ public class SoundTweaksScreen extends Screen {
 
         this.clearButton = Button.builder(Component.literal("x"), btn -> clearFilters())
                 .bounds(262, 26, 20, 20).build();
-        this.clearButton.setTooltip(Tooltip.create(Component.literal("Clear all filters")));
+        this.clearButton.setTooltip(Tooltip.create(Component.translatable("soundtweaks.gui.clear_filters")));
         this.addRenderableWidget(this.clearButton);
 
         int searchX = 286;
@@ -150,7 +144,7 @@ public class SoundTweaksScreen extends Screen {
 
         // Import config from another instance via native file dialog
         var importCfgBtn = Button.builder(
-                Component.literal("Import Config..."),
+                Component.translatable("soundtweaks.gui.import_config"),
                 btn -> {
                     String selected;
                     try (MemoryStack stack = MemoryStack.stackPush()) {
@@ -173,11 +167,7 @@ public class SoundTweaksScreen extends Screen {
                     refreshList();
                 }
         ).bounds(cw / 2 - 125, this.height - 26, 120, 20).build();
-        importCfgBtn.setTooltip(Tooltip.create(Component.literal(
-                "Import sound volumes from another instance.\n" +
-                "Select soundtweaks.json for sounds,\n" +
-                "or soundtweaks_blocks.json for blocks.\n" +
-                "Replaces current configuration.")));
+        importCfgBtn.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.import_config")));
         this.addRenderableWidget(importCfgBtn);
 
         // Manage Presets button as a native widget (only when sidebar is open)

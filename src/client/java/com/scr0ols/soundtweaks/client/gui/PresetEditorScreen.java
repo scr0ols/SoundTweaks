@@ -47,7 +47,7 @@ public class PresetEditorScreen extends Screen {
     private boolean mutePresetsActive = false;
 
     public PresetEditorScreen(Screen parent, PresetConfig.Preset preset) {
-        super(Component.literal("Edit: " + preset.name));
+        super(Component.translatable("soundtweaks.presets.edit_title", preset.name));
         this.parent = parent;
         this.preset = preset;
     }
@@ -75,19 +75,18 @@ public class PresetEditorScreen extends Screen {
 
         var clearBtn = Button.builder(Component.literal("x"), btn -> clearFilters())
                 .bounds(262, fY, 20, fH).build();
-        clearBtn.setTooltip(Tooltip.create(Component.literal("Clear all filters")));
+        clearBtn.setTooltip(Tooltip.create(Component.translatable("soundtweaks.gui.clear_filters")));
         this.addRenderableWidget(clearBtn);
 
         this.viewToggleBtn = Button.builder(
-                Component.literal(PresetSoundList.detailedView ? "Detail View" : "Simple View"),
+                PresetSoundList.detailedView ? Component.translatable("soundtweaks.gui.view_detail") : Component.translatable("soundtweaks.gui.view_simple"),
                 btn -> {
                     PresetSoundList.detailedView = !PresetSoundList.detailedView;
-                    btn.setMessage(Component.literal(PresetSoundList.detailedView ? "Detail View" : "Simple View"));
+                    btn.setMessage(PresetSoundList.detailedView ? Component.translatable("soundtweaks.gui.view_detail") : Component.translatable("soundtweaks.gui.view_simple"));
                     refreshList();
                 }
         ).bounds(this.width - 82, fY, 78, fH).build();
-        this.viewToggleBtn.setTooltip(Tooltip.create(Component.literal(
-                "Simple View: grouped by sound event\nDetail View: all individual sound files")));
+        this.viewToggleBtn.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.view_toggle")));
         this.addRenderableWidget(this.viewToggleBtn);
 
         int searchX = 286;
@@ -103,19 +102,15 @@ public class PresetEditorScreen extends Screen {
         int centerX = this.width / 2;
 
         var importBtn = Button.builder(
-                Component.literal("Import from config"), btn -> importFromBase()
+                Component.translatable("soundtweaks.gui.import_from_config"), btn -> importFromBase()
         ).bounds(centerX - 135, btnY, 130, 20).build();
-        importBtn.setTooltip(Tooltip.create(Component.literal(
-                "Copies all sounds/blocks with volume ≠ 100%\n" +
-                "from the base config into this preset.\n" +
-                "Useful to snapshot your current global settings.")));
+        importBtn.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.import_from_config")));
         this.addRenderableWidget(importBtn);
 
         this.mutePresetsActive = false;
         this.mutePresetsBtn = Button.builder(Component.empty(), btn -> toggleMuteVisible())
                 .bounds(centerX + 2, btnY, 24, 20).build();
-        this.mutePresetsBtn.setTooltip(Tooltip.create(Component.literal(
-                "Mute / restore all currently visible sounds in this preset.")));
+        this.mutePresetsBtn.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.mute_preset")));
         this.addRenderableWidget(this.mutePresetsBtn);
 
         this.addRenderableWidget(Button.builder(

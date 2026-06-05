@@ -111,8 +111,7 @@ public class PresetsScreen extends Screen {
         this.newPresetBtn = Button.builder(
                 Component.translatable("soundtweaks.presets.new"), btn -> enterCreateMode()
         ).bounds(4, this.height - 50, LIST_W - 8, 20).build();
-        this.newPresetBtn.setTooltip(Tooltip.create(Component.literal(
-                "Create a new preset.")));
+        this.newPresetBtn.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.new_preset")));
         this.addRenderableWidget(this.newPresetBtn);
 
         this.doneBtn = Button.builder(
@@ -121,7 +120,7 @@ public class PresetsScreen extends Screen {
         this.addRenderableWidget(this.doneBtn);
 
         this.importPresetsBtn = Button.builder(
-                Component.literal("Import"),
+                Component.translatable("soundtweaks.gui.import"),
                 btn -> {
                     String selected;
                     try (MemoryStack stack = MemoryStack.stackPush()) {
@@ -136,12 +135,11 @@ public class PresetsScreen extends Screen {
                     if (result >= 0) presetList.refresh();
                 }
         ).bounds(4, this.height - 26, LIST_W / 2 - 6, 20).build();
-        this.importPresetsBtn.setTooltip(Tooltip.create(Component.literal(
-                "Import presets from a shared JSON file.")));
+        this.importPresetsBtn.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.import_presets")));
         this.addRenderableWidget(this.importPresetsBtn);
 
         this.exportPresetsBtn = Button.builder(
-                Component.literal("Export"),
+                Component.translatable("soundtweaks.gui.export"),
                 btn -> {
                     String target;
                     try (MemoryStack stack = MemoryStack.stackPush()) {
@@ -156,15 +154,13 @@ public class PresetsScreen extends Screen {
                 }
         // Provisional bounds — corrected by rebuildLayout() at the end of init().
         ).bounds(4, this.height - 26, LIST_W / 2 - 6, 20).build();
-        this.exportPresetsBtn.setTooltip(Tooltip.create(Component.literal(
-                "Export all current presets to a JSON file.")));
+        this.exportPresetsBtn.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.export_presets")));
         this.addRenderableWidget(this.exportPresetsBtn);
 
         this.openConfigBtn = Button.builder(
-                Component.literal("Open Config Folder"), btn -> ConfigFileUtil.openConfigFolder()
+                Component.translatable("soundtweaks.gui.open_folder"), btn -> ConfigFileUtil.openConfigFolder()
         ).bounds(LIST_W / 2 + 2, this.height - 26, LIST_W / 2 - 6, 20).build();
-        this.openConfigBtn.setTooltip(Tooltip.create(Component.literal(
-                "Open the folder containing\nSoundTweaks config and preset files.")));
+        this.openConfigBtn.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.open_folder")));
         this.addRenderableWidget(this.openConfigBtn);
 
         rebuildLayout();
@@ -183,7 +179,7 @@ public class PresetsScreen extends Screen {
         this.createConfirmBtn.visible = false;
         this.addRenderableWidget(this.createConfirmBtn);
 
-        this.createCancelBtn = Button.builder(Component.literal("Cancel"),
+        this.createCancelBtn = Button.builder(Component.translatable("soundtweaks.gui.cancel"),
                 btn -> exitCreateMode()
         ).bounds(cx + 110, cy + 24, 106, 18).build();
         this.createCancelBtn.visible = false;
@@ -199,12 +195,12 @@ public class PresetsScreen extends Screen {
         this.renameBox.visible = false;
         this.addRenderableWidget(this.renameBox);
 
-        this.renameConfirmBtn = Button.builder(Component.literal("Save name"),
+        this.renameConfirmBtn = Button.builder(Component.translatable("soundtweaks.gui.save_name"),
                 btn -> confirmRename()).bounds(renX, renY + 26, renBtnW, 20).build();
         this.renameConfirmBtn.visible = false;
         this.addRenderableWidget(this.renameConfirmBtn);
 
-        this.renameCancelBtn = Button.builder(Component.literal("Clear"),
+        this.renameCancelBtn = Button.builder(Component.translatable("soundtweaks.gui.clear"),
                 btn -> { renameBox.setValue(""); this.setFocused(renameBox); renameBox.setFocused(true); }
         ).bounds(renX + renBtnW + 4, renY + 26, renBtnW, 20).build();
         this.renameCancelBtn.visible = false;
@@ -248,7 +244,7 @@ public class PresetsScreen extends Screen {
 
         this.soundsClear = Button.builder(Component.literal("x"), btn -> clearSoundsFilters())
                 .bounds(px + 212, fy, 18, fh).build();
-        this.soundsClear.setTooltip(Tooltip.create(Component.literal("Clear all sound filters.")));
+        this.soundsClear.setTooltip(Tooltip.create(Component.translatable("soundtweaks.gui.clear_filters")));
         this.soundsClear.visible = false;
         this.addRenderableWidget(this.soundsClear);
 
@@ -259,21 +255,19 @@ public class PresetsScreen extends Screen {
                 refreshSoundsList();
             }
         }).bounds(px + pw - 110, fy, 24, fh).build();
-        this.soundsMute.setTooltip(Tooltip.create(Component.literal(
-                "Mute / restore all visible sounds in this preset.")));
+        this.soundsMute.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.mute_preset")));
         this.soundsMute.visible = false;
         this.addRenderableWidget(this.soundsMute);
 
         this.soundsViewToggle = Button.builder(
-                Component.literal(PresetSoundList.detailedView ? "Detail View" : "Simple View"),
+                PresetSoundList.detailedView ? Component.translatable("soundtweaks.gui.view_detail") : Component.translatable("soundtweaks.gui.view_simple"),
                 btn -> {
                     PresetSoundList.detailedView = !PresetSoundList.detailedView;
-                    btn.setMessage(Component.literal(PresetSoundList.detailedView ? "Detail View" : "Simple View"));
+                    btn.setMessage(PresetSoundList.detailedView ? Component.translatable("soundtweaks.gui.view_detail") : Component.translatable("soundtweaks.gui.view_simple"));
                     refreshSoundsList();
                 }
         ).bounds(px + pw - 82, fy, 78, fh).build();
-        this.soundsViewToggle.setTooltip(Tooltip.create(Component.literal(
-                "Simple View: one entry per sound event.\nDetail View: individual sound files.")));
+        this.soundsViewToggle.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.view_toggle")));
         this.soundsViewToggle.visible = false;
         this.addRenderableWidget(this.soundsViewToggle);
 
@@ -288,15 +282,14 @@ public class PresetsScreen extends Screen {
 
         // Import in the footer, to the left of Done (doneBtn is at panelX+panelW/2-60)
         int importX = px + pw / 2 - 117;
-        this.soundsImport = Button.builder(Component.literal("Import from config"), btn -> {
+        this.soundsImport = Button.builder(Component.translatable("soundtweaks.gui.import_from_config"), btn -> {
             if (editingPreset == null) return;
             VolumeConfig.SOUNDS.getAll().forEach((id, vol) -> { if (vol != 1.0f) editingPreset.sounds.put(id, vol); });
             VolumeConfig.BLOCKS.getAll().forEach((id, vol) -> { if (vol != 1.0f) editingPreset.blocks.put(id, vol); });
             PresetConfig.markDirty();
             refreshSoundsList();
         }).bounds(importX, this.height - 26, 110, 20).build();
-        this.soundsImport.setTooltip(Tooltip.create(Component.literal(
-                "Copies all sounds/blocks with volume ≠ 100%\nfrom the base config into this preset.")));
+        this.soundsImport.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.import_from_config")));
         this.soundsImport.visible = false;
         this.addRenderableWidget(this.soundsImport);
     }
@@ -836,11 +829,12 @@ public class PresetsScreen extends Screen {
                 }
                 this.minecraft.setScreen(PresetsScreen.this);
             },
-            Component.literal("Delete preset?"),
+            Component.translatable("soundtweaks.presets.delete_title"),
             Component.empty()
                 .append(Component.literal("\"" + toDelete.name + "\"").withStyle(s ->
                     s.withColor(net.minecraft.network.chat.TextColor.fromRgb(toDelete.argbColor() & 0x00FFFFFF))))
-                .append(Component.literal(" — This action cannot be undone."))
+                .append(Component.literal(" — "))
+                .append(Component.translatable("soundtweaks.presets.delete_warning"))
         ));
     }
 

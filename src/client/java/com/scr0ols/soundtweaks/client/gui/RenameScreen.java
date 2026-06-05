@@ -18,7 +18,7 @@ public class RenameScreen extends Screen {
     private boolean focusSet = false;
 
     public RenameScreen(Screen parent, String presetId, String currentName) {
-        super(Component.literal("Rename Preset"));
+        super(Component.translatable("soundtweaks.presets.rename_title"));
         this.parent      = parent;
         this.presetId    = presetId;
         this.currentName = currentName;
@@ -42,7 +42,7 @@ public class RenameScreen extends Screen {
         ).bounds(cx, cy + 26, 106, 20).build());
 
         this.addRenderableWidget(Button.builder(
-                Component.literal("Cancel"),
+                Component.translatable("soundtweaks.gui.cancel"),
                 btn -> this.onClose()
         ).bounds(cx + 114, cy + 26, 106, 20).build());
     }
