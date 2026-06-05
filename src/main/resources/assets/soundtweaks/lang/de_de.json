@@ -47,6 +47,16 @@
   "soundtweaks.import.sounds.title":    "Sound-Config importieren / exportieren",
   "soundtweaks.import.blocks.title":    "Block-Config importieren / exportieren",
 
+  "soundtweaks.tooltip.view_toggle":        "Einfache Ansicht: nach Klangereignis gruppiert\nDetailansicht: alle einzelnen Sounddateien",
+  "soundtweaks.tooltip.presets_sidebar":    "Preset-Seitenleiste ein-/ausblenden.\nPresets ermöglichen das Speichern und schnelle Wechseln\nzwischen verschiedenen Lautstärkekonfigurationen.",
+  "soundtweaks.tooltip.import_config":      "Lautstärken von einer anderen Instanz importieren.\nWähle soundtweaks.json für Sounds\noder soundtweaks_blocks.json für Blöcke.\nErsetzt die aktuelle Konfiguration.",
+  "soundtweaks.tooltip.new_preset":         "Ein neues Preset erstellen.",
+  "soundtweaks.tooltip.import_presets":     "Presets aus einer geteilten JSON-Datei importieren.",
+  "soundtweaks.tooltip.export_presets":     "Alle aktuellen Presets in eine JSON-Datei exportieren.",
+  "soundtweaks.tooltip.open_folder":        "Den Ordner mit den SoundTweaks-\nKonfigurationsdateien und Presets öffnen.",
+  "soundtweaks.tooltip.mute_preset":        "Alle aktuell sichtbaren Sounds in diesem Preset stumm-/einschalten.",
+  "soundtweaks.tooltip.import_from_config": "Kopiert alle Sounds/Blöcke mit Lautstärke ≠ 100%\naus der Basiskonfiguration in dieses Preset.\nNützlich zum Sichern aktueller globaler Einstellungen.",
+
   "soundtweaks.presets.edit_title":     "Bearbeiten: %s",
   "soundtweaks.presets.rename_title":   "Preset umbenennen",
   "soundtweaks.presets.delete_title":   "Preset löschen?",

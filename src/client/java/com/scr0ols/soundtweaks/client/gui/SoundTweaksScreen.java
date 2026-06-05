@@ -96,19 +96,14 @@ public class SoundTweaksScreen extends Screen {
                     refreshList();
                 }
         ).bounds(28, 2, 78, 20).build();
-        this.viewToggleButton.setTooltip(Tooltip.create(Component.literal(
-                "Simple View: grouped by sound event\n" +
-                "Detail View: individual sound files")));
+        this.viewToggleButton.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.view_toggle")));
         this.addRenderableWidget(this.viewToggleButton);
 
         this.presetsBtn = Button.builder(
                 Component.translatable("soundtweaks.presets.title"),
                 btn -> toggleSidebar()
         ).bounds(110, 2, 68, 20).build();
-        this.presetsBtn.setTooltip(Tooltip.create(Component.literal(
-                "Toggle the presets sidebar.\n" +
-                "Presets let you save and quickly switch\n" +
-                "between different volume configurations.")));
+        this.presetsBtn.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.presets_sidebar")));
         this.addRenderableWidget(this.presetsBtn);
 
         // ── Row 2 (Y=22): [Category] [Object] [×] [search bar (fills remaining space)]
@@ -172,11 +167,7 @@ public class SoundTweaksScreen extends Screen {
                     refreshList();
                 }
         ).bounds(cw / 2 - 125, this.height - 26, 120, 20).build();
-        importCfgBtn.setTooltip(Tooltip.create(Component.literal(
-                "Import sound volumes from another instance.\n" +
-                "Select soundtweaks.json for sounds,\n" +
-                "or soundtweaks_blocks.json for blocks.\n" +
-                "Replaces current configuration.")));
+        importCfgBtn.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.import_config")));
         this.addRenderableWidget(importCfgBtn);
 
         // Manage Presets button as a native widget (only when sidebar is open)

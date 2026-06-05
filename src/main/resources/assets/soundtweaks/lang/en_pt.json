@@ -47,6 +47,16 @@
   "soundtweaks.import.sounds.title":    "Plunder / Export Sound Config",
   "soundtweaks.import.blocks.title":    "Plunder / Export Block Config",
 
+  "soundtweaks.tooltip.view_toggle":        "Simple View: grouped by plunder type\nDetailed View: every last piece of booty",
+  "soundtweaks.tooltip.presets_sidebar":    "Raise or lower the preset flag!\nPresets let ye hoard yer favourite\nvolume configs like buried treasure.",
+  "soundtweaks.tooltip.import_config":      "Plunder sound volumes from another ship!\nGrab soundtweaks.json fer sounds,\nor soundtweaks_blocks.json fer blocks.\nReplaces yer current haul.",
+  "soundtweaks.tooltip.new_preset":         "Forge a brand new preset, arrr!",
+  "soundtweaks.tooltip.import_presets":     "Plunder presets from a shared JSON scroll.",
+  "soundtweaks.tooltip.export_presets":     "Set sail with all yer presets in a JSON chest.",
+  "soundtweaks.tooltip.open_folder":        "Open the treasure chest holding\nSoundTweaks config and preset scrolls.",
+  "soundtweaks.tooltip.mute_preset":        "Silence the seas / restore the sounds in this preset.",
+  "soundtweaks.tooltip.import_from_config": "Plunders all sounds/blocks with volume ≠ 100%\nfrom the base config into this preset.\nUseful to snapshot yer current global plunder.",
+
   "soundtweaks.presets.edit_title":     "Tamper with: %s",
   "soundtweaks.presets.rename_title":   "Rename yer Preset",
   "soundtweaks.presets.delete_title":   "Feed it to the sharks?",

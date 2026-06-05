@@ -47,6 +47,16 @@
   "soundtweaks.import.sounds.title":    "사운드 설정 가져오기 / 내보내기",
   "soundtweaks.import.blocks.title":    "블록 설정 가져오기 / 내보내기",
 
+  "soundtweaks.tooltip.view_toggle":        "간단 보기: 사운드 이벤트별로 그룹화\n상세 보기: 개별 사운드 파일 모두 표시",
+  "soundtweaks.tooltip.presets_sidebar":    "프리셋 사이드바를 표시/숨깁니다.\n프리셋을 사용하면 다양한 볼륨 설정을\n저장하고 빠르게 전환할 수 있습니다.",
+  "soundtweaks.tooltip.import_config":      "다른 인스턴스에서 사운드 볼륨을 가져옵니다.\n사운드는 soundtweaks.json,\n블록은 soundtweaks_blocks.json을 선택하세요.\n현재 설정을 덮어씁니다.",
+  "soundtweaks.tooltip.new_preset":         "새 프리셋을 만듭니다.",
+  "soundtweaks.tooltip.import_presets":     "공유된 JSON 파일에서 프리셋을 가져옵니다.",
+  "soundtweaks.tooltip.export_presets":     "모든 현재 프리셋을 JSON 파일로 내보냅니다.",
+  "soundtweaks.tooltip.open_folder":        "SoundTweaks 설정 파일과\n프리셋이 있는 폴더를 엽니다.",
+  "soundtweaks.tooltip.mute_preset":        "이 프리셋의 현재 표시된 모든 사운드를 음소거/복원합니다.",
+  "soundtweaks.tooltip.import_from_config": "기본 설정에서 볼륨 ≠ 100%인 모든 사운드/블록을\n이 프리셋으로 복사합니다.\n현재 전역 설정을 스냅샷하는 데 유용합니다.",
+
   "soundtweaks.presets.edit_title":     "편집: %s",
   "soundtweaks.presets.rename_title":   "Preset 이름 변경",
   "soundtweaks.presets.delete_title":   "preset을 삭제할까요?",

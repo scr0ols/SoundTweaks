@@ -47,6 +47,16 @@
   "soundtweaks.import.sounds.title":   "Import / Export Sound Config",
   "soundtweaks.import.blocks.title":   "Import / Export Block Config",
 
+  "soundtweaks.tooltip.view_toggle":        "Simple View: grouped by sound event\nDetail View: individual sound files",
+  "soundtweaks.tooltip.presets_sidebar":    "Toggle the presets sidebar.\nPresets let you save and quickly switch\nbetween different volume configurations.",
+  "soundtweaks.tooltip.import_config":      "Import sound volumes from another instance.\nSelect soundtweaks.json for sounds,\nor soundtweaks_blocks.json for blocks.\nReplaces current configuration.",
+  "soundtweaks.tooltip.new_preset":         "Create a new preset.",
+  "soundtweaks.tooltip.import_presets":     "Import presets from a shared JSON file.",
+  "soundtweaks.tooltip.export_presets":     "Export all current presets to a JSON file.",
+  "soundtweaks.tooltip.open_folder":        "Open the folder containing\nSoundTweaks config and preset files.",
+  "soundtweaks.tooltip.mute_preset":        "Mute / restore all currently visible sounds in this preset.",
+  "soundtweaks.tooltip.import_from_config": "Copies all sounds/blocks with volume ≠ 100%\nfrom the base config into this preset.\nUseful to snapshot your current global settings.",
+
   "soundtweaks.presets.edit_title":    "Edit: %s",
   "soundtweaks.presets.rename_title":  "Rename Preset",
   "soundtweaks.presets.delete_title":  "Delete preset?",

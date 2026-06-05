@@ -47,6 +47,16 @@
   "soundtweaks.import.sounds.title":    "导入 / 导出音效配置",
   "soundtweaks.import.blocks.title":    "导入 / 导出方块配置",
 
+  "soundtweaks.tooltip.view_toggle":        "简单视图：按音效事件分组\n详细视图：所有单独的音效文件",
+  "soundtweaks.tooltip.presets_sidebar":    "显示/隐藏预设侧边栏。\n预设允许你保存并快速切换\n不同的音量配置。",
+  "soundtweaks.tooltip.import_config":      "从另一个实例导入音量设置。\n选择 soundtweaks.json 导入音效，\n或选择 soundtweaks_blocks.json 导入方块。\n将替换当前配置。",
+  "soundtweaks.tooltip.new_preset":         "创建新预设。",
+  "soundtweaks.tooltip.import_presets":     "从共享的 JSON 文件导入预设。",
+  "soundtweaks.tooltip.export_presets":     "将所有当前预设导出到 JSON 文件。",
+  "soundtweaks.tooltip.open_folder":        "打开包含 SoundTweaks\n配置文件和预设的文件夹。",
+  "soundtweaks.tooltip.mute_preset":        "静音 / 恢复此预设中所有可见音效。",
+  "soundtweaks.tooltip.import_from_config": "将基础配置中音量 ≠ 100% 的所有音效/方块\n复制到此预设中。\n适合快照当前全局设置。",
+
   "soundtweaks.presets.edit_title":     "编辑：%s",
   "soundtweaks.presets.rename_title":   "重命名 Preset",
   "soundtweaks.presets.delete_title":   "删除 preset？",

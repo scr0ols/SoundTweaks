@@ -47,6 +47,16 @@
   "soundtweaks.import.sounds.title":    "Importa / Esporta config suoni",
   "soundtweaks.import.blocks.title":    "Importa / Esporta config blocchi",
 
+  "soundtweaks.tooltip.view_toggle":        "Vista semplice: raggruppato per evento sonoro\nVista dettagliata: tutti i file audio individuali",
+  "soundtweaks.tooltip.presets_sidebar":    "Mostra/nascondi la barra laterale dei preset.\nI preset permettono di salvare e passare rapidamente\ntra diverse configurazioni del volume.",
+  "soundtweaks.tooltip.import_config":      "Importa volumi sonori da un'altra istanza.\nSeleziona soundtweaks.json per i suoni,\no soundtweaks_blocks.json per i blocchi.\nSostituisce la configurazione attuale.",
+  "soundtweaks.tooltip.new_preset":         "Crea un nuovo preset.",
+  "soundtweaks.tooltip.import_presets":     "Importa preset da un file JSON condiviso.",
+  "soundtweaks.tooltip.export_presets":     "Esporta tutti i preset attuali in un file JSON.",
+  "soundtweaks.tooltip.open_folder":        "Apri la cartella contenente i file\ndi configurazione e i preset di SoundTweaks.",
+  "soundtweaks.tooltip.mute_preset":        "Silenzia / ripristina tutti i suoni visibili in questo preset.",
+  "soundtweaks.tooltip.import_from_config": "Copia tutti i suoni/blocchi con volume ≠ 100%\ndalla config base in questo preset.\nUtile per salvare le impostazioni globali attuali.",
+
   "soundtweaks.presets.edit_title":     "Modifica: %s",
   "soundtweaks.presets.rename_title":   "Rinomina Preset",
   "soundtweaks.presets.delete_title":   "Eliminare il preset?",

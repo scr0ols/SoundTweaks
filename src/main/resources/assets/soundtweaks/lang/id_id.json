@@ -47,6 +47,16 @@
   "soundtweaks.import.sounds.title":    "Impor / Ekspor Konfigurasi Suara",
   "soundtweaks.import.blocks.title":    "Impor / Ekspor Konfigurasi Blok",
 
+  "soundtweaks.tooltip.view_toggle":        "Tampilan Sederhana: dikelompokkan berdasarkan peristiwa suara\nTampilan Detail: semua file suara individual",
+  "soundtweaks.tooltip.presets_sidebar":    "Tampilkan/sembunyikan bilah samping preset.\nPreset memungkinkan kamu menyimpan dan beralih cepat\nantara berbagai konfigurasi volume.",
+  "soundtweaks.tooltip.import_config":      "Impor volume suara dari instansi lain.\nPilih soundtweaks.json untuk suara,\natau soundtweaks_blocks.json untuk blok.\nMenunggu konfigurasi saat ini.",
+  "soundtweaks.tooltip.new_preset":         "Buat preset baru.",
+  "soundtweaks.tooltip.import_presets":     "Impor preset dari file JSON bersama.",
+  "soundtweaks.tooltip.export_presets":     "Ekspor semua preset saat ini ke file JSON.",
+  "soundtweaks.tooltip.open_folder":        "Buka folder yang berisi file konfigurasi\ndan preset SoundTweaks.",
+  "soundtweaks.tooltip.mute_preset":        "Bisukan / pulihkan semua suara yang terlihat di preset ini.",
+  "soundtweaks.tooltip.import_from_config": "Menyalin semua suara/blok dengan volume ≠ 100%\ndari config dasar ke preset ini.\nBerguna untuk menyimpan pengaturan global saat ini.",
+
   "soundtweaks.presets.edit_title":     "Edit: %s",
   "soundtweaks.presets.rename_title":   "Ganti Nama Preset",
   "soundtweaks.presets.delete_title":   "Hapus preset?",

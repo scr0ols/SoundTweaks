@@ -47,6 +47,16 @@
   "soundtweaks.import.sounds.title":    "Geluidsconfiguratie Importeren / Exporteren",
   "soundtweaks.import.blocks.title":    "Blokonfiguratie Importeren / Exporteren",
 
+  "soundtweaks.tooltip.view_toggle":        "Eenvoudige weergave: gegroepeerd per geluidsgebeurtenis\nGedetailleerde weergave: alle afzonderlijke geluidsbestanden",
+  "soundtweaks.tooltip.presets_sidebar":    "De preset-zijbalk tonen/verbergen.\nPresets laten je verschillende volumeconfiguraties\nopslaan en snel wisselen.",
+  "soundtweaks.tooltip.import_config":      "Geluidsvolumes importeren van een andere instantie.\nSelecteer soundtweaks.json voor geluiden,\nof soundtweaks_blocks.json voor blokken.\nVervangt de huidige configuratie.",
+  "soundtweaks.tooltip.new_preset":         "Een nieuwe preset aanmaken.",
+  "soundtweaks.tooltip.import_presets":     "Presets importeren uit een gedeeld JSON-bestand.",
+  "soundtweaks.tooltip.export_presets":     "Alle huidige presets exporteren naar een JSON-bestand.",
+  "soundtweaks.tooltip.open_folder":        "De map openen met de SoundTweaks-\nconfiguratie- en presetbestanden.",
+  "soundtweaks.tooltip.mute_preset":        "Alle zichtbare geluiden in dit preset dempen / herstellen.",
+  "soundtweaks.tooltip.import_from_config": "Kopieert alle geluiden/blokken met volume ≠ 100%\nvan de basisconfiguratie naar dit preset.\nHandig om je huidige globale instellingen vast te leggen.",
+
   "soundtweaks.presets.edit_title":     "Bewerken: %s",
   "soundtweaks.presets.rename_title":   "Preset Hernoemen",
   "soundtweaks.presets.delete_title":   "Preset verwijderen?",

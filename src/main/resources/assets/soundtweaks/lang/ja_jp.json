@@ -47,6 +47,16 @@
   "soundtweaks.import.sounds.title":    "サウンド設定をインポート / エクスポート",
   "soundtweaks.import.blocks.title":    "ブロック設定をインポート / エクスポート",
 
+  "soundtweaks.tooltip.view_toggle":        "シンプルビュー：サウンドイベントごとにグループ化\n詳細ビュー：すべての個別サウンドファイル",
+  "soundtweaks.tooltip.presets_sidebar":    "プリセットのサイドバーを表示/非表示にします。\nプリセットを使うと、異なる音量設定を\n保存して素早く切り替えられます。",
+  "soundtweaks.tooltip.import_config":      "別のインスタンスからサウンド音量をインポートします。\n音声には soundtweaks.json、\nブロックには soundtweaks_blocks.json を選択してください。\n現在の設定を上書きします。",
+  "soundtweaks.tooltip.new_preset":         "新しいプリセットを作成します。",
+  "soundtweaks.tooltip.import_presets":     "共有の JSON ファイルからプリセットをインポートします。",
+  "soundtweaks.tooltip.export_presets":     "すべてのプリセットを JSON ファイルにエクスポートします。",
+  "soundtweaks.tooltip.open_folder":        "SoundTweaks の設定ファイルと\nプリセットが入ったフォルダーを開きます。",
+  "soundtweaks.tooltip.mute_preset":        "このプリセット内の全ての表示中サウンドをミュート / 解除します。",
+  "soundtweaks.tooltip.import_from_config": "ベース設定から音量 ≠ 100% のすべてのサウンド/ブロックを\nこのプリセットにコピーします。\n現在のグローバル設定をスナップショットするのに便利です。",
+
   "soundtweaks.presets.edit_title":     "編集: %s",
   "soundtweaks.presets.rename_title":   "Preset の名前を変更",
   "soundtweaks.presets.delete_title":   "preset を削除しますか？",

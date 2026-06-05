@@ -47,6 +47,16 @@
   "soundtweaks.import.sounds.title":    "Ses Yapılandırmasını İçe / Dışa Aktar",
   "soundtweaks.import.blocks.title":    "Blok Yapılandırmasını İçe / Dışa Aktar",
 
+  "soundtweaks.tooltip.view_toggle":        "Basit Görünüm: ses olayına göre gruplandırılmış\nAyrıntılı Görünüm: tüm bireysel ses dosyaları",
+  "soundtweaks.tooltip.presets_sidebar":    "Preset yan çubuğunu göster/gizle.\nPresetler farklı ses düzeylerini kaydetmenizi ve\nhızla geçiş yapmanızı sağlar.",
+  "soundtweaks.tooltip.import_config":      "Başka bir örnekten ses düzeylerini içe aktarır.\nSesler için soundtweaks.json,\nbloklar için soundtweaks_blocks.json seçin.\nMevcut yapılandırmanın yerini alır.",
+  "soundtweaks.tooltip.new_preset":         "Yeni bir preset oluştur.",
+  "soundtweaks.tooltip.import_presets":     "Paylaşılan bir JSON dosyasından preset içe aktar.",
+  "soundtweaks.tooltip.export_presets":     "Tüm mevcut presetleri JSON dosyasına dışa aktar.",
+  "soundtweaks.tooltip.open_folder":        "SoundTweaks yapılandırma dosyalarını\nve presetleri içeren klasörü aç.",
+  "soundtweaks.tooltip.mute_preset":        "Bu presetteki tüm görünür sesleri kapat / aç.",
+  "soundtweaks.tooltip.import_from_config": "Temel yapılandırmadaki hacmi ≠ %100 olan tüm sesleri/blokları\nbu presete kopyalar.\nMevcut genel ayarları kaydetmek için kullanışlıdır.",
+
   "soundtweaks.presets.edit_title":     "Düzenle: %s",
   "soundtweaks.presets.rename_title":   "Preset Yeniden Adlandır",
   "soundtweaks.presets.delete_title":   "Preset silinsin mi?",

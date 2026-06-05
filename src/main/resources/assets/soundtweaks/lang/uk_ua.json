@@ -47,6 +47,16 @@
   "soundtweaks.import.sounds.title":    "Імпорт / Експорт конфігу звуків",
   "soundtweaks.import.blocks.title":    "Імпорт / Експорт конфігу блоків",
 
+  "soundtweaks.tooltip.view_toggle":        "Простий вигляд: згруповано за звуковою подією\nДетальний вигляд: усі окремі звукові файли",
+  "soundtweaks.tooltip.presets_sidebar":    "Показати/приховати бокову панель пресетів.\nПресети дозволяють зберігати та швидко перемикатися\nміж різними конфігураціями гучності.",
+  "soundtweaks.tooltip.import_config":      "Імпортувати гучність звуків з іншого екземпляра.\nОберіть soundtweaks.json для звуків\nабо soundtweaks_blocks.json для блоків.\nЗамінює поточну конфігурацію.",
+  "soundtweaks.tooltip.new_preset":         "Створити новий пресет.",
+  "soundtweaks.tooltip.import_presets":     "Імпортувати пресети зі спільного файлу JSON.",
+  "soundtweaks.tooltip.export_presets":     "Експортувати всі поточні пресети у файл JSON.",
+  "soundtweaks.tooltip.open_folder":        "Відкрити папку з файлами конфігурації\nта пресетами SoundTweaks.",
+  "soundtweaks.tooltip.mute_preset":        "Вимкнути / відновити всі видимі звуки у цьому пресеті.",
+  "soundtweaks.tooltip.import_from_config": "Копіює всі звуки/блоки з гучністю ≠ 100%\nз базової конфігурації до цього пресету.\nЗручно для збереження поточних глобальних налаштувань.",
+
   "soundtweaks.presets.edit_title":     "Редагувати: %s",
   "soundtweaks.presets.rename_title":   "Перейменувати Preset",
   "soundtweaks.presets.delete_title":   "Видалити preset?",
