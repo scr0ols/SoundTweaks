@@ -1,5 +1,5 @@
 plugins {
-	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+	id 'org.quiltmc.loom' version "${loom_version}"
 	id 'maven-publish'
 }
 
@@ -29,11 +29,9 @@ loom {
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	
-	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	mappings loom.officialMojangMappings()
 
-	// Fabric API. This is technically optional, but you probably want it anyway.
-	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	modImplementation "org.quiltmc:quilt-loader:${project.quilt_loader_version}"
 	
 }
 
@@ -41,7 +39,7 @@ processResources {
 	def version = project.version
 	inputs.property "version", version
 
-	filesMatching("fabric.mod.json") {
+	filesMatching("quilt.mod.json") {
 		expand "version": version
 	}
 }
