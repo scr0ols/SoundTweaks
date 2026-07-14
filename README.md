@@ -1,6 +1,6 @@
 # SoundTweaks
 
-![Java](https://img.shields.io/badge/Java-25%2B-blue) ![Fabric](https://img.shields.io/badge/Fabric-Minecraft%2026.1.2-orange) ![License](https://img.shields.io/badge/License-MIT-green)
+![Java](https://img.shields.io/badge/Java-25%2B-blue) ![Fabric](https://img.shields.io/badge/Fabric-Minecraft%2026.1.2-orange) ![License](https://img.shields.io/badge/License-GPLv3-blue)
 
 **Granular per-sound and per-block volume control for Minecraft.**  
 Fabric mod — Minecraft 26.1.2 · Java 25+
