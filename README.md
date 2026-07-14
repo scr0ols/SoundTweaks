@@ -3,8 +3,6 @@
 ![Java](https://img.shields.io/badge/Java-25%2B-blue) ![Fabric](https://img.shields.io/badge/Fabric-Minecraft%2026.1.2-orange) ![License](https://img.shields.io/badge/License-GPLv3-blue)
 
 **Granular per-sound and per-block volume control for Minecraft.**  
-Fabric mod — Minecraft 26.1.2 · Java 25+
-
 ---
 
 ## What it does
@@ -62,13 +60,3 @@ All files are saved in `.minecraft/config/`:
 ```
 
 Output: `build/libs/soundtweaks-1.0.0.jar`
-
----
-
-## License
-
-## License
-
-[GPL-3.0](LICENSE) — free to use and redistribute; modified versions must stay open source under the same license.
-
-**Author:** scr0ols
