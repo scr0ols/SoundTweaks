@@ -67,6 +67,8 @@ Output: `build/libs/soundtweaks-1.0.0.jar`
 
 ## License
 
-[MIT](LICENSE) — free to use, modify and redistribute with credit.
+## License
+
+[GPL-3.0](LICENSE) — free to use and redistribute; modified versions must stay open source under the same license.
 
 **Author:** scr0ols
