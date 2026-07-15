@@ -6,8 +6,8 @@
 [![Fabric](https://img.shields.io/badge/Fabric-0.19.2%2B-C8A87A)](https://fabricmc.net/)
 [![Java](https://img.shields.io/badge/Java-25%2B-ED8B00?logo=openjdk&logoColor=white)](https://adoptium.net/)
 [![License](https://img.shields.io/badge/License-GPL--3.0-blue)](LICENSE)
-[![Modrinth](https://img.shields.io/modrinth/dt/sound-tweaks?logo=modrinth&label=Downloads&color=00AF5C)](https://modrinth.com/mod/sound-tweaks)
-[![SpigotMC](https://img.shields.io/badge/SpigotMC-Discussion-ED8106?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0yMCA2SDRjLTEuMSAwLTIgLjktMiAydjhsMCA0IDQtNGgxNGMxLjEgMCAyLS45IDItMlY4YzAtMS4xLS45LTItMi0yeiIvPjwvc3ZnPg==)](https://www.spigotmc.org/resources/sound-tweaks.137086/)
+[![Modrinth](https://img.shields.io/modrinth/dt/sound-tweaks?logo=modrinth&color=00AF5C)](https://modrinth.com/mod/sound-tweaks)
+[![SpigotMC](https://img.shields.io/spiget/downloads/137086?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0yMCA2SDRjLTEuMSAwLTIgLjktMiAydjhsMCA0IDQtNGgxNGMxLjEgMCAyLS45IDItMlY4YzAtMS4xLS45LTItMi0yeiIvPjwvc3ZnPg==&label=SpigotMC&color=ED8106)](https://www.spigotmc.org/resources/sound-tweaks.137086/)
 
 **Granular per-sound and per-block volume control for Minecraft.**
 
