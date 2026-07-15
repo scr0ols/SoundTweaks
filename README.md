@@ -2,11 +2,11 @@
 
 <div align="center">
 
-[![Minecraft](https://img.shields.io/badge/Minecraft-26.1.2-62B47A?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSIjNjJCNDdBIi8+PC9zdmc+)](https://www.minecraft.net/)
+[![Minecraft](https://img.shields.io/badge/Minecraft-26.1.2-62B47A?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSIjOEI2MjQwIi8+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjUiIGZpbGw9IiM1RDk5MzQiLz48cmVjdCB4PSIyIiB5PSIxIiB3aWR0aD0iMiIgaGVpZ2h0PSIxIiBmaWxsPSIjNEE3QTI4Ii8+PHJlY3QgeD0iNiIgeT0iMiIgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0iIzRBN0EyOCIvPjxyZWN0IHg9IjEwIiB5PSIxIiB3aWR0aD0iMiIgaGVpZ2h0PSIxIiBmaWxsPSIjNEE3QTI4Ii8+PHJlY3QgeD0iMTMiIHk9IjIiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiM0QTdBMjgiLz48cmVjdCB4PSIwIiB5PSI1IiB3aWR0aD0iMTYiIGhlaWdodD0iMSIgZmlsbD0iIzZCNEMyQSIvPjxyZWN0IHg9IjEiIHk9IjciIHdpZHRoPSIyIiBoZWlnaHQ9IjEiIGZpbGw9IiM3QTU1MzAiLz48cmVjdCB4PSI1IiB5PSI5IiB3aWR0aD0iMyIgaGVpZ2h0PSIxIiBmaWxsPSIjN0E1NTMwIi8+PHJlY3QgeD0iMTAiIHk9IjgiIHdpZHRoPSIyIiBoZWlnaHQ9IjEiIGZpbGw9IiM3QTU1MzAiLz48cmVjdCB4PSIzIiB5PSIxMiIgd2lkdGg9IjIiIGhlaWdodD0iMSIgZmlsbD0iIzdBNTUzMCIvPjxyZWN0IHg9IjkiIHk9IjEyIiB3aWR0aD0iMyIgaGVpZ2h0PSIxIiBmaWxsPSIjN0E1NTMwIi8+PHJlY3QgeD0iMTMiIHk9IjEwIiB3aWR0aD0iMiIgaGVpZ2h0PSIxIiBmaWxsPSIjN0E1NTMwIi8+PC9zdmc+)](https://www.minecraft.net/)
 [![Fabric](https://img.shields.io/badge/Fabric-0.19.2%2B-C8A87A)](https://fabricmc.net/)
 [![Java](https://img.shields.io/badge/Java-25%2B-ED8B00?logo=openjdk&logoColor=white)](https://adoptium.net/)
 [![License](https://img.shields.io/badge/License-GPL--3.0-blue)](LICENSE)
-[![Modrinth](https://img.shields.io/modrinth/dt/soundtweaks?logo=modrinth&label=Downloads&color=00AF5C)](https://modrinth.com/mod/soundtweaks)
+[![Modrinth](https://img.shields.io/modrinth/dt/sound-tweaks?logo=modrinth&label=Downloads&color=00AF5C)](https://modrinth.com/mod/sound-tweaks)
 
 **Granular per-sound and per-block volume control for Minecraft.**
 
@@ -82,7 +82,7 @@ SoundTweaks ships with translations for **19 languages**:
 | 🏴‍☠️ | Pirate English | `en_pt` |
 
 > [!NOTE]
-> Want to add or improve a translation? Contribute via pull request — translation files live in `src/main/resources/assets/soundtweaks/lang/`.
+> Want to add or improve a translation? Contribute via pull request — translation files live in `src/main/resources/assets/soundtweaks/lang/`. You can also open a [Discussion](https://github.com/scr0ols/SoundTweaks/discussions) to request a translation for a specific language.
 
 ---
 
