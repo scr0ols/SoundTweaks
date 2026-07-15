@@ -1,0 +1,40 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > [!TIP]
+        > For open-ended discussion or ideas you're not sure about, consider opening a [Discussion](https://github.com/scr0ols/SoundTweaks/discussions) instead.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the use case or limitation that motivates this request.
+      placeholder: "e.g. I can't silence only the piston sounds in my farm without affecting other block sounds..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe what you'd like to see added or changed.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Have you tried working around this with existing features (e.g. presets, per-block control)?
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and this has not been requested before
+          required: true

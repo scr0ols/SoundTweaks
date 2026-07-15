@@ -1,0 +1,45 @@
+name: Translation Request
+description: Request a new language or report an issue with an existing translation
+labels: ["i18n"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > [!NOTE]
+        > If you'd like to contribute the translation yourself, see the [Translations](https://github.com/scr0ols/SoundTweaks/wiki/Translations) wiki page and open a pull request instead.
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Request type
+      options:
+        - New language
+        - Fix existing translation
+    validations:
+      required: true
+
+  - type: input
+    id: language
+    attributes:
+      label: Language
+      description: Language name and locale code (e.g. `Finnish — fi_fi`)
+      placeholder: "e.g. Finnish — fi_fi"
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: |
+        - For **new languages**: any context about demand or availability of translators
+        - For **fixes**: paste the incorrect string(s) and the corrected version
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contribution
+      options:
+        - label: I am willing to contribute this translation myself via pull request
