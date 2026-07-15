@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![Minecraft](https://img.shields.io/badge/Minecraft-26.1.2-62B47A?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSIjOEI2MjQwIi8+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjUiIGZpbGw9IiM1RDk5MzQiLz48cmVjdCB4PSIyIiB5PSIxIiB3aWR0aD0iMiIgaGVpZ2h0PSIxIiBmaWxsPSIjNEE3QTI4Ii8+PHJlY3QgeD0iNiIgeT0iMiIgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0iIzRBN0EyOCIvPjxyZWN0IHg9IjEwIiB5PSIxIiB3aWR0aD0iMiIgaGVpZ2h0PSIxIiBmaWxsPSIjNEE3QTI4Ii8+PHJlY3QgeD0iMTMiIHk9IjIiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiM0QTdBMjgiLz48cmVjdCB4PSIwIiB5PSI1IiB3aWR0aD0iMTYiIGhlaWdodD0iMSIgZmlsbD0iIzZCNEMyQSIvPjxyZWN0IHg9IjEiIHk9IjciIHdpZHRoPSIyIiBoZWlnaHQ9IjEiIGZpbGw9IiM3QTU1MzAiLz48cmVjdCB4PSI1IiB5PSI5IiB3aWR0aD0iMyIgaGVpZ2h0PSIxIiBmaWxsPSIjN0E1NTMwIi8+PHJlY3QgeD0iMTAiIHk9IjgiIHdpZHRoPSIyIiBoZWlnaHQ9IjEiIGZpbGw9IiM3QTU1MzAiLz48cmVjdCB4PSIzIiB5PSIxMiIgd2lkdGg9IjIiIGhlaWdodD0iMSIgZmlsbD0iIzdBNTUzMCIvPjxyZWN0IHg9IjkiIHk9IjEyIiB3aWR0aD0iMyIgaGVpZ2h0PSIxIiBmaWxsPSIjN0E1NTMwIi8+PHJlY3QgeD0iMTMiIHk9IjEwIiB3aWR0aD0iMiIgaGVpZ2h0PSIxIiBmaWxsPSIjN0E1NTMwIi8+PC9zdmc+)](https://www.minecraft.net/)
+[![Minecraft](https://img.shields.io/badge/Minecraft-26.1.2%2B-62B47A?logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAeFBMVEWcy2yXxmeTwmOSwWKQv2CNvF2KuVp/v1V+vlSDslOBsFF2tkx1tUt0tEpzs0lxsUdwsEa5hVxvr0VtrUNsrEJrq0FqqkBpqT9oqD5npz2Hh4dmpjxkpDpiojhhoTdgoDZfnzVXly2WbEpQkCZsbGx0WER5VTpZPSnN78OwAAAAnElEQVR42jWNCw7CMAxDw/8/CBuMbTBGGPb9b4hbQRtZT3Gfaodd0XXnoVrvrk3dv0vbV8vthrfHMJ0XfdVcbEG71zzxsJpN+HrSOJJHkgNLgoQFwhkQc0QQBkYISEADN1e2Ak+jyhKHlGDOsJS6FCNZhkg2oZMlLbIfdJfUwrKoZpRCjSnzBj8pKfgg1U6ZYYlAheP/ratuocjvvsNMH5BFYTKgAAAAAElFTkSuQmCC&logoColor=white)](https://www.minecraft.net/)
 [![Fabric](https://img.shields.io/badge/Fabric-0.19.2%2B-C8A87A)](https://fabricmc.net/)
 [![Java](https://img.shields.io/badge/Java-25%2B-ED8B00?logo=openjdk&logoColor=white)](https://adoptium.net/)
 [![License](https://img.shields.io/badge/License-GPL--3.0-blue)](LICENSE)
@@ -48,7 +48,7 @@ Everything is saved per-world-session and persists across restarts.
 
 | Dependency | Version |
 |---|---|
-| Minecraft | 26.1.2 |
+| Minecraft | 26.1.2+ |
 | Fabric Loader | ≥ 0.19.2 |
 | Fabric API | any |
 | Java | 25+ |
@@ -104,8 +104,17 @@ All files are saved in `.minecraft/config/`:
 
 ## Building
 
+**Linux / macOS**
 ```bash
 ./gradlew build
 ```
 
+**Windows**
+```bat
+gradlew.bat build
+```
+
 Output: `build/libs/soundtweaks-1.2.0.jar`
+
+> [!TIP]
+> The mod jar is in `build/libs/`. Drop it into your `mods/` folder to test locally. Files ending in `-sources.jar` or `-dev.jar` are not needed for running the mod.
