@@ -306,7 +306,7 @@ public class SoundTweaksScreen extends Screen {
         for (PresetConfig.Preset preset : favs) {
             if (y + PRESET_H > availableBottom) break;
 
-            boolean active = PresetConfig.isActive(preset.name);
+            boolean active = PresetConfig.isActive(preset.id);
             int     color  = preset.argbColor();
             boolean hov    = mouseX >= sideX + 1 && mouseX < this.width - 1
                     && mouseY >= y && mouseY < y + PRESET_H;
@@ -379,7 +379,7 @@ public class SoundTweaksScreen extends Screen {
         for (PresetConfig.Preset preset : favs) {
             if (y + PRESET_H > availableBottom) break;
             if (my >= y && my < y + PRESET_H) {
-                PresetConfig.setActive(preset.name, !PresetConfig.isActive(preset.name));
+                PresetConfig.setActive(preset.id, !PresetConfig.isActive(preset.id));
                 return true;
             }
             y += PRESET_H + 1;
