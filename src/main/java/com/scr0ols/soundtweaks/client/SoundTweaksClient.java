@@ -2,6 +2,7 @@ package com.scr0ols.soundtweaks.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.scr0ols.soundtweaks.PresetConfig;
+import com.scr0ols.soundtweaks.SoundDeduplicationConfig;
 import com.scr0ols.soundtweaks.SoundRegistry;
 import com.scr0ols.soundtweaks.SoundTweaks;
 import com.scr0ols.soundtweaks.VolumeConfig;
@@ -38,6 +39,7 @@ public class SoundTweaksClient {
         VolumeConfig.SOUNDS.load();
         VolumeConfig.BLOCKS.load();
         PresetConfig.load();
+        SoundDeduplicationConfig.INSTANCE.load();
         SoundRegistry.populate();
 
         NeoForge.EVENT_BUS.addListener(SoundTweaksClient::onClientTick);

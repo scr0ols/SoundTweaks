@@ -3,6 +3,7 @@
 	"package": "com.scr0ols.soundtweaks.client.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"client": [
+		"SoundEngineAccessor",
 		"SoundEngineMixin",
 		"AbstractSoundInstanceMixin",
 		"LevelMixin"
