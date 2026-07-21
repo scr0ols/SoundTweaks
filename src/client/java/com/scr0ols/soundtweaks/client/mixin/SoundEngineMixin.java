@@ -14,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -33,7 +34,7 @@ public class SoundEngineMixin {
         at = @At("HEAD"),
         cancellable = true
     )
-    private void checkDuplication(SoundInstance sound, CallbackInfo ci) {
+    private void checkDuplication(SoundInstance sound, CallbackInfoReturnable<SoundEngine.PlayResult> cir) {
         SoundSource source = sound.getSource();
         if (source == SoundSource.MASTER || source == SoundSource.UI) return;
 
@@ -67,13 +68,13 @@ public class SoundEngineMixin {
         if (positionCount >= maxPos) {
             SoundTweaks.LOGGER.debug("SoundTweaks: dedup cancelou '{}' em {} (pos={}/{})",
                     id.toString(), here, positionCount, maxPos);
-            ci.cancel();
+            cir.setReturnValue(SoundEngine.PlayResult.NOT_STARTED);
             return;
         }
         if (identifierCount >= maxId) {
             SoundTweaks.LOGGER.debug("SoundTweaks: dedup cancelou '{}' globalmente (id={}/{})",
                     id.toString(), identifierCount, maxId);
-            ci.cancel();
+            cir.setReturnValue(SoundEngine.PlayResult.NOT_STARTED);
         }
     }
 
