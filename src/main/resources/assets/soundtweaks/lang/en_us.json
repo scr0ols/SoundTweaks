@@ -1,4 +1,4 @@
-{
+﻿{
   "soundtweaks.gui.title":            "SoundTweaks",
   "soundtweaks.gui.search_hint":      "Search sound...",
   "soundtweaks.gui.done":             "Done",
@@ -28,6 +28,41 @@
   "soundtweaks.presets.manage":       "Manage Presets",
   "soundtweaks.presets.name_hint":    "Preset name...",
   "soundtweaks.presets.no_favorites": "No favorites yet — go to Manage Presets to add some",
+
+  "soundtweaks.gui.view_detail":        "Detail View",
+  "soundtweaks.gui.view_simple":        "Simple View",
+  "soundtweaks.gui.clear_filters":      "Clear all filters",
+  "soundtweaks.gui.mute_all":           "Mute all sounds",
+  "soundtweaks.gui.import_config":      "Import Config...",
+  "soundtweaks.gui.import":             "Import",
+  "soundtweaks.gui.export":             "Export",
+  "soundtweaks.gui.open_folder":        "Open Config Folder",
+  "soundtweaks.gui.cancel":             "Cancel",
+  "soundtweaks.gui.save_name":          "Save name",
+  "soundtweaks.gui.clear":              "Clear",
+  "soundtweaks.gui.import_from_config": "Import from config",
+  "soundtweaks.gui.path_hint":          "e.g. C:\\...\\config\\soundtweaks_presets.json",
+
+  "soundtweaks.import.presets.title":  "Import / Export Presets",
+  "soundtweaks.import.sounds.title":   "Import / Export Sound Config",
+  "soundtweaks.import.blocks.title":   "Import / Export Block Config",
+
+  "soundtweaks.tooltip.view_toggle":        "Simple View: grouped by sound event\nDetail View: individual sound files",
+  "soundtweaks.tooltip.presets_sidebar":    "Toggle the presets sidebar.\nPresets let you save and quickly switch\nbetween different volume configurations.",
+  "soundtweaks.tooltip.import_config":      "Import sound volumes from another instance.\nSelect soundtweaks.json for sounds,\nor soundtweaks_blocks.json for blocks.\nReplaces current configuration.",
+  "soundtweaks.tooltip.new_preset":         "Create a new preset.",
+  "soundtweaks.tooltip.import_presets":     "Import presets from a shared JSON file.",
+  "soundtweaks.tooltip.export_presets":     "Export all current presets to a JSON file.",
+  "soundtweaks.tooltip.open_folder":        "Open the folder containing\nSoundTweaks config and preset files.",
+  "soundtweaks.tooltip.mute_preset":        "Mute / restore all currently visible sounds in this preset.",
+  "soundtweaks.tooltip.import_from_config": "Copies all sounds/blocks with volume ≠ 100%\nfrom the base config into this preset.\nUseful to snapshot your current global settings.",
+
+  "soundtweaks.presets.edit_title":             "Edit: %s",
+  "soundtweaks.presets.rename_title":           "Rename Preset",
+  "soundtweaks.presets.delete_title":           "Delete preset?",
+  "soundtweaks.presets.delete_warning":         "This action cannot be undone.",
+  "soundtweaks.presets.import_conflict_title":  "Import: ID conflict",
+  "soundtweaks.presets.import_conflict_body":   "%d preset(s) had conflicting IDs and were assigned new IDs automatically. Open the wiki to learn how to manage preset IDs manually.",
 
   "key.category.soundtweaks.soundtweaks": "Sound Tweaks",
   "key.soundtweaks.open_menu":    "Open Sound Tweaks",

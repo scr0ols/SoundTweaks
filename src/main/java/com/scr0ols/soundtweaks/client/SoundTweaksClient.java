@@ -30,9 +30,9 @@ public class SoundTweaksClient {
     public static KeyMapping openMenuKey;
     public static KeyMapping openPresetsKey;
 
-    // Preset names whose trigger was held on the previous tick (rising-edge detection).
+    // Preset IDs whose trigger was held on the previous tick (rising-edge detection).
     // Only accessed from ClientTickEvent.Post (render thread) — no synchronisation needed.
-    private static final Set<String> shortcutKeysHeld = new HashSet<>();
+    private static final Set<Integer> shortcutKeysHeld = new HashSet<>();
 
     // Called from SoundTweaks constructor on the client dist
     public static void init(IEventBus modBus) {
@@ -99,11 +99,11 @@ public class SoundTweaksClient {
                 if (preset.shortcutHeldKey != 0) {
                     // 2 or 3 keys: verify held keys + trigger
                     if (GLFW.glfwGetKey(win, preset.shortcutHeldKey) != GLFW.GLFW_PRESS) {
-                        shortcutKeysHeld.remove(preset.name); continue;
+                        shortcutKeysHeld.remove(preset.id); continue;
                     }
                     if (preset.shortcutHeldKey2 != 0
                             && GLFW.glfwGetKey(win, preset.shortcutHeldKey2) != GLFW.GLFW_PRESS) {
-                        shortcutKeysHeld.remove(preset.name); continue;
+                        shortcutKeysHeld.remove(preset.id); continue;
                     }
                     triggerActive = GLFW.glfwGetKey(win, glfwKey) == GLFW.GLFW_PRESS;
                 } else {
@@ -111,11 +111,11 @@ public class SoundTweaksClient {
                     triggerActive = GLFW.glfwGetKey(win, glfwKey) == GLFW.GLFW_PRESS;
                 }
 
-                boolean wasHeld = shortcutKeysHeld.contains(preset.name);
+                boolean wasHeld = shortcutKeysHeld.contains(preset.id);
                 if (triggerActive && !wasHeld)
-                    PresetConfig.setActive(preset.name, !PresetConfig.isActive(preset.name));
-                if (triggerActive) shortcutKeysHeld.add(preset.name);
-                else               shortcutKeysHeld.remove(preset.name);
+                    PresetConfig.setActive(preset.id, !PresetConfig.isActive(preset.id));
+                if (triggerActive) shortcutKeysHeld.add(preset.id);
+                else               shortcutKeysHeld.remove(preset.id);
             }
         } else {
             shortcutKeysHeld.clear();
