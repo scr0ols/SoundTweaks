@@ -131,8 +131,8 @@ public class PresetsScreen extends Screen {
                                 "JSON preset file (*.json)", false);
                     }
                     if (selected == null) return;
-                    int result = PresetConfig.importFrom(java.nio.file.Path.of(selected));
-                    if (result >= 0) presetList.refresh();
+                    PresetConfig.ImportResult result = PresetConfig.importFrom(java.nio.file.Path.of(selected));
+                    if (result != null) presetList.refresh();
                 }
         ).bounds(4, this.height - 26, LIST_W / 2 - 6, 20).build();
         this.importPresetsBtn.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.import_presets")));
@@ -824,7 +824,7 @@ public class PresetsScreen extends Screen {
         this.minecraft.setScreen(new ConfirmScreen(
             confirmed -> {
                 if (confirmed) {
-                    PresetConfig.deletePreset(toDelete.name);
+                    PresetConfig.deletePreset(toDelete.id);
                     closeDetailPanel();
                 }
                 this.minecraft.setScreen(PresetsScreen.this);
@@ -925,7 +925,7 @@ public class PresetsScreen extends Screen {
     private void confirmRename() {
         if (editingPreset != null) {
             String name = renameBox.getValue().trim();
-            if (!name.isEmpty()) { PresetConfig.renamePreset(editingPreset.name, name); presetList.refresh(); }
+            if (!name.isEmpty()) { PresetConfig.renamePreset(editingPreset.id, name); presetList.refresh(); }
         }
     }
 
@@ -963,8 +963,8 @@ public class PresetsScreen extends Screen {
 
             @Override
             public void extractContent(GuiGraphicsExtractor g, int mouseX, int mouseY, boolean hovered, float a) {
-                boolean active   = PresetConfig.isActive(preset.name);
-                boolean fav      = PresetConfig.isFavorite(preset.name);
+                boolean active   = PresetConfig.isActive(preset.id);
+                boolean fav      = PresetConfig.isFavorite(preset.id);
                 boolean selected = (PresetsScreen.this.editingPreset == preset);
                 int rW = rowW(), pc = preset.argbColor();
 
@@ -1010,11 +1010,11 @@ public class PresetsScreen extends Screen {
 
                 int sx = starX();
                 if (mx >= sx && mx < sx+18 && my >= getY()+4 && my < getY()+20) {
-                    PresetConfig.setFavorite(preset.name, !PresetConfig.isFavorite(preset.name)); return true;
+                    PresetConfig.setFavorite(preset.id, !PresetConfig.isFavorite(preset.id)); return true;
                 }
                 int badgeX = getX()+10, badgeY = getY()+6;
                 if (mx >= badgeX && mx < badgeX+22 && my >= badgeY && my < badgeY+11) {
-                    PresetConfig.setActive(preset.name, !PresetConfig.isActive(preset.name)); return true;
+                    PresetConfig.setActive(preset.id, !PresetConfig.isActive(preset.id)); return true;
                 }
                 if (PresetsScreen.this.editingPreset == preset) {
                     PresetListWidget.this.setSelected(null);

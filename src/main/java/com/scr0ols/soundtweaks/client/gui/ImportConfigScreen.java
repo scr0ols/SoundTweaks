@@ -176,7 +176,7 @@ public class ImportConfigScreen extends Screen {
 
         int result;
         switch (type) {
-            case PRESETS -> result = PresetConfig.importFrom(path);
+            case PRESETS -> { PresetConfig.ImportResult ir = PresetConfig.importFrom(path); result = (ir != null) ? ir.imported() : -1; }
             case SOUNDS  -> result = VolumeConfig.SOUNDS.importFrom(path);
             case BLOCKS  -> result = VolumeConfig.BLOCKS.importFrom(path);
             default      -> result = -1;
