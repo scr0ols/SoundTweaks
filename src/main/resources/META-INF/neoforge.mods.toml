@@ -1,6 +1,6 @@
 modLoader = "javafml"
 loaderVersion = "[4,)"
-license = "CC0-1.0"
+license = "GPL-3.0-or-later"
 
 [[mods]]
     modId = "soundtweaks"
@@ -9,14 +9,11 @@ license = "CC0-1.0"
     description = '''
 Per-sound volume control — mute, amplify or individually adjust any sound in the game.
 '''
-    logoFile = "icon.png"
-
-    [[mods.authors]]
-        name = "scr0ols"
-
-    [mods.properties]
-        homepage = "https://github.com/scr0ols/SoundTweaks/wiki"
-        issues = "https://github.com/scr0ols/SoundTweaks/issues"
+    logoFile = "assets/soundtweaks/banner.png"
+    displayURL = "https://github.com/scr0ols/SoundTweaks/wiki"
+    issueTrackerURL = "https://github.com/scr0ols/SoundTweaks/issues"
+    authors = "scr0ols"
+    credits = "scr0ols"
 
 [[mixins]]
     config = "soundtweaks.mixins.json"
