@@ -11,13 +11,13 @@ import net.minecraft.network.chat.Component;
 public class RenameScreen extends Screen {
 
     private final Screen parent;
-    private final String presetId;
+    private final int presetId;
     private final String currentName;
 
     private EditBox nameBox;
     private boolean focusSet = false;
 
-    public RenameScreen(Screen parent, String presetId, String currentName) {
+    public RenameScreen(Screen parent, int presetId, String currentName) {
         super(Component.translatable("soundtweaks.presets.rename_title"));
         this.parent      = parent;
         this.presetId    = presetId;

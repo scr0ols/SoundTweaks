@@ -930,12 +930,7 @@ public class PresetsScreen extends Screen {
 
     private void showImportConflictWarning(int count) {
         this.minecraft.setScreen(new net.minecraft.client.gui.screens.ConfirmLinkScreen(
-            confirmed -> {
-                if (confirmed)
-                    net.minecraft.Util.getPlatform().openUri(PresetConfig.WIKI_PRESETS_URL);
-                this.minecraft.setScreen(PresetsScreen.this);
-            },
-            Component.translatable("soundtweaks.presets.import_conflict_title"),
+            confirmed -> this.minecraft.setScreen(PresetsScreen.this),
             Component.translatable("soundtweaks.presets.import_conflict_body", count),
             PresetConfig.WIKI_PRESETS_URL,
             true
