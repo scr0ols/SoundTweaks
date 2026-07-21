@@ -3,6 +3,7 @@ package com.scr0ols.soundtweaks.client;
 import com.mojang.blaze3d.platform.InputConstants;
 //import com.scr0ols.soundtweaks.PerfStats;
 import com.scr0ols.soundtweaks.PresetConfig;
+import com.scr0ols.soundtweaks.SoundDeduplicationConfig;
 import com.scr0ols.soundtweaks.SoundRegistry;
 import com.scr0ols.soundtweaks.VolumeConfig;
 import com.scr0ols.soundtweaks.client.gui.PresetsScreen;
@@ -25,15 +26,16 @@ public class SoundTweaksClient implements ClientModInitializer {
     public static KeyMapping openPresetsKey;
     //public static KeyMapping perfReportKey;
 
-    // Preset names whose trigger was held on the previous tick (rising-edge detection).
+    // Preset ids whose trigger was held on the previous tick (rising-edge detection).
     // Only accessed from ClientTickEvents.END_CLIENT_TICK (render thread) — no synchronisation needed.
-    private static final Set<String> shortcutKeysHeld = new HashSet<>();
+    private static final Set<Integer> shortcutKeysHeld = new HashSet<>();
 
     @Override
     public void onInitializeClient() {
         VolumeConfig.SOUNDS.load();
         VolumeConfig.BLOCKS.load();
         PresetConfig.load();
+        SoundDeduplicationConfig.INSTANCE.load();
         SoundRegistry.populate();
 
         KeyMapping.Category soundTweaksCategory =
@@ -91,11 +93,11 @@ public class SoundTweaksClient implements ClientModInitializer {
                     if (preset.shortcutHeldKey != 0) {
                         // 2 or 3 keys: verify held keys + trigger
                         if (GLFW.glfwGetKey(win, preset.shortcutHeldKey) != GLFW.GLFW_PRESS) {
-                            shortcutKeysHeld.remove(preset.name); continue;
+                            shortcutKeysHeld.remove(preset.id); continue;
                         }
                         if (preset.shortcutHeldKey2 != 0
                                 && GLFW.glfwGetKey(win, preset.shortcutHeldKey2) != GLFW.GLFW_PRESS) {
-                            shortcutKeysHeld.remove(preset.name); continue;
+                            shortcutKeysHeld.remove(preset.id); continue;
                         }
                         triggerActive = GLFW.glfwGetKey(win, glfwKey) == GLFW.GLFW_PRESS;
                     } else {
@@ -103,11 +105,11 @@ public class SoundTweaksClient implements ClientModInitializer {
                         triggerActive = GLFW.glfwGetKey(win, glfwKey) == GLFW.GLFW_PRESS;
                     }
 
-                    boolean wasHeld = shortcutKeysHeld.contains(preset.name);
+                    boolean wasHeld = shortcutKeysHeld.contains(preset.id);
                     if (triggerActive && !wasHeld)
-                        PresetConfig.setActive(preset.name, !PresetConfig.isActive(preset.name));
-                    if (triggerActive) shortcutKeysHeld.add(preset.name);
-                    else               shortcutKeysHeld.remove(preset.name);
+                        PresetConfig.setActive(preset.id, !PresetConfig.isActive(preset.id));
+                    if (triggerActive) shortcutKeysHeld.add(preset.id);
+                    else               shortcutKeysHeld.remove(preset.id);
                 }
             } else {
                 shortcutKeysHeld.clear();
