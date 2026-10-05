@@ -8,6 +8,10 @@ Versions are `MAJOR.MINOR.PATCH+MC`, where `MC` is the Minecraft version the bui
 
 ## [Unreleased]
 
+### Added
+
+- NeoForge 26.3 build (beta), from the same source as the Fabric build. It is named `neoforge-soundtweaks-<version>.jar` and requires NeoForge 26.3.0.51-beta or newer.
+
 ### Changed
 
 - The project is split into `common` and `fabric` modules, with the shared code in `common`, to prepare for a NeoForge build from the same source. The Fabric jar is now named `fabric-soundtweaks-<version>.jar`.
