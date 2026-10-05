@@ -1,0 +1,105 @@
+plugins {
+	id 'net.fabricmc.fabric-loom'
+	id 'maven-publish'
+}
+
+base {
+	archivesName = "fabric-${project.mod_id}"
+}
+
+loom {
+	splitEnvironmentSourceSets()
+
+	mods {
+		"soundtweaks" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+}
+
+configurations {
+	commonJava {
+		canBeResolved = true
+		canBeConsumed = false
+	}
+
+	commonClientJava {
+		canBeResolved = true
+		canBeConsumed = false
+	}
+}
+
+tasks.named('compileJava', JavaCompile) {
+	dependsOn(configurations.commonJava)
+	source(configurations.commonJava)
+}
+
+tasks.named('compileClientJava', JavaCompile) {
+	dependsOn(configurations.commonClientJava)
+	source(configurations.commonClientJava)
+}
+
+// Assets (lang files, icon) are shared by every loader.
+sourceSets.main.resources.srcDir(project(':common').file('src/main/resources'))
+
+dependencies {
+	commonJava project(path: ':common', configuration: 'commonJava')
+	commonClientJava project(path: ':common', configuration: 'commonClientJava')
+
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+	// Fabric API. This is technically optional, but you probably want it anyway.
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+}
+
+processResources {
+	def version = project.version
+	inputs.property "version", version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = Integer.parseInt(project.java_version)
+}
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(Integer.parseInt(project.java_version))
+	}
+
+	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
+	// if it is present.
+	withSourcesJar()
+}
+
+tasks.named('sourcesJar', Jar) {
+	dependsOn(configurations.commonJava, configurations.commonClientJava)
+	from(configurations.commonJava)
+	from(configurations.commonClientJava)
+}
+
+jar {
+	def projectName = project.name
+	inputs.property "projectName", projectName
+
+	from(rootProject.file("LICENSE")) {
+		rename { "LICENSE_$projectName" }
+	}
+}
+
+publishing {
+	publications {
+		create("mavenJava", MavenPublication) {
+			from components.java
+		}
+	}
+
+	repositories {
+	}
+}
