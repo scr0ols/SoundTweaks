@@ -24,3 +24,4 @@ rootProject.name = 'SoundTweaks'
 
 include('common')
 include('fabric')
+include('neoforge')
