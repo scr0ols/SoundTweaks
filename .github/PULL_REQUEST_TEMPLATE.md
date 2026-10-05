@@ -59,7 +59,7 @@ Expected result:
 > All boxes must be checked before this PR will be reviewed.
 
 **Scope**
-- [ ] I targeted the correct development branch — not `main`
+- [ ] I targeted `dev` — not `main`
 - [ ] This PR contains a single focused change — no unrelated modifications
 
 **Quality**

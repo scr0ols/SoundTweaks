@@ -15,10 +15,37 @@ Thank you for taking the time to contribute! Please read these guidelines before
 
 ---
 
+## Branch workflow
+
+| Branch | Purpose |
+|---|---|
+| `main` | The last released state. Changed only by a `release:` pull request from `dev`. |
+| `dev` | Integration branch. It always builds, and every pull request targets it. |
+| `feat/*`, `fix/*`, `port/<mc>`, `docs/*`, `chore/*` | Short-lived branches cut from `dev`, named after their purpose. |
+| `release/<mc>` | Maintenance branch for an older Minecraft version that still needs a fix. Not created ahead of time. |
+
+1. Branch off `dev`: `git switch -c fix/short-description origin/dev`.
+2. Open the pull request against `dev`. Never open one against `main`.
+3. Moving to a new Minecraft version is a normal pull request from a `port/<mc>` branch (for example `port/26.4`) into `dev`. The Minecraft version lives in `gradle.properties`, not in a branch name.
+
+### Releases
+
+1. Open a pull request from `dev` to `main` titled `release: vX.Y.Z - <summary>`.
+2. After it is merged, tag the **merge commit on `main`** (`vX.Y.Z`) and create the GitHub release from that tag. Release notes come from `CHANGELOG.md`.
+3. Past releases are tags, so any old state can be checked out with `git checkout v1.2.2`.
+
+Versions are `MAJOR.MINOR.PATCH+MC`, for example `1.3.0+26.3`. This applies from the next release; earlier releases keep their plain `MAJOR.MINOR.PATCH` versions.
+
+### Older Minecraft versions
+
+If an older Minecraft version needs a fix after newer ones have shipped, cut `release/<mc>` (for example `release/26.2`) from that version's release tag and send the fix there. The maintainer does this only when needed.
+
+---
+
 ## Before opening a pull request
 
 > [!WARNING]
-> Target the **active development branch** for the version you're fixing or improving. Development branches follow the naming pattern `<minecraft-version>` (e.g. `26.1.2`, `26.2`, etc.) — check the repository's branch list to find the right one. Do **not** target `main` — it is the release branch only and pull requests against it will not be merged.
+> Target the **`dev`** branch. Do **not** target `main` — it only holds released code and changes through release pull requests from `dev`. See [Branch workflow](#branch-workflow).
 
 - One change per PR — keep scope focused
 - Test your change locally before submitting (`./gradlew build` on Linux/macOS, `gradlew.bat build` on Windows)
@@ -53,7 +80,7 @@ Use a semantic prefix:
 ```bash
 git clone https://github.com/scr0ols/SoundTweaks.git
 cd SoundTweaks
-git checkout 26.1.2        # or whichever development branch you're targeting
+git checkout dev
 ./gradlew build
 ```
 
