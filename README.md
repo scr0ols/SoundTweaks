@@ -53,6 +53,8 @@ Everything is saved per-world-session and persists across restarts.
 | Fabric API | any |
 | Java | 25+ |
 
+Versions are `MAJOR.MINOR.PATCH+MC`, where `MC` is the Minecraft version the build targets (for example `1.3.0+26.3`). This applies from the next release. See the [changelog](CHANGELOG.md).
+
 ---
 
 ## Languages
