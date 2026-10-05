@@ -226,6 +226,12 @@ public class PresetConfig {
                 SoundTweaks.LOGGER.info("SoundTweaks: {} presets carregados", presets.size());
             }
 
+            if (!hasSdlMarker(root)) {
+                int converted = convertShortcutsFromGlfw(presets);
+                SoundTweaks.LOGGER.info("SoundTweaks: atalhos de {} presets convertidos de GLFW para SDL", converted);
+                SAVE_EXECUTOR.submit(PresetConfig::save);
+            }
+
             // Remove orphan id references (preset deleted but id still in active/favorite lists)
             Set<Integer> existingIds = new HashSet<>();
             for (Preset p : presets) existingIds.add(p.id);
@@ -312,6 +318,7 @@ public class PresetConfig {
     public static void save() {
         try {
             JsonObject root = new JsonObject();
+            root.addProperty(ShortcutKeyMigration.FORMAT_KEY, ShortcutKeyMigration.FORMAT_SDL);
             JsonArray presetsArr = new JsonArray();
             for (Preset p : presets) presetsArr.add(serializePreset(p));
             root.add("presets", presetsArr);
@@ -336,6 +343,7 @@ public class PresetConfig {
     public static int exportTo(Path file) {
         try {
             JsonObject root = new JsonObject();
+            root.addProperty(ShortcutKeyMigration.FORMAT_KEY, ShortcutKeyMigration.FORMAT_SDL);
             JsonArray presetsArr = new JsonArray();
             for (Preset p : presets) presetsArr.add(serializePreset(p));
             root.add("presets", presetsArr);
@@ -359,6 +367,8 @@ public class PresetConfig {
     public static ImportResult importFrom(Path file) {
         try {
             JsonElement root = JsonParser.parseString(Files.readString(file));
+            // Files exported before 26.3 hold GLFW key codes and carry no format marker.
+            boolean convertShortcuts = !(root.isJsonObject() && hasSdlMarker(root.getAsJsonObject()));
             List<JsonObject> toImport = new ArrayList<>();
 
             if (root.isJsonArray()) {
@@ -406,6 +416,7 @@ public class PresetConfig {
                 if (obj.has("shortcutKey"))      p.shortcutKey      = obj.get("shortcutKey").getAsInt();
                 if (obj.has("shortcutHeldKey"))  p.shortcutHeldKey  = obj.get("shortcutHeldKey").getAsInt();
                 if (obj.has("shortcutHeldKey2")) p.shortcutHeldKey2 = obj.get("shortcutHeldKey2").getAsInt();
+                if (convertShortcuts) convertShortcutsFromGlfw(List.of(p));
                 readFloatMap(obj.getAsJsonObject("sounds"), p.sounds);
                 readFloatMap(obj.getAsJsonObject("blocks"), p.blocks);
                 presets.add(p);
@@ -425,6 +436,34 @@ public class PresetConfig {
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     /** Parses a preset that already has an "id" field (current format). */
+    private static boolean hasSdlMarker(JsonObject root) {
+        JsonElement marker = root.get(ShortcutKeyMigration.FORMAT_KEY);
+        return marker != null && marker.isJsonPrimitive()
+                && ShortcutKeyMigration.FORMAT_SDL.equals(marker.getAsString());
+    }
+
+    /**
+     * Converts the shortcut keys of the given presets from GLFW key codes to SDL scancodes, in place.
+     * A shortcut with a key that has no SDL equivalent is unbound and a warning is logged.
+     * @return the number of presets that held a shortcut
+     */
+    private static int convertShortcutsFromGlfw(Collection<Preset> target) {
+        int converted = 0;
+        for (Preset p : target) {
+            if (p.shortcutKey <= 0 && p.shortcutHeldKey == 0 && p.shortcutHeldKey2 == 0) continue;
+            ShortcutKeyMigration.Shortcut s =
+                    ShortcutKeyMigration.convert(p.shortcutKey, p.shortcutHeldKey, p.shortcutHeldKey2);
+            if (s.dropped()) {
+                SoundTweaks.LOGGER.warn("SoundTweaks: o atalho do preset '{}' usa uma tecla sem equivalente no Minecraft 26.3 e foi removido", p.name);
+            }
+            p.shortcutKey = s.key();
+            p.shortcutHeldKey = s.heldKey();
+            p.shortcutHeldKey2 = s.heldKey2();
+            converted++;
+        }
+        return converted;
+    }
+
     private static Preset parsePreset(JsonObject obj) {
         if (obj == null || !obj.has("name") || !obj.has("id")) return null;
         Preset p = new Preset(obj.get("id").getAsInt(), obj.get("name").getAsString());
