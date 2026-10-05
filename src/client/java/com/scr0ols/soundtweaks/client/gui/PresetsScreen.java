@@ -677,7 +677,7 @@ public class PresetsScreen extends Screen {
                 return super.keyPressed(event);
             }
             if (editMode == EditMode.SOUNDS) {
-                if (key == 256) {
+                if (key == InputConstants.KEY_ESCAPE) {
                     if (soundsCatDrop.isOpen()) { soundsCatDrop.close(); return true; }
                     if (soundsObjDrop.isOpen()) { soundsObjDrop.close(); return true; }
                 }

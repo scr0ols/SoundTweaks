@@ -1,5 +1,6 @@
 package com.scr0ols.soundtweaks.client.gui;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.scr0ols.soundtweaks.PresetConfig;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
@@ -80,8 +81,8 @@ public class RenameScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
-        if (event.key() == 257) { confirm(); return true; } // Enter
-        if (event.key() == 256) { this.onClose(); return true; } // ESC
+        if (event.key() == InputConstants.KEY_RETURN || event.key() == InputConstants.KEY_NUMPADENTER) { confirm(); return true; }
+        if (event.key() == InputConstants.KEY_ESCAPE) { this.onClose(); return true; }
         return super.keyPressed(event);
     }
 
