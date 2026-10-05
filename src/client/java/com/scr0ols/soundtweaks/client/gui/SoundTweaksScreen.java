@@ -1,5 +1,6 @@
 package com.scr0ols.soundtweaks.client.gui;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.scr0ols.soundtweaks.MissingBlockRegistry;
 import com.scr0ols.soundtweaks.PresetConfig;
 import com.scr0ols.soundtweaks.SoundCategory;
@@ -7,9 +8,6 @@ import com.scr0ols.soundtweaks.SoundRegistry;
 import com.scr0ols.soundtweaks.VolumeConfig;
 import com.scr0ols.soundtweaks.VolumeResolver;
 import com.scr0ols.soundtweaks.client.SoundDisplayHelper;
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.util.tinyfd.TinyFileDialogs;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -145,27 +143,7 @@ public class SoundTweaksScreen extends Screen {
         // Import config from another instance via native file dialog
         var importCfgBtn = Button.builder(
                 Component.translatable("soundtweaks.gui.import_config"),
-                btn -> {
-                    String selected;
-                    try (MemoryStack stack = MemoryStack.stackPush()) {
-                        PointerBuffer filters = stack.mallocPointer(1);
-                        filters.put(stack.UTF8("*.json")).flip();
-                        selected = TinyFileDialogs.tinyfd_openFileDialog(
-                                "Select soundtweaks config file",
-                                "",
-                                filters,
-                                "JSON config files (*.json)",
-                                false);
-                    }
-                    if (selected == null) return;
-                    java.nio.file.Path src = java.nio.file.Path.of(selected);
-                    if (isBlockConfig(src)) {
-                        VolumeConfig.BLOCKS.importFrom(src);
-                    } else {
-                        VolumeConfig.SOUNDS.importFrom(src);
-                    }
-                    refreshList();
-                }
+                btn -> FileDialogs.openJson(this::importConfigFrom, this::openPathFallback)
         ).bounds(cw / 2 - 125, this.height - 26, 120, 20).build();
         importCfgBtn.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.import_config")));
         this.addRenderableWidget(importCfgBtn);
@@ -176,7 +154,7 @@ public class SoundTweaksScreen extends Screen {
             int manageY = this.height - MANAGE_H - 4;
             this.addRenderableWidget(Button.builder(
                     Component.translatable("soundtweaks.presets.manage"),
-                    b -> this.minecraft.setScreen(new PresetsScreen(this))
+                    b -> this.minecraft.gui.setScreen(new PresetsScreen(this))
             ).bounds(sideX + 2, manageY, SIDE_W - 4, MANAGE_H).build());
         }
 
@@ -306,7 +284,7 @@ public class SoundTweaksScreen extends Screen {
         for (PresetConfig.Preset preset : favs) {
             if (y + PRESET_H > availableBottom) break;
 
-            boolean active = PresetConfig.isActive(preset.name);
+            boolean active = PresetConfig.isActive(preset.id);
             int     color  = preset.argbColor();
             boolean hov    = mouseX >= sideX + 1 && mouseX < this.width - 1
                     && mouseY >= y && mouseY < y + PRESET_H;
@@ -379,7 +357,7 @@ public class SoundTweaksScreen extends Screen {
         for (PresetConfig.Preset preset : favs) {
             if (y + PRESET_H > availableBottom) break;
             if (my >= y && my < y + PRESET_H) {
-                PresetConfig.setActive(preset.name, !PresetConfig.isActive(preset.name));
+                PresetConfig.setActive(preset.id, !PresetConfig.isActive(preset.id));
                 return true;
             }
             y += PRESET_H + 1;
@@ -418,12 +396,12 @@ public class SoundTweaksScreen extends Screen {
     @Override
     public boolean keyPressed(KeyEvent event) {
         int key = event.key();
-        if (key == 256) {
+        if (key == InputConstants.KEY_ESCAPE) {
             if (this.categoryDropdown.isOpen()) { this.categoryDropdown.close(); return true; }
             if (this.objectDropdown.isOpen())   { this.objectDropdown.close();   return true; }
         }
-        if (key >= 65 && key <= 90) {
-            char letter = (char) key;
+        char letter = PresetEditorScreen.jumpLetter(event);
+        if (letter != 0) {
             if (this.categoryDropdown.isOpen()) return this.categoryDropdown.jumpToLetter(letter);
             if (this.objectDropdown.isOpen())   return this.objectDropdown.jumpToLetter(letter);
             if (!this.searchBox.isFocused())    return this.soundList.jumpToLetter(letter);
@@ -615,6 +593,22 @@ public class SoundTweaksScreen extends Screen {
      * Sound IDs contain a dot after the namespace colon ("minecraft:block.piston.extend");
      * block IDs do not ("minecraft:piston"). Falls back to false (sounds) on any error.
      */
+    private void importConfigFrom(java.nio.file.Path src) {
+        if (isBlockConfig(src)) {
+            VolumeConfig.BLOCKS.importFrom(src);
+        } else {
+            VolumeConfig.SOUNDS.importFrom(src);
+        }
+        refreshList();
+    }
+
+    /** The system file dialog could not be shown: fall back to typing the path in-game. */
+    private void openPathFallback() {
+        ImportConfigScreen.ImportType type = this.selectedCategory == SoundCategory.BLOCK
+                ? ImportConfigScreen.ImportType.BLOCKS : ImportConfigScreen.ImportType.SOUNDS;
+        this.minecraft.gui.setScreen(new ImportConfigScreen(this, type, this::refreshList));
+    }
+
     private static boolean isBlockConfig(java.nio.file.Path file) {
         try {
             JsonObject obj = JsonParser.parseString(Files.readString(file)).getAsJsonObject();
@@ -636,6 +630,6 @@ public class SoundTweaksScreen extends Screen {
         savedObject   = this.selectedObject;
         savedSearch   = this.searchQuery;
         savedScroll   = this.soundList != null ? this.soundList.getScrollAmount() : 0.0;
-        this.minecraft.setScreen(this.parent);
+        this.minecraft.gui.setScreen(this.parent);
     }
 }

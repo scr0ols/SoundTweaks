@@ -1,14 +1,23 @@
 package com.scr0ols.soundtweaks.client.mixin;
 
+import com.scr0ols.soundtweaks.SoundDeduplicationConfig;
 import com.scr0ols.soundtweaks.SoundRegistry;
+import com.scr0ols.soundtweaks.SoundTweaks;
+import net.minecraft.client.sounds.ChannelAccess;
 import net.minecraft.client.sounds.SoundEngine;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.resources.sounds.TickableSoundInstance;
+import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundSource;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * Interceta SoundEngine para discovery de sons.
@@ -19,6 +28,55 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(SoundEngine.class)
 public class SoundEngineMixin {
+
+    @Inject(
+        method = "play",
+        at = @At("HEAD"),
+        cancellable = true
+    )
+    private void checkDuplication(SoundInstance sound, CallbackInfoReturnable<SoundEngine.PlayResult> cir) {
+        SoundSource source = sound.getSource();
+        if (source == SoundSource.MASTER || source == SoundSource.UI) return;
+
+        SoundDeduplicationConfig cfg = SoundDeduplicationConfig.INSTANCE;
+        int maxPos = cfg.getMaxPerPosition();
+        int maxId  = cfg.getMaxPerSoundId();
+
+        var id = sound.getIdentifier();
+        if (id == null) return;
+        BlockPos here = BlockPos.containing(sound.getX(), sound.getY(), sound.getZ());
+
+        Map<SoundInstance, ChannelAccess.ChannelHandle> instanceToChannel =
+                ((SoundEngineAccessor) (Object) this).getInstanceToChannel();
+
+        var snapshot = new ArrayList<>(instanceToChannel.entrySet());
+
+        int positionCount = 0;
+        int identifierCount = 0;
+
+        for (var entry : snapshot) {
+            SoundInstance instance = entry.getKey();
+            ChannelAccess.ChannelHandle channel = entry.getValue();
+            if (channel.isStopped()) continue;
+            if (!id.equals(instance.getIdentifier())) continue;
+
+            identifierCount++;
+            if (here.equals(BlockPos.containing(instance.getX(), instance.getY(), instance.getZ())))
+                positionCount++;
+        }
+
+        if (positionCount >= maxPos) {
+            SoundTweaks.LOGGER.debug("SoundTweaks: dedup cancelou '{}' em {} (pos={}/{})",
+                    id.toString(), here, positionCount, maxPos);
+            cir.setReturnValue(SoundEngine.PlayResult.NOT_STARTED);
+            return;
+        }
+        if (identifierCount >= maxId) {
+            SoundTweaks.LOGGER.debug("SoundTweaks: dedup cancelou '{}' globalmente (id={}/{})",
+                    id.toString(), identifierCount, maxId);
+            cir.setReturnValue(SoundEngine.PlayResult.NOT_STARTED);
+        }
+    }
 
     /**
      * Redirect in play() — required so AbstractSoundInstanceMixin can apply

@@ -9,10 +9,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.util.tinyfd.TinyFileDialogs;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.nio.file.Path;
 
@@ -94,7 +91,7 @@ public class ImportConfigScreen extends Screen {
         this.addRenderableWidget(exportBtn);
 
         this.cancelBtn = Button.builder(Component.translatable("soundtweaks.gui.cancel"),
-                btn -> this.minecraft.setScreen(parent)
+                btn -> this.minecraft.gui.setScreen(parent)
         ).bounds(btnStartX + (btnW + btnGap) * 2, btnY, btnW, 20).build();
         this.addRenderableWidget(cancelBtn);
     }
@@ -137,21 +134,31 @@ public class ImportConfigScreen extends Screen {
     }
 
     private void doExport() {
-        String target;
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            PointerBuffer filters = stack.mallocPointer(1);
-            filters.put(stack.UTF8("*.json")).flip();
-            target = TinyFileDialogs.tinyfd_saveFileDialog(
-                    "Export " + net.minecraft.client.resources.language.I18n.get(type.titleKey), type.defaultExportName, filters,
-                    "JSON file (*.json)");
-        }
-        if (target == null) return;
+        FileDialogs.saveJson(type.defaultExportName, this::exportTo, this::exportToConfigFolder);
+    }
 
+    /** The system file dialog is unavailable: export to the typed path, or else into the config folder. */
+    private void exportToConfigFolder() {
+        String input = pathBox.getValue().trim();
+        Path target;
+        try {
+            target = input.isEmpty()
+                    ? Path.of(ConfigFileUtil.getConfigDirString(), type.defaultExportName)
+                    : Path.of(ConfigFileUtil.getConfigDirString()).resolve(input);
+        } catch (java.nio.file.InvalidPathException e) {
+            feedbackMsg   = "Invalid file path: " + input;
+            feedbackColor = 0xFFFF6666;
+            return;
+        }
+        exportTo(target);
+    }
+
+    private void exportTo(Path target) {
         int result;
         switch (type) {
-            case PRESETS -> result = PresetConfig.exportTo(java.nio.file.Path.of(target));
-            case SOUNDS  -> result = VolumeConfig.SOUNDS.exportTo(java.nio.file.Path.of(target));
-            case BLOCKS  -> result = VolumeConfig.BLOCKS.exportTo(java.nio.file.Path.of(target));
+            case PRESETS -> result = PresetConfig.exportTo(target);
+            case SOUNDS  -> result = VolumeConfig.SOUNDS.exportTo(target);
+            case BLOCKS  -> result = VolumeConfig.BLOCKS.exportTo(target);
             default      -> result = -1;
         }
 
@@ -174,9 +181,31 @@ public class ImportConfigScreen extends Screen {
             return;
         }
 
+        if (type == ImportType.PRESETS) {
+            PresetConfig.ImportResult ir = PresetConfig.importFrom(path);
+            if (ir == null) {
+                feedbackMsg   = "Error reading file. Is it a valid JSON config?";
+                feedbackColor = 0xFFFF6666;
+            } else if (ir.imported() == 0) {
+                feedbackMsg   = "No presets found in this file.";
+                feedbackColor = 0xFFFFAA44;
+            } else if (ir.conflictsReassigned() > 0) {
+                feedbackMsg   = "Imported " + ir.imported() + " presets. "
+                        + ir.conflictsReassigned() + " ID conflict(s) — IDs were reassigned. See logs.";
+                feedbackColor = 0xFFFFAA44;
+                if (onSuccess != null) onSuccess.run();
+                // Stay open so the user sees the conflict warning
+            } else {
+                feedbackMsg   = "Success! Imported " + ir.imported() + " presets.";
+                feedbackColor = 0xFF88FF88;
+                if (onSuccess != null) onSuccess.run();
+                this.minecraft.gui.setScreen(parent);
+            }
+            return;
+        }
+
         int result;
         switch (type) {
-            case PRESETS -> result = PresetConfig.importFrom(path);
             case SOUNDS  -> result = VolumeConfig.SOUNDS.importFrom(path);
             case BLOCKS  -> result = VolumeConfig.BLOCKS.importFrom(path);
             default      -> result = -1;
@@ -185,23 +214,25 @@ public class ImportConfigScreen extends Screen {
         if (result < 0) {
             feedbackMsg   = "Error reading file. Is it a valid JSON config?";
             feedbackColor = 0xFFFF6666;
+        } else if (result == 0) {
+            feedbackMsg   = "No entries found in this file.";
+            feedbackColor = 0xFFFFAA44;
         } else {
             feedbackMsg   = "Success! Imported " + result + " entries.";
             feedbackColor = 0xFF88FF88;
             if (onSuccess != null) onSuccess.run();
-            // Close immediately after success
-            this.minecraft.setScreen(parent);
+            this.minecraft.gui.setScreen(parent);
         }
     }
 
     @Override
     public boolean keyPressed(KeyEvent event) {
         int key = event.key();
-        if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) {
+        if (key == InputConstants.KEY_RETURN || key == InputConstants.KEY_NUMPADENTER) {
             doImport(); return true;
         }
-        if (key == GLFW.GLFW_KEY_ESCAPE) {
-            this.minecraft.setScreen(parent); return true;
+        if (key == InputConstants.KEY_ESCAPE) {
+            this.minecraft.gui.setScreen(parent); return true;
         }
         return super.keyPressed(event);
     }
@@ -218,5 +249,5 @@ public class ImportConfigScreen extends Screen {
     }
 
     @Override
-    public void onClose() { this.minecraft.setScreen(parent); }
+    public void onClose() { this.minecraft.gui.setScreen(parent); }
 }

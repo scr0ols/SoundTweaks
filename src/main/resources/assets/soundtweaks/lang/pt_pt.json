@@ -57,10 +57,12 @@
   "soundtweaks.tooltip.mute_preset":        "Silenciar / restaurar todos os sons visíveis neste preset.",
   "soundtweaks.tooltip.import_from_config": "Copia todos os sons/blocos com volume ≠ 100%\nda config base para este preset.\nÚtil para guardar as definições globais actuais.",
 
-  "soundtweaks.presets.edit_title":     "Editar: %s",
-  "soundtweaks.presets.rename_title":   "Renomear Preset",
-  "soundtweaks.presets.delete_title":   "Eliminar preset?",
-  "soundtweaks.presets.delete_warning": "Esta ação não pode ser desfeita.",
+  "soundtweaks.presets.edit_title":             "Editar: %s",
+  "soundtweaks.presets.rename_title":           "Renomear Preset",
+  "soundtweaks.presets.delete_title":           "Eliminar preset?",
+  "soundtweaks.presets.delete_warning":         "Esta ação não pode ser desfeita.",
+  "soundtweaks.presets.import_conflict_title":  "Importação: conflito de IDs",
+  "soundtweaks.presets.import_conflict_body":   "%d preset(s) tinham IDs em conflito e foram reatribuídos automaticamente. Abre a wiki para saber como gerir IDs de presets manualmente.",
 
   "key.category.soundtweaks.soundtweaks": "Sound Tweaks",
   "key.soundtweaks.open_menu":    "Abrir Sound Tweaks",

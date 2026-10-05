@@ -1,5 +1,6 @@
 package com.scr0ols.soundtweaks.client.gui;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.scr0ols.soundtweaks.PresetConfig;
 import com.scr0ols.soundtweaks.SoundCategory;
 import com.scr0ols.soundtweaks.VolumeConfig;
@@ -291,17 +292,27 @@ public class PresetEditorScreen extends Screen {
     @Override
     public boolean keyPressed(KeyEvent event) {
         int key = event.key();
-        if (key == 256) {
+        if (key == InputConstants.KEY_ESCAPE) {
             if (this.categoryDropdown.isOpen()) { this.categoryDropdown.close(); return true; }
             if (this.objectDropdown.isOpen())   { this.objectDropdown.close();   return true; }
         }
-        if (key >= 65 && key <= 90 && !this.searchBox.isFocused()) {
-            char letter = (char) key;
+        char letter = jumpLetter(event);
+        if (letter != 0 && !this.searchBox.isFocused()) {
             if (this.categoryDropdown.isOpen()) return this.categoryDropdown.jumpToLetter(letter);
             if (this.objectDropdown.isOpen())   return this.objectDropdown.jumpToLetter(letter);
             return this.soundList.jumpToLetter(letter);
         }
         return super.keyPressed(event);
+    }
+
+    /**
+     * The letter on the pressed key, or 0 if it is not a plain letter. Uses the layout-aware SDL keycode
+     * because SDL only sends typed characters while a text field is focused, and scancodes are physical positions.
+     */
+    static char jumpLetter(KeyEvent event) {
+        int mods = event.modifiers() & (InputConstants.MOD_CONTROL | InputConstants.MOD_ALT | InputConstants.MOD_SUPER);
+        int code = event.keycode();
+        return mods == 0 && code >= 'a' && code <= 'z' ? (char) code : 0;
     }
 
     @Override
@@ -310,6 +321,6 @@ public class PresetEditorScreen extends Screen {
         savedObject   = this.selectedObject;
         savedSearch   = this.searchQuery;
         savedScroll   = this.soundList != null ? this.soundList.getScrollAmount() : 0.0;
-        this.minecraft.setScreen(parent);
+        this.minecraft.gui.setScreen(parent);
     }
 }

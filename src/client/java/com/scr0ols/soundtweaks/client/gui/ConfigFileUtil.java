@@ -1,7 +1,7 @@
 package com.scr0ols.soundtweaks.client.gui;
 
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.util.Util;
+import com.mojang.blaze3d.Blaze3D;
 
 import java.nio.file.Path;
 
@@ -14,7 +14,7 @@ public final class ConfigFileUtil {
 
     /** Opens the OS file explorer at the mod's config folder. */
     public static void openConfigFolder() {
-        Util.getPlatform().openPath(FabricLoader.getInstance().getConfigDir());
+        Blaze3D.openPath(FabricLoader.getInstance().getConfigDir());
     }
 
     /** Returns the absolute path of the config folder (for display to the user). */
