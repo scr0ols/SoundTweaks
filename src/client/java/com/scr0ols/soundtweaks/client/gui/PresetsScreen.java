@@ -6,9 +6,7 @@ import com.scr0ols.soundtweaks.SoundRegistry;
 import com.scr0ols.soundtweaks.VolumeConfig;
 import com.scr0ols.soundtweaks.client.SoundDisplayHelper;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.util.tinyfd.TinyFileDialogs;
+import org.lwjgl.sdl.SDLScancode;
 import net.minecraft.client.gui.components.AbstractSelectionList;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -21,7 +19,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -128,13 +126,7 @@ public class PresetsScreen extends Screen {
                 Component.translatable("soundtweaks.gui.import"),
                 btn -> {
                     String selected;
-                    try (MemoryStack stack = MemoryStack.stackPush()) {
-                        PointerBuffer filters = stack.mallocPointer(1);
-                        filters.put(stack.UTF8("*.json")).flip();
-                        selected = TinyFileDialogs.tinyfd_openFileDialog(
-                                "Select soundtweaks_presets.json", "", filters,
-                                "JSON preset file (*.json)", false);
-                    }
+                    selected = null; // TODO(F5): TinyFileDialogs was removed in 26.3; replace with SDL3 file dialogs
                     if (selected == null) return;
                     PresetConfig.ImportResult result = PresetConfig.importFrom(java.nio.file.Path.of(selected));
                     if (result == null) {
@@ -157,13 +149,7 @@ public class PresetsScreen extends Screen {
                 Component.translatable("soundtweaks.gui.export"),
                 btn -> {
                     String target;
-                    try (MemoryStack stack = MemoryStack.stackPush()) {
-                        PointerBuffer filters = stack.mallocPointer(1);
-                        filters.put(stack.UTF8("*.json")).flip();
-                        target = TinyFileDialogs.tinyfd_saveFileDialog(
-                                "Export presets", "soundtweaks_presets_export.json", filters,
-                                "JSON preset file (*.json)");
-                    }
+                    target = null; // TODO(F5): TinyFileDialogs was removed in 26.3; replace with SDL3 file dialogs
                     if (target == null) return;
                     int exported = PresetConfig.exportTo(java.nio.file.Path.of(target));
                     if (exported < 0) showFooterMsg("Export failed. Check logs for details.", 0xFFFF6666);
@@ -672,20 +658,20 @@ public class PresetsScreen extends Screen {
         // Without this check first, when editingPreset != null and creating == true,
         // the block below would consume all keys without passing them to createBox.
         if (creating) {
-            if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) { confirmCreate(); return true; }
-            if (key == GLFW.GLFW_KEY_ESCAPE) { exitCreateMode(); return true; }
+            if (key == InputConstants.KEY_RETURN || key == InputConstants.KEY_NUMPADENTER) { confirmCreate(); return true; }
+            if (key == InputConstants.KEY_ESCAPE) { exitCreateMode(); return true; }
             return super.keyPressed(event);
         }
 
         if (editingPreset != null) {
             if (editMode == EditMode.SHORTCUT) { handleShortcutKey(key); return true; }
             if (editMode == EditMode.RENAME) {
-                if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) { confirmRename(); return true; }
-                if (key == GLFW.GLFW_KEY_ESCAPE) { setEditMode(EditMode.COLOR); return true; }
+                if (key == InputConstants.KEY_RETURN || key == InputConstants.KEY_NUMPADENTER) { confirmRename(); return true; }
+                if (key == InputConstants.KEY_ESCAPE) { setEditMode(EditMode.COLOR); return true; }
                 return super.keyPressed(event);
             }
             if (editMode == EditMode.COLOR && this.getFocused() == colorHexBox) {
-                if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER || key == GLFW.GLFW_KEY_ESCAPE) {
+                if (key == InputConstants.KEY_RETURN || key == InputConstants.KEY_NUMPADENTER || key == InputConstants.KEY_ESCAPE) {
                     this.setFocused(null); return true;
                 }
                 return super.keyPressed(event);
@@ -697,7 +683,7 @@ public class PresetsScreen extends Screen {
                 }
                 return super.keyPressed(event);
             }
-            if (key == GLFW.GLFW_KEY_ESCAPE) { closeDetailPanel(); return true; }
+            if (key == InputConstants.KEY_ESCAPE) { closeDetailPanel(); return true; }
             return true;
         }
 
@@ -713,8 +699,8 @@ public class PresetsScreen extends Screen {
     }
 
     private void handleShortcutKey(int key) {
-        if (key == GLFW.GLFW_KEY_ESCAPE) { resetShortcutCapture(); setEditMode(EditMode.COLOR); return; }
-        if (key == GLFW.GLFW_KEY_BACKSPACE) {
+        if (key == InputConstants.KEY_ESCAPE) { resetShortcutCapture(); setEditMode(EditMode.COLOR); return; }
+        if (key == InputConstants.KEY_BACKSPACE) {
             resetShortcutCapture();
             if (editingPreset != null) {
                 editingPreset.shortcutKey = 0; editingPreset.shortcutHeldKey = 0; editingPreset.shortcutHeldKey2 = 0;
@@ -722,7 +708,7 @@ public class PresetsScreen extends Screen {
             }
             presetList.refresh(); return;
         }
-        if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) { if (lastCapturedTrigger != 0) confirmShortcut(); return; }
+        if (key == InputConstants.KEY_RETURN || key == InputConstants.KEY_NUMPADENTER) { if (lastCapturedTrigger != 0) confirmShortcut(); return; }
         lastHeldAtTrigger.clear(); lastHeldAtTrigger.addAll(captureHeldKeys);
         while (lastHeldAtTrigger.size() > 2) lastHeldAtTrigger.remove(0);
         lastCapturedTrigger = key; captureHeldKeys.add(key);
@@ -952,7 +938,7 @@ public class PresetsScreen extends Screen {
         this.minecraft.gui.setScreen(new net.minecraft.client.gui.screens.ConfirmLinkScreen(
             confirmed -> this.minecraft.gui.setScreen(PresetsScreen.this),
             Component.translatable("soundtweaks.presets.import_conflict_body", count),
-            PresetConfig.WIKI_PRESETS_URL,
+            java.net.URI.create(PresetConfig.WIKI_PRESETS_URL),
             true
         ));
     }
@@ -1078,41 +1064,39 @@ public class PresetsScreen extends Screen {
         return rawKeyName(preset.shortcutKey & 0xFFFF);
     }
 
-    static String rawKeyName(int glfwKey) {
-        if (glfwKey <= 0) return "---";
-        String s = GLFW.glfwGetKeyName(glfwKey, 0);
-        if (s != null && !s.isBlank()) return s.toUpperCase();
-        return switch (glfwKey) {
-            case GLFW.GLFW_KEY_F1  -> "F1";   case GLFW.GLFW_KEY_F2  -> "F2";
-            case GLFW.GLFW_KEY_F3  -> "F3";   case GLFW.GLFW_KEY_F4  -> "F4";
-            case GLFW.GLFW_KEY_F5  -> "F5";   case GLFW.GLFW_KEY_F6  -> "F6";
-            case GLFW.GLFW_KEY_F7  -> "F7";   case GLFW.GLFW_KEY_F8  -> "F8";
-            case GLFW.GLFW_KEY_F9  -> "F9";   case GLFW.GLFW_KEY_F10 -> "F10";
-            case GLFW.GLFW_KEY_F11 -> "F11";  case GLFW.GLFW_KEY_F12 -> "F12";
-            case GLFW.GLFW_KEY_UP    -> "UP";    case GLFW.GLFW_KEY_DOWN  -> "DOWN";
-            case GLFW.GLFW_KEY_LEFT  -> "LEFT";  case GLFW.GLFW_KEY_RIGHT -> "RIGHT";
-            case GLFW.GLFW_KEY_INSERT -> "INS";  case GLFW.GLFW_KEY_DELETE -> "DEL";
-            case GLFW.GLFW_KEY_HOME   -> "HOME"; case GLFW.GLFW_KEY_END    -> "END";
-            case GLFW.GLFW_KEY_PAGE_UP -> "PgUp"; case GLFW.GLFW_KEY_PAGE_DOWN -> "PgDn";
-            case GLFW.GLFW_KEY_SPACE      -> "Space"; case GLFW.GLFW_KEY_ENTER -> "Enter";
-            case GLFW.GLFW_KEY_KP_ENTER   -> "Num Enter";
-            case GLFW.GLFW_KEY_TAB        -> "Tab";  case GLFW.GLFW_KEY_CAPS_LOCK -> "Caps";
-            case GLFW.GLFW_KEY_ESCAPE     -> "Esc";  case GLFW.GLFW_KEY_BACKSPACE -> "Bksp";
-            case GLFW.GLFW_KEY_PRINT_SCREEN -> "Print"; case GLFW.GLFW_KEY_PAUSE -> "Pause";
-            case GLFW.GLFW_KEY_NUM_LOCK -> "Num Lock"; case GLFW.GLFW_KEY_SCROLL_LOCK -> "Scroll";
-            case GLFW.GLFW_KEY_LEFT_SHIFT,  GLFW.GLFW_KEY_RIGHT_SHIFT   -> "Shift";
-            case GLFW.GLFW_KEY_LEFT_CONTROL, GLFW.GLFW_KEY_RIGHT_CONTROL -> "Ctrl";
-            case GLFW.GLFW_KEY_LEFT_ALT,    GLFW.GLFW_KEY_RIGHT_ALT     -> "Alt";
-            case GLFW.GLFW_KEY_LEFT_SUPER,  GLFW.GLFW_KEY_RIGHT_SUPER   -> "Super";
-            case GLFW.GLFW_KEY_KP_0 -> "Num0"; case GLFW.GLFW_KEY_KP_1 -> "Num1";
-            case GLFW.GLFW_KEY_KP_2 -> "Num2"; case GLFW.GLFW_KEY_KP_3 -> "Num3";
-            case GLFW.GLFW_KEY_KP_4 -> "Num4"; case GLFW.GLFW_KEY_KP_5 -> "Num5";
-            case GLFW.GLFW_KEY_KP_6 -> "Num6"; case GLFW.GLFW_KEY_KP_7 -> "Num7";
-            case GLFW.GLFW_KEY_KP_8 -> "Num8"; case GLFW.GLFW_KEY_KP_9 -> "Num9";
-            case GLFW.GLFW_KEY_KP_ADD -> "Num+"; case GLFW.GLFW_KEY_KP_SUBTRACT -> "Num-";
-            case GLFW.GLFW_KEY_KP_MULTIPLY -> "Num*"; case GLFW.GLFW_KEY_KP_DIVIDE -> "Num/";
-            case GLFW.GLFW_KEY_KP_DECIMAL  -> "Num.";
-            default -> "Key" + glfwKey;
+    static String rawKeyName(int keyCode) {
+        if (keyCode <= 0) return "---";
+        return switch (keyCode) {
+            case InputConstants.KEY_F1  -> "F1";   case InputConstants.KEY_F2  -> "F2";
+            case InputConstants.KEY_F3  -> "F3";   case InputConstants.KEY_F4  -> "F4";
+            case InputConstants.KEY_F5  -> "F5";   case InputConstants.KEY_F6  -> "F6";
+            case InputConstants.KEY_F7  -> "F7";   case InputConstants.KEY_F8  -> "F8";
+            case InputConstants.KEY_F9  -> "F9";   case InputConstants.KEY_F10 -> "F10";
+            case InputConstants.KEY_F11 -> "F11";  case InputConstants.KEY_F12 -> "F12";
+            case InputConstants.KEY_UP    -> "UP";    case InputConstants.KEY_DOWN  -> "DOWN";
+            case InputConstants.KEY_LEFT  -> "LEFT";  case InputConstants.KEY_RIGHT -> "RIGHT";
+            case InputConstants.KEY_INSERT -> "INS";  case InputConstants.KEY_DELETE -> "DEL";
+            case InputConstants.KEY_HOME   -> "HOME"; case InputConstants.KEY_END    -> "END";
+            case InputConstants.KEY_PAGEUP -> "PgUp"; case InputConstants.KEY_PAGEDOWN -> "PgDn";
+            case InputConstants.KEY_SPACE      -> "Space"; case InputConstants.KEY_RETURN -> "Enter";
+            case InputConstants.KEY_NUMPADENTER   -> "Num Enter";
+            case InputConstants.KEY_TAB        -> "Tab";  case InputConstants.KEY_CAPSLOCK -> "Caps";
+            case InputConstants.KEY_ESCAPE     -> "Esc";  case InputConstants.KEY_BACKSPACE -> "Bksp";
+            case InputConstants.KEY_PRINTSCREEN -> "Print"; case InputConstants.KEY_PAUSE -> "Pause";
+            case InputConstants.KEY_NUMLOCK -> "Num Lock"; case InputConstants.KEY_SCROLLLOCK -> "Scroll";
+            case InputConstants.KEY_LSHIFT,  InputConstants.KEY_RSHIFT   -> "Shift";
+            case InputConstants.KEY_LCONTROL, InputConstants.KEY_RCONTROL -> "Ctrl";
+            case InputConstants.KEY_LALT,    InputConstants.KEY_RALT     -> "Alt";
+            case InputConstants.KEY_LGUI,  InputConstants.KEY_RGUI   -> "Super";
+            case InputConstants.KEY_NUMPAD0 -> "Num0"; case InputConstants.KEY_NUMPAD1 -> "Num1";
+            case InputConstants.KEY_NUMPAD2 -> "Num2"; case InputConstants.KEY_NUMPAD3 -> "Num3";
+            case InputConstants.KEY_NUMPAD4 -> "Num4"; case InputConstants.KEY_NUMPAD5 -> "Num5";
+            case InputConstants.KEY_NUMPAD6 -> "Num6"; case InputConstants.KEY_NUMPAD7 -> "Num7";
+            case InputConstants.KEY_NUMPAD8 -> "Num8"; case InputConstants.KEY_NUMPAD9 -> "Num9";
+            case InputConstants.KEY_ADD -> "Num+"; case SDLScancode.SDL_SCANCODE_KP_MINUS -> "Num-";
+            case InputConstants.KEY_MULTIPLY -> "Num*"; case SDLScancode.SDL_SCANCODE_KP_DIVIDE -> "Num/";
+            case SDLScancode.SDL_SCANCODE_KP_PERIOD  -> "Num.";
+            default -> InputConstants.Type.KEYBOARD.getOrCreate(keyCode).getDisplayName().getString().toUpperCase();
         };
     }
 }

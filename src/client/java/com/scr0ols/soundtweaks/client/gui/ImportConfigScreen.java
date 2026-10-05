@@ -9,10 +9,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.util.tinyfd.TinyFileDialogs;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.nio.file.Path;
 
@@ -138,13 +135,7 @@ public class ImportConfigScreen extends Screen {
 
     private void doExport() {
         String target;
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            PointerBuffer filters = stack.mallocPointer(1);
-            filters.put(stack.UTF8("*.json")).flip();
-            target = TinyFileDialogs.tinyfd_saveFileDialog(
-                    "Export " + net.minecraft.client.resources.language.I18n.get(type.titleKey), type.defaultExportName, filters,
-                    "JSON file (*.json)");
-        }
+        target = null; // TODO(F5): TinyFileDialogs was removed in 26.3; replace with SDL3 file dialogs
         if (target == null) return;
 
         int result;
@@ -221,10 +212,10 @@ public class ImportConfigScreen extends Screen {
     @Override
     public boolean keyPressed(KeyEvent event) {
         int key = event.key();
-        if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) {
+        if (key == InputConstants.KEY_RETURN || key == InputConstants.KEY_NUMPADENTER) {
             doImport(); return true;
         }
-        if (key == GLFW.GLFW_KEY_ESCAPE) {
+        if (key == InputConstants.KEY_ESCAPE) {
             this.minecraft.gui.setScreen(parent); return true;
         }
         return super.keyPressed(event);

@@ -15,7 +15,6 @@ import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
 //import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -43,21 +42,21 @@ public class SoundTweaksClient implements ClientModInitializer {
 
         openMenuKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.soundtweaks.open_menu",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_K,
+                InputConstants.Type.KEYBOARD,
+                InputConstants.KEY_K,
                 soundTweaksCategory
         ));
 
         openPresetsKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.soundtweaks.open_presets",
-                InputConstants.Type.KEYSYM,
+                InputConstants.Type.KEYBOARD,
                 InputConstants.UNKNOWN.getValue(),
                 soundTweaksCategory
         ));
 
         /*perfReportKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.soundtweaks.perf_report",
-                InputConstants.Type.KEYSYM,
+                InputConstants.Type.KEYBOARD,
                 InputConstants.UNKNOWN.getValue(),
                 soundTweaksCategory
         ));*/
@@ -81,28 +80,25 @@ public class SoundTweaksClient implements ClientModInitializer {
 
             // Preset shortcuts — only active when no screen is open
             if (client.gui.screen() == null && client.gui.overlay() == null) {
-                long win = GLFW.glfwGetCurrentContext();
-                if (win == 0L) return; // invalid GLFW context — skip
-
                 for (PresetConfig.Preset preset : PresetConfig.getPresets()) {
                     if (preset.shortcutKey <= 0) continue;
 
-                    int glfwKey = preset.shortcutKey & 0xFFFF;
+                    int keyCode = preset.shortcutKey & 0xFFFF;
                     boolean triggerActive;
 
                     if (preset.shortcutHeldKey != 0) {
                         // 2 or 3 keys: verify held keys + trigger
-                        if (GLFW.glfwGetKey(win, preset.shortcutHeldKey) != GLFW.GLFW_PRESS) {
+                        if (!InputConstants.isKeyDown(preset.shortcutHeldKey)) {
                             shortcutKeysHeld.remove(preset.id); continue;
                         }
                         if (preset.shortcutHeldKey2 != 0
-                                && GLFW.glfwGetKey(win, preset.shortcutHeldKey2) != GLFW.GLFW_PRESS) {
+                                && !InputConstants.isKeyDown(preset.shortcutHeldKey2)) {
                             shortcutKeysHeld.remove(preset.id); continue;
                         }
-                        triggerActive = GLFW.glfwGetKey(win, glfwKey) == GLFW.GLFW_PRESS;
+                        triggerActive = InputConstants.isKeyDown(keyCode);
                     } else {
                         // 1 key: only check the trigger key (rising edge)
-                        triggerActive = GLFW.glfwGetKey(win, glfwKey) == GLFW.GLFW_PRESS;
+                        triggerActive = InputConstants.isKeyDown(keyCode);
                     }
 
                     boolean wasHeld = shortcutKeysHeld.contains(preset.id);

@@ -7,9 +7,6 @@ import com.scr0ols.soundtweaks.SoundRegistry;
 import com.scr0ols.soundtweaks.VolumeConfig;
 import com.scr0ols.soundtweaks.VolumeResolver;
 import com.scr0ols.soundtweaks.client.SoundDisplayHelper;
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.util.tinyfd.TinyFileDialogs;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -147,16 +144,7 @@ public class SoundTweaksScreen extends Screen {
                 Component.translatable("soundtweaks.gui.import_config"),
                 btn -> {
                     String selected;
-                    try (MemoryStack stack = MemoryStack.stackPush()) {
-                        PointerBuffer filters = stack.mallocPointer(1);
-                        filters.put(stack.UTF8("*.json")).flip();
-                        selected = TinyFileDialogs.tinyfd_openFileDialog(
-                                "Select soundtweaks config file",
-                                "",
-                                filters,
-                                "JSON config files (*.json)",
-                                false);
-                    }
+                    selected = null; // TODO(F5): TinyFileDialogs was removed in 26.3; replace with SDL3 file dialogs
                     if (selected == null) return;
                     java.nio.file.Path src = java.nio.file.Path.of(selected);
                     if (isBlockConfig(src)) {
