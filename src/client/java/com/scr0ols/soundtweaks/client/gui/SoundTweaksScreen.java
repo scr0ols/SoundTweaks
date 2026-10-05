@@ -144,18 +144,7 @@ public class SoundTweaksScreen extends Screen {
         // Import config from another instance via native file dialog
         var importCfgBtn = Button.builder(
                 Component.translatable("soundtweaks.gui.import_config"),
-                btn -> {
-                    String selected;
-                    selected = null; // TODO(F5): TinyFileDialogs was removed in 26.3; replace with SDL3 file dialogs
-                    if (selected == null) return;
-                    java.nio.file.Path src = java.nio.file.Path.of(selected);
-                    if (isBlockConfig(src)) {
-                        VolumeConfig.BLOCKS.importFrom(src);
-                    } else {
-                        VolumeConfig.SOUNDS.importFrom(src);
-                    }
-                    refreshList();
-                }
+                btn -> FileDialogs.openJson(this::importConfigFrom, this::openPathFallback)
         ).bounds(cw / 2 - 125, this.height - 26, 120, 20).build();
         importCfgBtn.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.import_config")));
         this.addRenderableWidget(importCfgBtn);
@@ -612,6 +601,22 @@ public class SoundTweaksScreen extends Screen {
      * Sound IDs contain a dot after the namespace colon ("minecraft:block.piston.extend");
      * block IDs do not ("minecraft:piston"). Falls back to false (sounds) on any error.
      */
+    private void importConfigFrom(java.nio.file.Path src) {
+        if (isBlockConfig(src)) {
+            VolumeConfig.BLOCKS.importFrom(src);
+        } else {
+            VolumeConfig.SOUNDS.importFrom(src);
+        }
+        refreshList();
+    }
+
+    /** The system file dialog could not be shown: fall back to typing the path in-game. */
+    private void openPathFallback() {
+        ImportConfigScreen.ImportType type = this.selectedCategory == SoundCategory.BLOCK
+                ? ImportConfigScreen.ImportType.BLOCKS : ImportConfigScreen.ImportType.SOUNDS;
+        this.minecraft.gui.setScreen(new ImportConfigScreen(this, type, this::refreshList));
+    }
+
     private static boolean isBlockConfig(java.nio.file.Path file) {
         try {
             JsonObject obj = JsonParser.parseString(Files.readString(file)).getAsJsonObject();

@@ -124,37 +124,14 @@ public class PresetsScreen extends Screen {
 
         this.importPresetsBtn = Button.builder(
                 Component.translatable("soundtweaks.gui.import"),
-                btn -> {
-                    String selected;
-                    selected = null; // TODO(F5): TinyFileDialogs was removed in 26.3; replace with SDL3 file dialogs
-                    if (selected == null) return;
-                    PresetConfig.ImportResult result = PresetConfig.importFrom(java.nio.file.Path.of(selected));
-                    if (result == null) {
-                        showFooterMsg("Import failed. Check logs for details.", 0xFFFF6666);
-                    } else if (result.imported() == 0) {
-                        showFooterMsg("No presets found in this file.", 0xFFFFAA44);
-                    } else if (result.conflictsReassigned() > 0) {
-                        presetList.refresh();
-                        showImportConflictWarning(result.conflictsReassigned());
-                    } else {
-                        showFooterMsg("Imported " + result.imported() + " presets.", 0xFF88FF88);
-                        presetList.refresh();
-                    }
-                }
+                btn -> FileDialogs.openJson(this::importPresetsFrom, this::openPathFallback)
         ).bounds(4, this.height - 26, LIST_W / 2 - 6, 20).build();
         this.importPresetsBtn.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.import_presets")));
         this.addRenderableWidget(this.importPresetsBtn);
 
         this.exportPresetsBtn = Button.builder(
                 Component.translatable("soundtweaks.gui.export"),
-                btn -> {
-                    String target;
-                    target = null; // TODO(F5): TinyFileDialogs was removed in 26.3; replace with SDL3 file dialogs
-                    if (target == null) return;
-                    int exported = PresetConfig.exportTo(java.nio.file.Path.of(target));
-                    if (exported < 0) showFooterMsg("Export failed. Check logs for details.", 0xFFFF6666);
-                    else showFooterMsg("Exported " + exported + " presets.", 0xFF88FF88);
-                }
+                btn -> FileDialogs.saveJson("soundtweaks_presets_export.json", this::exportPresetsTo, this::openPathFallback)
         // Provisional bounds — corrected by rebuildLayout() at the end of init().
         ).bounds(4, this.height - 26, LIST_W / 2 - 6, 20).build();
         this.exportPresetsBtn.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.export_presets")));
@@ -932,6 +909,33 @@ public class PresetsScreen extends Screen {
             String name = renameBox.getValue().trim();
             if (!name.isEmpty()) { PresetConfig.renamePreset(editingPreset.id, name); presetList.refresh(); }
         }
+    }
+
+    private void importPresetsFrom(java.nio.file.Path file) {
+        PresetConfig.ImportResult result = PresetConfig.importFrom(file);
+        if (result == null) {
+            showFooterMsg("Import failed. Check logs for details.", 0xFFFF6666);
+        } else if (result.imported() == 0) {
+            showFooterMsg("No presets found in this file.", 0xFFFFAA44);
+        } else if (result.conflictsReassigned() > 0) {
+            presetList.refresh();
+            showImportConflictWarning(result.conflictsReassigned());
+        } else {
+            showFooterMsg("Imported " + result.imported() + " presets.", 0xFF88FF88);
+            presetList.refresh();
+        }
+    }
+
+    private void exportPresetsTo(java.nio.file.Path file) {
+        int exported = PresetConfig.exportTo(file);
+        if (exported < 0) showFooterMsg("Export failed. Check logs for details.", 0xFFFF6666);
+        else showFooterMsg("Exported " + exported + " presets.", 0xFF88FF88);
+    }
+
+    /** The system file dialog could not be shown: fall back to typing the path in-game. */
+    private void openPathFallback() {
+        this.minecraft.gui.setScreen(new ImportConfigScreen(this,
+                ImportConfigScreen.ImportType.PRESETS, () -> presetList.refresh()));
     }
 
     private void showImportConflictWarning(int count) {

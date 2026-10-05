@@ -134,15 +134,31 @@ public class ImportConfigScreen extends Screen {
     }
 
     private void doExport() {
-        String target;
-        target = null; // TODO(F5): TinyFileDialogs was removed in 26.3; replace with SDL3 file dialogs
-        if (target == null) return;
+        FileDialogs.saveJson(type.defaultExportName, this::exportTo, this::exportToConfigFolder);
+    }
 
+    /** The system file dialog is unavailable: export to the typed path, or else into the config folder. */
+    private void exportToConfigFolder() {
+        String input = pathBox.getValue().trim();
+        Path target;
+        try {
+            target = input.isEmpty()
+                    ? Path.of(ConfigFileUtil.getConfigDirString(), type.defaultExportName)
+                    : Path.of(ConfigFileUtil.getConfigDirString()).resolve(input);
+        } catch (java.nio.file.InvalidPathException e) {
+            feedbackMsg   = "Invalid file path: " + input;
+            feedbackColor = 0xFFFF6666;
+            return;
+        }
+        exportTo(target);
+    }
+
+    private void exportTo(Path target) {
         int result;
         switch (type) {
-            case PRESETS -> result = PresetConfig.exportTo(java.nio.file.Path.of(target));
-            case SOUNDS  -> result = VolumeConfig.SOUNDS.exportTo(java.nio.file.Path.of(target));
-            case BLOCKS  -> result = VolumeConfig.BLOCKS.exportTo(java.nio.file.Path.of(target));
+            case PRESETS -> result = PresetConfig.exportTo(target);
+            case SOUNDS  -> result = VolumeConfig.SOUNDS.exportTo(target);
+            case BLOCKS  -> result = VolumeConfig.BLOCKS.exportTo(target);
             default      -> result = -1;
         }
 
