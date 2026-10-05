@@ -10,7 +10,6 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.resources.language.I18n;
@@ -297,20 +296,23 @@ public class PresetEditorScreen extends Screen {
             if (this.categoryDropdown.isOpen()) { this.categoryDropdown.close(); return true; }
             if (this.objectDropdown.isOpen())   { this.objectDropdown.close();   return true; }
         }
-        return super.keyPressed(event);
-    }
-
-    // Letters arrive as typed characters (not scancodes) so jump-to-letter follows the keyboard layout.
-    @Override
-    public boolean charTyped(CharacterEvent event) {
-        int cp = event.codepoint();
-        if (Character.isBmpCodePoint(cp) && Character.isLetter(cp) && !this.searchBox.isFocused()) {
-            char letter = (char) cp;
+        char letter = jumpLetter(event);
+        if (letter != 0 && !this.searchBox.isFocused()) {
             if (this.categoryDropdown.isOpen()) return this.categoryDropdown.jumpToLetter(letter);
             if (this.objectDropdown.isOpen())   return this.objectDropdown.jumpToLetter(letter);
             return this.soundList.jumpToLetter(letter);
         }
-        return super.charTyped(event);
+        return super.keyPressed(event);
+    }
+
+    /**
+     * The letter on the pressed key, or 0 if it is not a plain letter. Uses the layout-aware SDL keycode
+     * because SDL only sends typed characters while a text field is focused, and scancodes are physical positions.
+     */
+    static char jumpLetter(KeyEvent event) {
+        int mods = event.modifiers() & (InputConstants.MOD_CONTROL | InputConstants.MOD_ALT | InputConstants.MOD_SUPER);
+        int code = event.keycode();
+        return mods == 0 && code >= 'a' && code <= 'z' ? (char) code : 0;
     }
 
     @Override

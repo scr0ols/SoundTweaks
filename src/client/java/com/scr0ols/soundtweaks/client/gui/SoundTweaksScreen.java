@@ -12,7 +12,6 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.resources.language.I18n;
@@ -401,20 +400,13 @@ public class SoundTweaksScreen extends Screen {
             if (this.categoryDropdown.isOpen()) { this.categoryDropdown.close(); return true; }
             if (this.objectDropdown.isOpen())   { this.objectDropdown.close();   return true; }
         }
-        return super.keyPressed(event);
-    }
-
-    // Letters arrive as typed characters (not scancodes) so jump-to-letter follows the keyboard layout.
-    @Override
-    public boolean charTyped(CharacterEvent event) {
-        int cp = event.codepoint();
-        if (Character.isBmpCodePoint(cp) && Character.isLetter(cp)) {
-            char letter = (char) cp;
+        char letter = PresetEditorScreen.jumpLetter(event);
+        if (letter != 0) {
             if (this.categoryDropdown.isOpen()) return this.categoryDropdown.jumpToLetter(letter);
             if (this.objectDropdown.isOpen())   return this.objectDropdown.jumpToLetter(letter);
             if (!this.searchBox.isFocused())    return this.soundList.jumpToLetter(letter);
         }
-        return super.charTyped(event);
+        return super.keyPressed(event);
     }
 
     // ── Dropdown callbacks ────────────────────────────────────────────────────
