@@ -62,9 +62,10 @@ public final class FileDialogs {
             }
             String result = selected;
             boolean unavailable = failed;
-            // SDL calls back from its own thread on some platforms; hand everything to the game thread,
-            // including freeing the callback, which cannot be freed while it is still running.
-            mc.execute(() -> {
+            // SDL calls back from its own thread on some platforms, or synchronously on failure. schedule() always
+            // queues for the next game-thread task (execute() would run inline on the game thread), so the callback
+            // is never freed while it is still running.
+            mc.schedule(() -> {
                 self[0].free();
                 filters.free();
                 MemoryUtil.memFree(filterName);
