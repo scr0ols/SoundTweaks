@@ -1,4 +1,6 @@
-package com.scr0ols.soundtweaks.client;
+package com.scr0ols.soundtweaks.fabric;
+
+import com.scr0ols.soundtweaks.client.ClientLogic;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
@@ -7,7 +9,7 @@ import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.resources.Identifier;
 
-public class SoundTweaksClient implements ClientModInitializer {
+public class SoundTweaksFabricClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {

@@ -16,10 +16,10 @@
 	"environment": "client",
 	"entrypoints": {
 		"main": [
-			"com.scr0ols.soundtweaks.SoundTweaks"
+			"com.scr0ols.soundtweaks.fabric.SoundTweaksFabric"
 		],
 		"client": [
-			"com.scr0ols.soundtweaks.client.SoundTweaksClient"
+			"com.scr0ols.soundtweaks.fabric.SoundTweaksFabricClient"
 		]
 	},
 	"mixins": [

@@ -4,7 +4,7 @@ package com.scr0ols.soundtweaks;
 import java.util.concurrent.atomic.AtomicLong;
 
 // Lightweight hot-path profiler for SoundTweaks.
-// Activate by uncommenting this class + usages in AbstractSoundInstanceMixin and SoundTweaksClient.
+// Activate by uncommenting this class + usages in AbstractSoundInstanceMixin and ClientLogic.
 public class PerfStats {
 
     private static final AtomicLong totalCalls     = new AtomicLong();
