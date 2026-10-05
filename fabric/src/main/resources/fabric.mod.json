@@ -1,0 +1,38 @@
+{
+	"schemaVersion": 1,
+	"id": "soundtweaks",
+	"version": "${version}",
+	"name": "SoundTweaks",
+	"description": "Per-sound volume control — mute, amplify or individually adjust any sound in the game.",
+	"authors": [
+		"scr0ols"
+	],
+	"contact": {
+		"homepage": "https://github.com/scr0ols/SoundTweaks/wiki",
+		"issues": "https://github.com/scr0ols/SoundTweaks/issues"
+	},
+	"license": "GPL-3.0-or-later",
+	"icon": "assets/soundtweaks/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"main": [
+			"com.scr0ols.soundtweaks.fabric.SoundTweaksFabric"
+		],
+		"client": [
+			"com.scr0ols.soundtweaks.fabric.SoundTweaksFabricClient"
+		]
+	},
+	"mixins": [
+		"soundtweaks.mixins.json",
+		{
+			"config": "soundtweaks.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}

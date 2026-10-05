@@ -8,6 +8,11 @@ Versions are `MAJOR.MINOR.PATCH+MC`, where `MC` is the Minecraft version the bui
 
 ## [Unreleased]
 
+### Changed
+
+- The project is split into `common` and `fabric` modules, with the shared code in `common`, to prepare for a NeoForge build from the same source. The Fabric jar is now named `fabric-soundtweaks-<version>.jar`.
+- Loom is pinned to the 1.17.20 release.
+
 ## [1.2.3] - 2026-10-05
 
 Port to Minecraft 26.3 (Fabric). Minecraft 26.3 replaced GLFW with SDL3 and removed the native file dialog library, so input handling, saved shortcuts and the import/export dialogs were migrated.
