@@ -9,7 +9,7 @@ license = "${mod_license}"
     description = '''
 Per-sound volume control — mute, amplify or individually adjust any sound in the game.
 '''
-    logoFile = "assets/soundtweaks/banner.png"
+    bannerFile = "assets/soundtweaks/banner.png"
     displayURL = "https://github.com/scr0ols/SoundTweaks/wiki"
     issueTrackerURL = "https://github.com/scr0ols/SoundTweaks/issues"
     authors = "scr0ols"
