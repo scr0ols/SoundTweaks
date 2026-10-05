@@ -116,7 +116,7 @@ All files are saved in `.minecraft/config/`:
 gradlew.bat build
 ```
 
-Output: `build/libs/soundtweaks-1.2.0.jar`
+Output: `fabric/build/libs/fabric-soundtweaks-<version>.jar` (one jar per loader module).
 
 > [!TIP]
-> The mod jar is in `build/libs/`. Drop it into your `mods/` folder to test locally. Files ending in `-sources.jar` or `-dev.jar` are not needed for running the mod.
+> The mod jar is in `fabric/build/libs/`. Drop it into your `mods/` folder to test locally. Files ending in `-sources.jar` or `-dev.jar` are not needed for running the mod.

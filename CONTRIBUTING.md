@@ -85,7 +85,18 @@ git checkout dev
 ```
 
 > [!TIP]
-> The output jar is in `build/libs/`. Drop it into your `mods/` folder to test. Files ending in `-sources.jar` or `-dev.jar` are not needed for running the mod.
+> The output jar is in `<loader>/build/libs/`, named `<loader>-soundtweaks-<version>.jar`. Drop it into your `mods/` folder to test. Files ending in `-sources.jar` or `-dev.jar` are not needed for running the mod.
+
+### Project layout
+
+The project is split into modules:
+
+| Module | Contents |
+|---|---|
+| `common/` | Code that does not depend on a mod loader: configuration, GUI, mixins, lang files and the unit tests. It is compiled into each loader's jar. |
+| `fabric/` | Fabric entrypoints, `fabric.mod.json` and the Fabric build. |
+
+Put a change in `common/` unless it needs a loader API. To start the game from the Fabric module, run `./gradlew :fabric:runClient`.
 
 ---
 
