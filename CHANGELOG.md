@@ -54,5 +54,5 @@ Version bump only; no GitHub release was published for this version.
 
 [Unreleased]: https://github.com/scr0ols/SoundTweaks/compare/v1.2.3...HEAD
 [1.2.3]: https://github.com/scr0ols/SoundTweaks/compare/v1.2.2...v1.2.3
-[1.2.2]: https://github.com/scr0ols/SoundTweaks/compare/v1.2.1...v1.2.2
+[1.2.2]: https://github.com/scr0ols/SoundTweaks/compare/v1.2.0...v1.2.2
 [1.2.0]: https://github.com/scr0ols/SoundTweaks/releases/tag/v1.2.0
