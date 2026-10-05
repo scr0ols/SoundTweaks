@@ -1,6 +1,6 @@
 package com.scr0ols.soundtweaks.client.gui;
 
-import net.fabricmc.loader.api.FabricLoader;
+import com.scr0ols.soundtweaks.Platform;
 import com.mojang.blaze3d.Blaze3D;
 
 import java.nio.file.Path;
@@ -14,12 +14,12 @@ public final class ConfigFileUtil {
 
     /** Opens the OS file explorer at the mod's config folder. */
     public static void openConfigFolder() {
-        Blaze3D.openPath(FabricLoader.getInstance().getConfigDir());
+        Blaze3D.openPath(Platform.configDir());
     }
 
     /** Returns the absolute path of the config folder (for display to the user). */
     public static String getConfigDirString() {
-        return FabricLoader.getInstance().getConfigDir().toAbsolutePath().toString();
+        return Platform.configDir().toAbsolutePath().toString();
     }
 
     /**
@@ -34,7 +34,7 @@ public final class ConfigFileUtil {
             Path p = Path.of(input);
             if (p.isAbsolute() && p.toFile().isFile()) return p;
             // Try relative to the config folder
-            Path relative = FabricLoader.getInstance().getConfigDir().resolve(p);
+            Path relative = Platform.configDir().resolve(p);
             if (relative.toFile().isFile()) return relative;
             return null;
         } catch (Exception e) {

@@ -2,7 +2,6 @@ package com.scr0ols.soundtweaks;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,7 +26,7 @@ public class SoundDeduplicationConfig {
     public void setMaxPerSoundId(int value)  { maxPerSoundId  = Math.max(1, value); }
 
     public void load() {
-        Path path = FabricLoader.getInstance().getConfigDir().resolve(FILE_NAME);
+        Path path = Platform.configDir().resolve(FILE_NAME);
         if (!Files.exists(path)) {
             save();
             return;
@@ -46,7 +45,7 @@ public class SoundDeduplicationConfig {
     }
 
     public void save() {
-        Path path = FabricLoader.getInstance().getConfigDir().resolve(FILE_NAME);
+        Path path = Platform.configDir().resolve(FILE_NAME);
         try {
             Data data = new Data();
             data.maxPerPosition = maxPerPosition;

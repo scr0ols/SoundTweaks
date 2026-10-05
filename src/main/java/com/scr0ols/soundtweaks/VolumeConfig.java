@@ -3,7 +3,6 @@ package com.scr0ols.soundtweaks;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.Mth;
 
 import java.io.IOException;
@@ -50,14 +49,18 @@ public class VolumeConfig {
 
     private final Map<String, Float> volumes = new ConcurrentHashMap<>();
     private volatile long lastSaveRequest = 0;
-    private final Path  configFile;
+    private final String fileName;
     private final float minVol;
     private final float maxVol;
 
     private VolumeConfig(String fileName, float minVol, float maxVol) {
-        this.configFile = FabricLoader.getInstance().getConfigDir().resolve(fileName);
+        this.fileName   = fileName;
         this.minVol     = minVol;
         this.maxVol     = maxVol;
+    }
+
+    private Path configFile() {
+        return Platform.configDir().resolve(fileName);
     }
 
     public float getVolume(String id) {
@@ -76,7 +79,7 @@ public class VolumeConfig {
             lastSaveRequest = 0;
             // Immutable snapshot to avoid race condition during async write
             final String json = GSON.toJson(new LinkedHashMap<>(volumes));
-            final Path   target = configFile;
+            final Path   target = configFile();
             SAVE_EXECUTOR.submit(() -> {
                 try {
                     Files.writeString(target, json);
@@ -88,26 +91,26 @@ public class VolumeConfig {
     }
 
     public void load() {
-        if (!Files.exists(configFile)) return;
+        if (!Files.exists(configFile())) return;
         try {
-            Map<String, Float> loaded = GSON.fromJson(Files.readString(configFile), MAP_TYPE);
+            Map<String, Float> loaded = GSON.fromJson(Files.readString(configFile()), MAP_TYPE);
             if (loaded != null) {
                 volumes.clear();
                 loaded.forEach((id, vol) -> volumes.put(id, Mth.clamp(vol, minVol, maxVol)));
             }
             SoundTweaks.LOGGER.info("SoundTweaks: {} carregado ({} entradas)",
-                    configFile.getFileName(), volumes.size());
+                    fileName, volumes.size());
         } catch (IOException e) {
-            SoundTweaks.LOGGER.error("SoundTweaks: erro ao carregar {}", configFile.getFileName(), e);
+            SoundTweaks.LOGGER.error("SoundTweaks: erro ao carregar {}", fileName, e);
         }
     }
 
     /** Synchronous save — only call from SAVE_EXECUTOR or during client shutdown. */
     public void save() {
         try {
-            Files.writeString(configFile, GSON.toJson(volumes));
+            Files.writeString(configFile(), GSON.toJson(volumes));
         } catch (IOException e) {
-            SoundTweaks.LOGGER.error("SoundTweaks: erro ao guardar {}", configFile.getFileName(), e);
+            SoundTweaks.LOGGER.error("SoundTweaks: erro ao guardar {}", fileName, e);
         }
     }
 
@@ -143,7 +146,7 @@ public class VolumeConfig {
             });
 
             // Write to disk FIRST — if it fails, memory stays intact
-            Files.writeString(configFile, GSON.toJson(validated));
+            Files.writeString(configFile(), GSON.toJson(validated));
 
             volumes.clear();
             volumes.putAll(validated);

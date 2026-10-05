@@ -13,6 +13,8 @@ public class SoundTweaks implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+		Platform.setConfigDir(FabricLoader.getInstance().getConfigDir());
+
 		String version = FabricLoader.getInstance()
 				.getModContainer(MOD_ID)
 				.map(c -> c.getMetadata().getVersion().getFriendlyString())

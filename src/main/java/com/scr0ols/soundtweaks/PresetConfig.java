@@ -1,7 +1,6 @@
 package com.scr0ols.soundtweaks;
 
 import com.google.gson.*;
-import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -66,10 +65,8 @@ public class PresetConfig {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    private static final Path CONFIG_FILE = FabricLoader.getInstance().getConfigDir()
-            .resolve("soundtweaks_presets.json");
-    private static final Path LEGACY_DIR  = FabricLoader.getInstance().getConfigDir()
-            .resolve("soundtweaks_presets");
+    private static Path configFile() { return Platform.configDir().resolve("soundtweaks_presets.json"); }
+    private static Path legacyDir()  { return Platform.configDir().resolve("soundtweaks_presets"); }
 
     private static final List<Preset>  presets      = new CopyOnWriteArrayList<>();
     private static final Set<Integer>  activeIds    = Collections.synchronizedSet(new LinkedHashSet<>());
@@ -187,9 +184,9 @@ public class PresetConfig {
     }
 
     public static void load() {
-        if (!Files.exists(CONFIG_FILE)) return;
+        if (!Files.exists(configFile())) return;
         try {
-            JsonObject root = GSON.fromJson(Files.readString(CONFIG_FILE), JsonObject.class);
+            JsonObject root = GSON.fromJson(Files.readString(configFile()), JsonObject.class);
             if (root == null) return;
 
             presets.clear();
@@ -284,7 +281,7 @@ public class PresetConfig {
         for (JsonElement el : presetsArr) {
             if (el.isJsonPrimitive()) {
                 String uuid = el.getAsString();
-                Path file = LEGACY_DIR.resolve(uuid + ".json");
+                Path file = legacyDir().resolve(uuid + ".json");
                 if (!Files.exists(file)) continue;
                 try {
                     JsonObject obj = GSON.fromJson(Files.readString(file), JsonObject.class);
@@ -328,7 +325,7 @@ public class PresetConfig {
             JsonArray favArr = new JsonArray();
             favoriteIds.forEach(favArr::add);
             root.add("favoritePresets", favArr);
-            Files.writeString(CONFIG_FILE, GSON.toJson(root));
+            Files.writeString(configFile(), GSON.toJson(root));
         } catch (IOException e) {
             SoundTweaks.LOGGER.error("SoundTweaks: erro ao guardar presets", e);
         }
@@ -380,7 +377,7 @@ public class PresetConfig {
                         if (el.isJsonObject()) {
                             toImport.add(el.getAsJsonObject());
                         } else if (el.isJsonPrimitive()) {
-                            Path pfile = LEGACY_DIR.resolve(el.getAsString() + ".json");
+                            Path pfile = legacyDir().resolve(el.getAsString() + ".json");
                             if (Files.exists(pfile))
                                 try { toImport.add(GSON.fromJson(Files.readString(pfile), JsonObject.class)); }
                                 catch (Exception ignored) {}
