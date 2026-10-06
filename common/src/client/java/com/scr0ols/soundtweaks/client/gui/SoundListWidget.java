@@ -5,9 +5,13 @@ import com.scr0ols.soundtweaks.SoundRegistry;
 import com.scr0ols.soundtweaks.VolumeConfig;
 import com.scr0ols.soundtweaks.VolumeResolver;
 import com.scr0ols.soundtweaks.client.SoundDisplayHelper;
+import com.scr0ols.soundtweaks.layout.RowLayout;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSelectionList;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.network.chat.Component;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.util.Mth;
@@ -126,6 +130,21 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
     @Override
     public void updateWidgetNarration(NarrationElementOutput output) {}
 
+    /** Draws a row's name (cut with "..." and shown in full as a tooltip) and its slider, positioned by {@link RowLayout}. */
+    private void drawNameAndSlider(GuiGraphicsExtractor g, int mx, int my, float a, int rowX, int y, int rowW,
+                                   int indent, String text, int color, AbstractWidget slider) {
+        RowLayout row = RowLayout.compute(rowX, rowW, indent);
+        Font font = this.minecraft.font;
+        String shown = GuiText.ellipsize(font, text, row.nameMaxW());
+        g.text(font, shown, row.nameX(), y + 5, color);
+        boolean overName = mx >= row.nameX() && mx < row.nameX() + row.nameMaxW() && my >= y && my < y + 20;
+        if (overName && !shown.equals(text)) g.setTooltipForNextFrame(Component.literal(text), mx, my);
+        slider.setX(row.sliderX());
+        slider.setY(y + 3);
+        slider.setWidth(row.sliderW());
+        slider.extractRenderState(g, mx, my, a);
+    }
+
     static int volumeColor(float volume) {
         return volume <= 0.0f ? 0xFFFF4444 : 0xFFFFFFFF;
     }
@@ -182,11 +201,7 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
             slider.refreshFromChildren();
             // Simple loop instead of stream — eliminates lambda/Stream allocation per frame
             float vol = minEffectiveVol(children);
-            g.text(SoundListWidget.this.minecraft.font,
-                    "* " + displayName, getX() + 4, getY() + 5, volumeColor(vol));
-            slider.setX(getX() + rowW - 94);
-            slider.setY(getY() + 3);
-            slider.extractRenderState(g, mx, my, a);
+            drawNameAndSlider(g, mx, my, a, getX(), getY(), rowW, 0, "* " + displayName, volumeColor(vol), slider);
         }
 
         @Override
@@ -243,11 +258,7 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
 
             slider.syncFromConfig();
             float vol = Math.min(VolumeResolver.getEffectiveVolume(soundId), 1.0f);
-            g.text(SoundListWidget.this.minecraft.font, displayName,
-                    getX() + 4 + indent, getY() + 5, volumeColor(vol));
-            slider.setX(getX() + rowW - 94);
-            slider.setY(getY() + 3);
-            slider.extractRenderState(g, mx, my, a);
+            drawNameAndSlider(g, mx, my, a, getX(), getY(), rowW, indent, displayName, volumeColor(vol), slider);
         }
 
         @Override
@@ -299,11 +310,7 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
                 g.fill(getX(), getY(), getX() + rowW, getY() + 20, 0x44FFFFFF);
 
             float vol = Math.min(VolumeResolver.getEffectiveBlockVolume(blockId), 1.0f);
-            g.text(SoundListWidget.this.minecraft.font, displayName,
-                    getX() + 4, getY() + 5, volumeColor(vol));
-            slider.setX(getX() + rowW - 94);
-            slider.setY(getY() + 3);
-            slider.extractRenderState(g, mx, my, a);
+            drawNameAndSlider(g, mx, my, a, getX(), getY(), rowW, 0, displayName, volumeColor(vol), slider);
         }
 
         @Override
@@ -334,7 +341,7 @@ public class SoundListWidget extends AbstractSelectionList<SoundListWidget.BaseE
         @Override
         public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hov, float a) {
             int midY = getY() + 10;
-            g.fill(getX() + 4, midY, getX() + 180, midY + 1, 0xFF555555);
+            g.fill(getX() + 4, midY, getX() + getWidth() - 4, midY + 1, 0xFF555555);
         }
 
         @Override public boolean mouseClicked(MouseButtonEvent e, boolean c)         { return false; }

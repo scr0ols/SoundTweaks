@@ -23,6 +23,8 @@
   "soundtweaks.category.redstone":    "Redstone",
 
   "soundtweaks.presets.title":        "Presets",
+  "soundtweaks.gui.no_favorites":     "No favorites",
+  "soundtweaks.gui.add_via_manage":   "Add via Manage",
   "soundtweaks.presets.new":          "+ New Preset",
   "soundtweaks.presets.confirm":      "Save Preset",
   "soundtweaks.presets.manage":       "Manage Presets",
