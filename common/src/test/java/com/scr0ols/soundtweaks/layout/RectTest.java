@@ -47,6 +47,14 @@ class RectTest {
     }
 
     @Test
+    void emptyRectsHaveNoArea() {
+        assertTrue(Rect.EMPTY.isEmpty());
+        assertTrue(new Rect(5, 5, 0, 20).isEmpty());
+        assertTrue(new Rect(5, 5, 20, 0).isEmpty());
+        assertFalse(new Rect(5, 5, 1, 1).isEmpty());
+    }
+
+    @Test
     void insetNeverGoesNegative() {
         assertEquals(new Rect(15, 15, 0, 0), new Rect(0, 0, 10, 10).inset(15));
     }
