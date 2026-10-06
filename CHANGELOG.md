@@ -8,6 +8,10 @@ Versions are `MAJOR.MINOR.PATCH+MC`, where `MC` is the Minecraft version the bui
 
 ## [Unreleased]
 
+## [1.3.0+26.3] - 2026-10-06
+
+Multi-loader build: the project is split into `common`, `fabric` and `neoforge` modules, adds a NeoForge 26.3 build (beta) and names jars per loader.
+
 ### Added
 
 - NeoForge 26.3 build (beta), from the same source as the Fabric build. It is named `neoforge-soundtweaks-<version>.jar` and requires NeoForge 26.3.0.51-beta or newer.
@@ -61,7 +65,8 @@ Version bump only; no GitHub release was published for this version.
 - Import detects preset ID conflicts and reassigns IDs automatically, with a warning shown to the user.
 - Export and import preserve preset order and settings reliably.
 
-[Unreleased]: https://github.com/scr0ols/SoundTweaks/compare/v1.2.3...HEAD
+[Unreleased]: https://github.com/scr0ols/SoundTweaks/compare/v1.3.0+26.3...HEAD
+[1.3.0+26.3]: https://github.com/scr0ols/SoundTweaks/compare/v1.2.3...v1.3.0+26.3
 [1.2.3]: https://github.com/scr0ols/SoundTweaks/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/scr0ols/SoundTweaks/compare/v1.2.0...v1.2.2
 [1.2.0]: https://github.com/scr0ols/SoundTweaks/releases/tag/v1.2.0
