@@ -17,7 +17,7 @@ import java.util.*;
 
 /**
  * Editable sound/block list for a preset.
- * Reusable in PresetEditorScreen and in the inline panel of PresetsScreen.
+ * Used in the inline panel of PresetsScreen.
  */
 class PresetSoundList extends AbstractSelectionList<PresetSoundList.BaseRow> {
 

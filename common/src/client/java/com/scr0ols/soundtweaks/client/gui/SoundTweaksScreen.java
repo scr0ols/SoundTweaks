@@ -8,9 +8,11 @@ import com.scr0ols.soundtweaks.SoundRegistry;
 import com.scr0ols.soundtweaks.VolumeConfig;
 import com.scr0ols.soundtweaks.VolumeResolver;
 import com.scr0ols.soundtweaks.client.SoundDisplayHelper;
+import com.scr0ols.soundtweaks.layout.FilterBarLayout;
+import com.scr0ols.soundtweaks.layout.LayoutMode;
+import com.scr0ols.soundtweaks.layout.Rect;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -50,17 +52,13 @@ public class SoundTweaksScreen extends Screen {
     @Nullable private final Screen parent;
 
     private SoundListWidget soundList;
-    private EditBox         searchBox;
-    private Button          clearButton;
+    private FilterBar       filterBar;
     private Button          viewToggleButton;
     private Button          muteSoundsBtn;
     private Button          presetsBtn;
     // Static to persist across opens — the real state lives in VolumeResolver,
     // but this flag tracks what the button "did" (what is queued to be unmuted)
     private static boolean  muteSoundsActive = false;
-
-    private FilterDropdown categoryDropdown;
-    private FilterDropdown objectDropdown;
 
     @Nullable private SoundCategory selectedCategory = null;
     @Nullable private String        selectedObject   = null;
@@ -104,30 +102,15 @@ public class SoundTweaksScreen extends Screen {
         this.presetsBtn.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.presets_sidebar")));
         this.addRenderableWidget(this.presetsBtn);
 
-        // ── Row 2 (Y=22): [Category] [Object] [×] [search bar (fills remaining space)]
-        this.categoryDropdown = new FilterDropdown(4, 26, 120,
-                I18n.get("soundtweaks.gui.category"), this::onCategorySelected);
+        // ── Row 2 (Y=26): filter bar, one or two lines depending on the width
+        this.filterBar = new FilterBar(this.font, this::onCategorySelected, this::onObjectSelected,
+                this::clearFilters, q -> { this.searchQuery = q; refreshList(); }, List.of());
         populateCategoryDropdown();
-
-        this.objectDropdown = new FilterDropdown(128, 26, 130,
-                I18n.get("soundtweaks.gui.object"), this::onObjectSelected);
-        this.objectDropdown.setActive(false);
-
-        this.clearButton = Button.builder(Component.literal("x"), btn -> clearFilters())
-                .bounds(262, 26, 20, 20).build();
-        this.clearButton.setTooltip(Tooltip.create(Component.translatable("soundtweaks.gui.clear_filters")));
-        this.addRenderableWidget(this.clearButton);
-
-        int searchX = 286;
-        int searchW = Math.max(60, cw - searchX - 4);
-        this.searchBox = new EditBox(this.font, searchX, 26, searchW, 20,
-                Component.translatable("soundtweaks.gui.search_hint"));
-        this.searchBox.setHint(Component.translatable("soundtweaks.gui.search_hint"));
-        this.searchBox.setResponder(q -> { this.searchQuery = q; refreshList(); });
-        this.addRenderableWidget(this.searchBox);
+        this.filterBar.addWidgets(this::addRenderableWidget);
+        FilterBarLayout filterLayout = this.filterBar.layout(new Rect(0, 26, cw, LayoutMode.BUTTON_H));
 
         // ── Sound list (starts immediately below the filters)
-        int listY = 50;
+        int listY = 26 + filterLayout.height();
         this.soundList = new SoundListWidget(this.minecraft,
                 cw, this.height - listY - 36, listY, 20);
         refreshList();
@@ -164,19 +147,19 @@ public class SoundTweaksScreen extends Screen {
     private void restoreSavedState() {
         if (savedCategory != null) {
             this.selectedCategory = savedCategory;
-            this.categoryDropdown.setSelectedValueSilently(savedCategory.getDropdownKey());
+            this.filterBar.category().setSelectedValueSilently(savedCategory.getDropdownKey());
             if (savedCategory != SoundCategory.OTHERS && savedCategory.getPrefix() != null) {
                 populateObjectDropdown(savedCategory);
-                this.objectDropdown.setActive(true);
+                this.filterBar.object().setActive(true);
                 if (savedObject != null) {
                     this.selectedObject = savedObject;
-                    this.objectDropdown.setSelectedValueSilently(savedObject);
+                    this.filterBar.object().setSelectedValueSilently(savedObject);
                 }
             }
         }
         if (!savedSearch.isEmpty()) {
             this.searchQuery = savedSearch;
-            this.searchBox.setValue(savedSearch);
+            this.filterBar.searchBox().setValue(savedSearch);
         } else {
             refreshList();
         }
@@ -242,8 +225,7 @@ public class SoundTweaksScreen extends Screen {
         renderFavoritesSidebar(graphics, mouseX, mouseY);
 
         // Dropdowns — always last (render on top of everything)
-        this.categoryDropdown.render(graphics, mouseX, mouseY);
-        this.objectDropdown.render(graphics, mouseX, mouseY);
+        this.filterBar.render(graphics, mouseX, mouseY);
     }
 
     // ── Favourites sidebar ────────────────────────────────────────────────────
@@ -320,14 +302,7 @@ public class SoundTweaksScreen extends Screen {
     public boolean mouseClicked(MouseButtonEvent event, boolean consumed) {
         // Dropdowns take priority: the popup overlaps the soundList (y=46+)
         // and super.mouseClicked would pass the click to soundList before the dropdown
-        if (this.categoryDropdown.mouseClicked(event)) {
-            if (this.categoryDropdown.isOpen()) this.objectDropdown.close();
-            return true;
-        }
-        if (this.objectDropdown.mouseClicked(event)) {
-            if (this.objectDropdown.isOpen()) this.categoryDropdown.close();
-            return true;
-        }
+        if (this.filterBar.mouseClicked(event)) return true;
 
         if (super.mouseClicked(event, consumed)) return true;
         if (handleSidebarClick(event)) return true;
@@ -374,22 +349,19 @@ public class SoundTweaksScreen extends Screen {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-        if (this.categoryDropdown.mouseDragged(event.y())) return true;
-        if (this.objectDropdown.mouseDragged(event.y()))   return true;
+        if (this.filterBar.mouseDragged(event.y())) return true;
         return super.mouseDragged(event, dragX, dragY);
     }
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
-        this.categoryDropdown.mouseReleased();
-        this.objectDropdown.mouseReleased();
+        this.filterBar.mouseReleased();
         return super.mouseReleased(event);
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        if (this.categoryDropdown.mouseScrolled(mouseX, mouseY, scrollY)) return true;
-        if (this.objectDropdown.mouseScrolled(mouseX, mouseY, scrollY))   return true;
+        if (this.filterBar.mouseScrolled(mouseX, mouseY, scrollY)) return true;
         return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 
@@ -397,14 +369,12 @@ public class SoundTweaksScreen extends Screen {
     public boolean keyPressed(KeyEvent event) {
         int key = event.key();
         if (key == InputConstants.KEY_ESCAPE) {
-            if (this.categoryDropdown.isOpen()) { this.categoryDropdown.close(); return true; }
-            if (this.objectDropdown.isOpen())   { this.objectDropdown.close();   return true; }
+            if (this.filterBar.closeDropdowns()) return true;
         }
-        char letter = PresetEditorScreen.jumpLetter(event);
+        char letter = GuiKeys.jumpLetter(event);
         if (letter != 0) {
-            if (this.categoryDropdown.isOpen()) return this.categoryDropdown.jumpToLetter(letter);
-            if (this.objectDropdown.isOpen())   return this.objectDropdown.jumpToLetter(letter);
-            if (!this.searchBox.isFocused())    return this.soundList.jumpToLetter(letter);
+            if (this.filterBar.isDropdownOpen()) return this.filterBar.jumpToLetter(letter);
+            if (!this.filterBar.searchBox().isFocused())    return this.soundList.jumpToLetter(letter);
         }
         return super.keyPressed(event);
     }
@@ -416,11 +386,11 @@ public class SoundTweaksScreen extends Screen {
         this.selectedObject   = null;
         if (this.selectedCategory != null && this.selectedCategory != SoundCategory.OTHERS) {
             populateObjectDropdown(this.selectedCategory);
-            this.objectDropdown.clearSelection();
-            this.objectDropdown.setActive(true);
+            this.filterBar.object().clearSelection();
+            this.filterBar.object().setActive(true);
         } else {
-            this.objectDropdown.clearSelection();
-            this.objectDropdown.setActive(false);
+            this.filterBar.object().clearSelection();
+            this.filterBar.object().setActive(false);
         }
         refreshList();
     }
@@ -494,7 +464,7 @@ public class SoundTweaksScreen extends Screen {
         pairs.sort((a, b) -> a[1].compareToIgnoreCase(b[1]));
         List<String> options = new ArrayList<>(), labels = new ArrayList<>();
         for (String[] p : pairs) { options.add(p[0]); labels.add(p[1]); }
-        this.categoryDropdown.setOptions(options, labels);
+        this.filterBar.category().setOptions(options, labels);
     }
 
     private void populateObjectDropdown(SoundCategory category) {
@@ -513,7 +483,7 @@ public class SoundTweaksScreen extends Screen {
         });
         List<String> sortedRaw = new ArrayList<>(), sortedLabels = new ArrayList<>();
         for (int[] idx : order) { sortedRaw.add(raw.get(idx[0])); sortedLabels.add(labels.get(idx[0])); }
-        this.objectDropdown.setOptions(sortedRaw, sortedLabels);
+        this.filterBar.object().setOptions(sortedRaw, sortedLabels);
     }
 
     private void toggleMuteVisible() {
@@ -577,11 +547,11 @@ public class SoundTweaksScreen extends Screen {
 
     private void clearFilters() {
         this.selectedCategory = null; this.selectedObject = null; this.searchQuery = "";
-        this.searchBox.setValue("");
+        this.filterBar.searchBox().setValue("");
         savedCategory = null; savedObject = null; savedSearch = ""; savedScroll = 0.0;
-        this.categoryDropdown.clearSelection();
-        this.objectDropdown.clearSelection();
-        this.objectDropdown.setActive(false);
+        this.filterBar.category().clearSelection();
+        this.filterBar.object().clearSelection();
+        this.filterBar.object().setActive(false);
         refreshList();
     }
 
