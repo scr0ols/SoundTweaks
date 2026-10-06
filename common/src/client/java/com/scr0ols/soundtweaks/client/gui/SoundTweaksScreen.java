@@ -8,8 +8,7 @@ import com.scr0ols.soundtweaks.SoundRegistry;
 import com.scr0ols.soundtweaks.VolumeConfig;
 import com.scr0ols.soundtweaks.VolumeResolver;
 import com.scr0ols.soundtweaks.client.SoundDisplayHelper;
-import com.scr0ols.soundtweaks.layout.FilterBarLayout;
-import com.scr0ols.soundtweaks.layout.LayoutMode;
+import com.scr0ols.soundtweaks.layout.MainScreenLayout;
 import com.scr0ols.soundtweaks.layout.Rect;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
@@ -37,25 +36,12 @@ public class SoundTweaksScreen extends Screen {
     private   static         boolean       detailedView  = false;
     private   static         boolean       sidebarOpen   = true;
 
-    // ── Favourites preset sidebar (right side) ────────────────────────────────
-    /** Sidebar width — fits ~35 name characters. */
-    private static final int SIDE_W   = 220;
-    /** Tab width when the sidebar is closed. */
-    private static final int TAB_W    = 18;
-    /** Height of each preset button. */
-    private static final int PRESET_H = 22;
-    /** Y where preset buttons start (below the header). */
-    private static final int SIDE_TOP = 26;
-    /** Height of the Manage button at the bottom. */
-    private static final int MANAGE_H = 20;
-
     @Nullable private final Screen parent;
 
     private SoundListWidget soundList;
     private FilterBar       filterBar;
     private Button          viewToggleButton;
     private Button          muteSoundsBtn;
-    private Button          presetsBtn;
     // Static to persist across opens — the real state lives in VolumeResolver,
     // but this flag tracks what the button "did" (what is queued to be unmuted)
     private static boolean  muteSoundsActive = false;
@@ -64,8 +50,11 @@ public class SoundTweaksScreen extends Screen {
     @Nullable private String        selectedObject   = null;
     private           String        searchQuery      = "";
 
-    /** Width of the content area (accounting for sidebar open/closed). */
-    private int contentW() { return sidebarOpen ? this.width - SIDE_W - 2 : this.width; }
+    /** Geometry of every part of the screen; recomputed by init and when the thin rail scrolls. */
+    private MainScreenLayout layout;
+    private List<PresetConfig.Preset> favorites = List.of();
+    /** Index of the first favourite shown by the thin rail. */
+    private int railFirst = 0;
 
     public SoundTweaksScreen(@Nullable Screen parent) {
         super(Component.translatable("soundtweaks.gui.title"));
@@ -76,11 +65,16 @@ public class SoundTweaksScreen extends Screen {
 
     @Override
     protected void init() {
-        int cw = contentW();
+        // init runs again on every window resize and sidebar toggle: keep what the player chose
+        if (this.soundList != null) saveState();
 
-        // ── Row 1 (Y=4): [speaker] [Simple/Detail View] [Presets ▶/◄] ... title ...
+        this.favorites = PresetConfig.getFavoritePresets();
+        computeLayout();
+        MainScreenLayout l = this.layout;
+
+        // ── Header: [speaker] [Simple/Detail View] [Presets ▶/◄] ... title ...
         this.muteSoundsBtn = Button.builder(Component.empty(), btn -> toggleMuteVisible())
-                .bounds(4, 2, 20, 20).build();
+                .bounds(l.mute().x(), l.mute().y(), l.mute().w(), l.mute().h()).build();
         this.muteSoundsBtn.setTooltip(Tooltip.create(Component.translatable("soundtweaks.gui.mute_all")));
         this.addRenderableWidget(this.muteSoundsBtn);
 
@@ -91,35 +85,36 @@ public class SoundTweaksScreen extends Screen {
                     btn.setMessage(detailedView ? Component.translatable("soundtweaks.gui.view_detail") : Component.translatable("soundtweaks.gui.view_simple"));
                     refreshList();
                 }
-        ).bounds(28, 2, 78, 20).build();
+        ).bounds(l.viewToggle().x(), l.viewToggle().y(), l.viewToggle().w(), l.viewToggle().h()).build();
         this.viewToggleButton.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.view_toggle")));
         this.addRenderableWidget(this.viewToggleButton);
 
-        this.presetsBtn = Button.builder(
-                Component.translatable("soundtweaks.presets.title"),
-                btn -> toggleSidebar()
-        ).bounds(110, 2, 68, 20).build();
-        this.presetsBtn.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.presets_sidebar")));
-        this.addRenderableWidget(this.presetsBtn);
+        if (!l.presets().isEmpty()) {
+            Button presetsBtn = Button.builder(
+                    Component.translatable("soundtweaks.presets.title"),
+                    btn -> toggleSidebar()
+            ).bounds(l.presets().x(), l.presets().y(), l.presets().w(), l.presets().h()).build();
+            presetsBtn.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.presets_sidebar")));
+            this.addRenderableWidget(presetsBtn);
+        }
 
-        // ── Row 2 (Y=26): filter bar, one or two lines depending on the width
+        // ── Filter bar, one or two lines depending on the width
         this.filterBar = new FilterBar(this.font, this::onCategorySelected, this::onObjectSelected,
                 this::clearFilters, q -> { this.searchQuery = q; refreshList(); }, List.of());
         populateCategoryDropdown();
         this.filterBar.addWidgets(this::addRenderableWidget);
-        FilterBarLayout filterLayout = this.filterBar.layout(new Rect(0, 26, cw, LayoutMode.BUTTON_H));
+        this.filterBar.setLayout(l.filterBar());
 
         // ── Sound list (starts immediately below the filters)
-        int listY = 26 + filterLayout.height();
-        this.soundList = new SoundListWidget(this.minecraft,
-                cw, this.height - listY - 36, listY, 20);
+        this.soundList = new SoundListWidget(this.minecraft, l.list().w(), l.list().h(), l.list().y(), 20);
+        this.soundList.setX(l.list().x());
         refreshList();
         this.addRenderableWidget(this.soundList);
 
         // Done button
         this.addRenderableWidget(
                 Button.builder(Component.translatable("soundtweaks.gui.done"), btn -> this.onClose())
-                        .bounds(cw / 2 + 5, this.height - 26, 120, 20)
+                        .bounds(l.doneButton().x(), l.doneButton().y(), l.doneButton().w(), l.doneButton().h())
                         .build()
         );
 
@@ -127,22 +122,36 @@ public class SoundTweaksScreen extends Screen {
         var importCfgBtn = Button.builder(
                 Component.translatable("soundtweaks.gui.import_config"),
                 btn -> FileDialogs.openJson(this::importConfigFrom, this::openPathFallback)
-        ).bounds(cw / 2 - 125, this.height - 26, 120, 20).build();
+        ).bounds(l.importButton().x(), l.importButton().y(), l.importButton().w(), l.importButton().h()).build();
         importCfgBtn.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.import_config")));
         this.addRenderableWidget(importCfgBtn);
 
-        // Manage Presets button as a native widget (only when sidebar is open)
-        if (sidebarOpen) {
-            int sideX   = this.width - SIDE_W;
-            int manageY = this.height - MANAGE_H - 4;
-            this.addRenderableWidget(Button.builder(
-                    Component.translatable("soundtweaks.presets.manage"),
+        // Manage Presets: a text button in the sidebar, an icon button on the thin rail
+        if (l.panel() != MainScreenLayout.Panel.NONE) {
+            boolean icon = l.panel() == MainScreenLayout.Panel.RAIL;
+            Button manage = Button.builder(
+                    icon ? Component.literal("≡") : Component.translatable("soundtweaks.presets.manage"),
                     b -> this.minecraft.gui.setScreen(new PresetsScreen(this))
-            ).bounds(sideX + 2, manageY, SIDE_W - 4, MANAGE_H).build());
+            ).bounds(l.manage().x(), l.manage().y(), l.manage().w(), l.manage().h()).build();
+            if (icon) manage.setTooltip(Tooltip.create(Component.translatable("soundtweaks.presets.manage")));
+            this.addRenderableWidget(manage);
         }
 
         restoreSavedState();
     }
+
+    private void computeLayout() {
+        this.layout = MainScreenLayout.compute(this.width, this.height, sidebarOpen, this.favorites.size(), this.railFirst);
+        this.railFirst = this.layout.firstFavorite();
+    }
+
+    private void saveState() {
+        savedCategory = this.selectedCategory;
+        savedObject   = this.selectedObject;
+        savedSearch   = this.searchQuery;
+        savedScroll   = this.soundList != null ? this.soundList.getScrollAmount() : 0.0;
+    }
+
 
     private void restoreSavedState() {
         if (savedCategory != null) {
@@ -180,120 +189,46 @@ public class SoundTweaksScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
-        // Header background band and separator — before super so it does not cover the buttons
-        graphics.fill(0, 0, contentW(), 24, 0xFF1A1A2E);
-        graphics.fill(0, 24, contentW(), 25, 0xFF444466);
+        Rect content = this.layout.content();
 
-        // Sidebar background before super — so the Manage button (widget) renders on top
-        if (sidebarOpen) {
-            graphics.fill(this.width - SIDE_W, 0, this.width, this.height - 36, 0x771A1A1E);
-        }
+        // Header background band and separator — before super so it does not cover the buttons
+        graphics.fill(content.x(), 0, content.right(), MainScreenLayout.HEADER_H, 0xFF1A1A2E);
+        graphics.fill(content.x(), MainScreenLayout.HEADER_H, content.right(), MainScreenLayout.HEADER_H + 1, 0xFF444466);
+
+        // Sidebar / rail background before super — so the Manage button (widget) renders on top
+        FavoritesPanel.render(graphics, this.font, this.layout, this.favorites, mouseX, mouseY);
 
         super.extractRenderState(graphics, mouseX, mouseY, a);
 
-        // Title centred, but not overlapping the header buttons (which extend to x≈182)
-        int titleMinX = 185;
-        int titleCenterX = Math.max(titleMinX + this.font.width(I18n.get("soundtweaks.gui.title")) / 2,
-                contentW() / 2);
-        graphics.centeredText(this.font, I18n.get("soundtweaks.gui.title"),
-                titleCenterX, 8, 0xFFFFFFFF);
+        // Title centred, but only in the room left of the header buttons
+        Rect titleArea = this.layout.title();
+        if (!titleArea.isEmpty()) {
+            String title = GuiText.ellipsize(this.font, I18n.get("soundtweaks.gui.title"), titleArea.w());
+            int half = this.font.width(title) / 2;
+            int centre = Math.max(titleArea.x() + half, Math.min(titleArea.right() - half, content.x() + content.w() / 2));
+            graphics.centeredText(this.font, title, centre, 8, 0xFFFFFFFF);
+        }
 
         // Speaker icon on the mute/restore button
         if (this.muteSoundsBtn != null)
             drawSpeakerIcon(graphics, this.muteSoundsBtn.getX(), this.muteSoundsBtn.getY(),
                     this.muteSoundsBtn.getWidth(), this.muteSoundsBtn.getHeight(), muteSoundsActive);
 
-        // Vertical separator line — only when sidebar is open (closed tab has its own separator)
-        if (sidebarOpen) {
-            int sepX = this.width - SIDE_W - 1;
-            graphics.fill(sepX, 0, sepX + 1, this.height - 36, 0xFF333355);
+        // Footer — 3-pixel separator (the panel draws its own)
+        FavoritesPanel.drawFooterLine(graphics, content.x(), content.right(), this.layout.list().bottom());
+        Rect countArea = this.layout.count();
+        if (!countArea.isEmpty()) {
+            int total = SoundRegistry.count();
+            boolean hasFilter = selectedCategory != null || selectedObject != null || !searchQuery.isBlank();
+            String countText = hasFilter
+                    ? I18n.get("soundtweaks.gui.sounds_filtered", getFilteredSounds().size(), total)
+                    : I18n.get("soundtweaks.gui.sounds", total);
+            graphics.text(this.font, GuiText.ellipsize(this.font, countText, countArea.w()),
+                    countArea.x(), countArea.y(), 0xFFAAAAAA);
         }
-
-        // Footer — 3-pixel separator (stops before sidebar when open)
-        int footerRight = sidebarOpen ? (this.width - SIDE_W) : this.width;
-        graphics.fill(0, this.height - 36, footerRight, this.height - 35, 0xFF111111);
-        graphics.fill(0, this.height - 35, footerRight, this.height - 34, 0xFF444444);
-        graphics.fill(0, this.height - 34, footerRight, this.height - 33, 0xFF888888);
-        int total = SoundRegistry.count();
-        boolean hasFilter = selectedCategory != null || selectedObject != null || !searchQuery.isBlank();
-        String countText = hasFilter
-                ? I18n.get("soundtweaks.gui.sounds_filtered", getFilteredSounds().size(), total)
-                : I18n.get("soundtweaks.gui.sounds", total);
-        graphics.text(this.font, countText, 8, this.height - 22, 0xFFAAAAAA);
-
-        // Sidebar
-        renderFavoritesSidebar(graphics, mouseX, mouseY);
 
         // Dropdowns — always last (render on top of everything)
         this.filterBar.render(graphics, mouseX, mouseY);
-    }
-
-    // ── Favourites sidebar ────────────────────────────────────────────────────
-
-    private void renderFavoritesSidebar(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-        if (!sidebarOpen) return;
-
-        List<PresetConfig.Preset> favs = PresetConfig.getFavoritePresets();
-        int sideX = this.width - SIDE_W;
-
-        // Header — clickable to close
-        boolean hovHeader = mouseX >= sideX && mouseY >= 0 && mouseY < 22;
-        graphics.fill(sideX, 0, this.width, 24, hovHeader ? 0xFF222233 : 0xFF1A1A2E);
-        graphics.centeredText(this.font, "Presets",
-                sideX + SIDE_W / 2, 8, 0xFFDDDDDD);
-        // Close arrow (◀) on the left corner of the header
-        graphics.text(this.font, "◄", sideX + 4, 8, hovHeader ? 0xFFFFFFFF : 0xFF888899);
-        graphics.fill(sideX, 24, this.width, 25, 0xFF444466);
-
-        // Footer — 3-pixel separator to match the main footer
-        graphics.fill(sideX, this.height - 36, this.width, this.height - 35, 0xFF111111);
-        graphics.fill(sideX, this.height - 35, this.width, this.height - 34, 0xFF444444);
-        graphics.fill(sideX, this.height - 34, this.width, this.height - 33, 0xFF888888);
-
-        // Available area for presets (between header and Manage button — now a native widget)
-        int manageY        = this.height - MANAGE_H - 4;
-        int availableBottom = manageY - 4;
-
-        if (favs.isEmpty()) {
-            graphics.centeredText(this.font, "No favorites",
-                    sideX + SIDE_W / 2, SIDE_TOP + 4, 0xFF555566);
-            graphics.centeredText(this.font, "Add via Manage",
-                    sideX + SIDE_W / 2, SIDE_TOP + 16, 0xFF444455);
-            return;
-        }
-
-        int y = SIDE_TOP;
-        for (PresetConfig.Preset preset : favs) {
-            if (y + PRESET_H > availableBottom) break;
-
-            boolean active = PresetConfig.isActive(preset.id);
-            int     color  = preset.argbColor();
-            boolean hov    = mouseX >= sideX + 1 && mouseX < this.width - 1
-                    && mouseY >= y && mouseY < y + PRESET_H;
-
-            if (active) {
-                graphics.fill(sideX + 1, y, this.width - 1, y + PRESET_H, (color & 0x00FFFFFF) | 0x55000000);
-                graphics.fill(sideX + 1, y, sideX + 4, y + PRESET_H, color | 0xFF000000); // solid side accent
-            } else {
-                graphics.fill(sideX + 1, y, this.width - 1, y + PRESET_H, (color & 0x00FFFFFF) | 0x1A000000);
-            }
-            if (hov) graphics.fill(sideX + 1, y, this.width - 1, y + PRESET_H, 0x22FFFFFF);
-
-            String name = preset.name;
-            int textStartX = sideX + 10;
-            int maxNameW   = this.width - textStartX - (active ? 22 : 4);
-            while (name.length() > 1 && this.font.width(name) > maxNameW)
-                name = name.substring(0, name.length() - 1);
-            if (!name.equals(preset.name)) name += "..";
-
-            if (active) {
-                graphics.text(this.font, name, textStartX, y + 7, 0xFFFFFFFF);
-                graphics.text(this.font, "ON", this.width - 18, y + 7, 0xFF88FF88);
-            } else {
-                graphics.text(this.font, name, textStartX, y + 7, 0xFF888888);
-            }
-            y += PRESET_H + 1;
-        }
     }
 
     // ── Mouse events ──────────────────────────────────────────────────────────
@@ -305,46 +240,38 @@ public class SoundTweaksScreen extends Screen {
         if (this.filterBar.mouseClicked(event)) return true;
 
         if (super.mouseClicked(event, consumed)) return true;
-        if (handleSidebarClick(event)) return true;
-
-        return false;
+        return handlePanelClick(event);
     }
 
-    private boolean handleSidebarClick(MouseButtonEvent event) {
+    private boolean handlePanelClick(MouseButtonEvent event) {
+        if (this.layout.panel() == MainScreenLayout.Panel.NONE) return false;
         double mx = event.x();
         double my = event.y();
-
-        if (!sidebarOpen) return false;
-
-        int sideX = this.width - SIDE_W;
-        if (mx < sideX) return false;
+        if (!this.layout.panelBounds().contains((int) mx, (int) my)) return false;
 
         // Sidebar header → close
-        if (my < 22) {
+        if (this.layout.panel() == MainScreenLayout.Panel.SIDEBAR && my < 22) {
             toggleSidebar();
             return true;
         }
 
-        // Preset buttons
-        List<PresetConfig.Preset> favs = PresetConfig.getFavoritePresets();
-        int availableBottom = this.height - MANAGE_H - 8;
-        int y = SIDE_TOP;
-        for (PresetConfig.Preset preset : favs) {
-            if (y + PRESET_H > availableBottom) break;
-            if (my >= y && my < y + PRESET_H) {
-                PresetConfig.setActive(preset.id, !PresetConfig.isActive(preset.id));
-                return true;
-            }
-            y += PRESET_H + 1;
-        }
-
-        return true; // absorb remaining clicks on the sidebar
+        PresetConfig.Preset preset = FavoritesPanel.presetAt(this.layout, this.favorites, mx, my);
+        if (preset != null) PresetConfig.setActive(preset.id, !PresetConfig.isActive(preset.id));
+        return true; // absorb remaining clicks on the panel
     }
 
     private void toggleSidebar() {
-        savedScroll = this.soundList != null ? this.soundList.getScrollAmount() : 0.0;
         sidebarOpen = !sidebarOpen;
         this.rebuildWidgets();
+    }
+
+    /** The mouse wheel over the thin rail scrolls the favourites one at a time. */
+    private boolean scrollRail(double mouseX, double mouseY, double scrollY) {
+        if (this.layout.panel() != MainScreenLayout.Panel.RAIL || scrollY == 0) return false;
+        if (!this.layout.panelBounds().contains((int) mouseX, (int) mouseY)) return false;
+        this.railFirst = this.layout.firstFavorite() - (int) Math.signum(scrollY);
+        computeLayout();
+        return true;
     }
 
     @Override
@@ -362,6 +289,7 @@ public class SoundTweaksScreen extends Screen {
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         if (this.filterBar.mouseScrolled(mouseX, mouseY, scrollY)) return true;
+        if (scrollRail(mouseX, mouseY, scrollY)) return true;
         return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 
@@ -596,10 +524,7 @@ public class SoundTweaksScreen extends Screen {
 
     @Override
     public void onClose() {
-        savedCategory = this.selectedCategory;
-        savedObject   = this.selectedObject;
-        savedSearch   = this.searchQuery;
-        savedScroll   = this.soundList != null ? this.soundList.getScrollAmount() : 0.0;
+        saveState();
         this.minecraft.gui.setScreen(this.parent);
     }
 }
