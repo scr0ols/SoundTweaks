@@ -30,3 +30,10 @@ jobs:
           path: |
             fabric/build/libs/*.jar
             !fabric/build/libs/*-sources.jar
+      - name: capture NeoForge jar
+        uses: actions/upload-artifact@v7
+        with:
+          name: neoforge-jar
+          path: |
+            neoforge/build/libs/*.jar
+            !neoforge/build/libs/*-sources.jar

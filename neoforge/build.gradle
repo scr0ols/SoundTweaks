@@ -1,0 +1,100 @@
+plugins {
+	id 'java-library'
+	id 'net.neoforged.moddev'
+}
+
+base {
+	archivesName = "neoforge-${project.mod_id}"
+}
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(Integer.parseInt(project.java_version))
+	}
+
+	withSourcesJar()
+}
+
+neoForge {
+	version = project.neo_version
+
+	runs {
+		client {
+			client()
+		}
+	}
+
+	mods {
+		"${project.mod_id}" {
+			sourceSet(sourceSets.main)
+		}
+	}
+}
+
+configurations {
+	commonJava {
+		canBeResolved = true
+		canBeConsumed = false
+	}
+
+	commonClientJava {
+		canBeResolved = true
+		canBeConsumed = false
+	}
+}
+
+dependencies {
+	commonJava project(path: ':common', configuration: 'commonJava')
+	commonClientJava project(path: ':common', configuration: 'commonClientJava')
+}
+
+// NeoForge has one source set, so the shared client code compiles together with the rest.
+tasks.named('compileJava', JavaCompile) {
+	dependsOn(configurations.commonJava, configurations.commonClientJava)
+	source(configurations.commonJava)
+	source(configurations.commonClientJava)
+}
+
+// Assets (lang files, icon) are shared by every loader.
+sourceSets.main.resources.srcDir(project(':common').file('src/main/resources'))
+
+tasks.named('sourcesJar', Jar) {
+	dependsOn(configurations.commonJava, configurations.commonClientJava)
+	from(configurations.commonJava)
+	from(configurations.commonClientJava)
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = Integer.parseInt(project.java_version)
+	options.encoding = 'UTF-8'
+}
+
+var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
+	var replaceProperties = [
+			minecraft_version_range: project.minecraft_version_range,
+			neo_version            : project.neo_version,
+			mod_id                 : project.mod_id,
+			mod_name               : project.mod_name,
+			mod_license            : 'GPL-3.0-or-later',
+			mod_version            : project.version,
+	]
+	inputs.properties replaceProperties
+	expand replaceProperties
+	from "src/main/templates"
+	into "build/generated/sources/modMetadata"
+}
+sourceSets.main.resources.srcDir generateModMetadata
+neoForge.ideSyncTask generateModMetadata
+
+jar {
+	def projectName = project.name
+	inputs.property "projectName", projectName
+
+	manifest {
+		attributes("Implementation-Version": project.version)
+	}
+
+	from(rootProject.file("LICENSE")) {
+		rename { "LICENSE_$projectName" }
+	}
+}
