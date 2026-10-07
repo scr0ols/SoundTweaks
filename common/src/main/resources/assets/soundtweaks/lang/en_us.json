@@ -2,6 +2,7 @@
   "soundtweaks.gui.title":            "SoundTweaks",
   "soundtweaks.gui.search_hint":      "Search sound...",
   "soundtweaks.gui.done":             "Done",
+  "soundtweaks.gui.back":             "‹ Back",
   "soundtweaks.gui.category":         "Category",
   "soundtweaks.gui.object":           "Object",
   "soundtweaks.gui.all":              "(All)",

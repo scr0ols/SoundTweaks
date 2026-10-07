@@ -1,31 +1,38 @@
 package com.scr0ols.soundtweaks.client.gui;
 
+import com.scr0ols.soundtweaks.layout.PresetsScreenLayout;
+import com.scr0ols.soundtweaks.layout.Rect;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+
+import java.util.List;
 
 /** Tab strip of the preset detail panel: Color | Rename | Shortcut | Edit Sounds | Delete. */
 final class PresetTabs {
 
     static final String[] LABELS = {"Color", "Rename", "Shortcut", "Edit Sounds", "Delete"};
-    private static final int[] WIDTHS = {64, 64, 72, 88, 60};
     static final int DELETE_INDEX = LABELS.length - 1;
-    static final int HEIGHT = 20;
-    private static final int GAP = 4;
 
     private PresetTabs() {}
 
+    /** Measured width of each label, as {@link PresetsScreenLayout#compute} expects. */
+    static int[] textWidths(Font font) {
+        int[] widths = new int[LABELS.length];
+        for (int i = 0; i < LABELS.length; i++) widths[i] = font.width(LABELS[i]);
+        return widths;
+    }
+
     /**
+     * @param tabs        one rect per tab, from {@link PresetsScreenLayout#tabs()}
      * @param activeIndex index of the highlighted tab, or -1 for none
-     * @param y           top edge of the strip
      */
     static void render(GuiGraphicsExtractor g, Font font, int mouseX, int mouseY,
-                       int px, int y, int pc, int activeIndex) {
-        int tabX = px + 4;
-        for (int i = 0; i < LABELS.length; i++) {
+                       List<Rect> tabs, int pc, int activeIndex) {
+        for (int i = 0; i < tabs.size(); i++) {
+            Rect r = tabs.get(i);
             boolean isDelete = (i == DELETE_INDEX);
             boolean active   = !isDelete && (i == activeIndex);
-            boolean hov      = mouseX >= tabX && mouseX < tabX + WIDTHS[i]
-                    && mouseY >= y && mouseY < y + HEIGHT;
+            boolean hov      = r.contains(mouseX, mouseY);
 
             int bg, accent, textCol;
             if (isDelete) {
@@ -38,19 +45,16 @@ final class PresetTabs {
                 textCol = active ? 0xFFFFFFFF : hov ? 0xFFCCCCCC : 0xFF888899;
             }
 
-            g.fill(tabX, y, tabX + WIDTHS[i], y + HEIGHT, bg);
-            g.fill(tabX, y, tabX + WIDTHS[i], y + 1, accent);
-            g.centeredText(font, LABELS[i], tabX + WIDTHS[i] / 2, y + 6, textCol);
-            tabX += WIDTHS[i] + GAP;
+            g.fill(r.x(), r.y(), r.right(), r.bottom(), bg);
+            g.fill(r.x(), r.y(), r.right(), r.y() + 1, accent);
+            g.centeredText(font, LABELS[i], r.x() + r.w() / 2, r.y() + 6, textCol);
         }
     }
 
     /** Index of the tab under the mouse, or -1. */
-    static int hit(double mx, double my, int px, int y) {
-        int tabX = px + 4;
-        for (int i = 0; i < LABELS.length; i++) {
-            if (mx >= tabX && mx < tabX + WIDTHS[i] && my >= y && my < y + HEIGHT) return i;
-            tabX += WIDTHS[i] + GAP;
+    static int hit(double mx, double my, List<Rect> tabs) {
+        for (int i = 0; i < tabs.size(); i++) {
+            if (tabs.get(i).contains((int) Math.floor(mx), (int) Math.floor(my))) return i;
         }
         return -1;
     }

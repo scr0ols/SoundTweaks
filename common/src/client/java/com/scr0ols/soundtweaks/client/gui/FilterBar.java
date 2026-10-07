@@ -78,18 +78,11 @@ public class FilterBar {
     public void setLayout(FilterBarLayout layout) {
         category.setBounds(layout.category().x(), layout.category().y(), layout.category().w());
         object.setBounds(layout.object().x(), layout.object().y(), layout.object().w());
-        place(clear, layout.clear());
-        place(search, layout.search());
+        WidgetBounds.place(clear, layout.clear());
+        WidgetBounds.place(search, layout.search());
         for (int i = 0; i < trailing.size(); i++) {
-            place(trailing.get(i), layout.trailing().get(i));
+            WidgetBounds.place(trailing.get(i), layout.trailing().get(i));
         }
-    }
-
-    private static void place(AbstractWidget widget, Rect r) {
-        widget.setX(r.x());
-        widget.setY(r.y());
-        widget.setWidth(r.w());
-        widget.setHeight(r.h());
     }
 
     /** Draws the dropdowns (and their popups); call after everything else on the screen. */

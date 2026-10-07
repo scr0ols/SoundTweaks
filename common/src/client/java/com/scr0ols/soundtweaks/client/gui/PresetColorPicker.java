@@ -1,86 +1,71 @@
 package com.scr0ols.soundtweaks.client.gui;
 
 import com.scr0ols.soundtweaks.PresetConfig;
+import com.scr0ols.soundtweaks.layout.PresetTabLayout;
+import com.scr0ols.soundtweaks.layout.Rect;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
-/** Colour swatch grid of the Color tab: 18 preset colours plus the "Custom" swatch. */
+/** Colour swatch grid of the Color tab: the preset colours plus the "Custom" swatch. */
 final class PresetColorPicker {
 
     /** Result of {@link #hit} when nothing was clicked. */
     static final int NO_HIT = -2;
 
-    private static final int SQ = 22, GAP = 3, COLS = 6, CONTENT_Y = 56;
-    private static final int GRID_Y = CONTENT_Y + 20;
-    private static final int CUSTOM_Y = GRID_Y + 3 * (SQ + GAP) + 12;
-    private static final int GRID_W = COLS * SQ + (COLS - 1) * GAP;
-
     private PresetColorPicker() {}
 
-    static int gridX(int px, int pw) { return px + pw / 2 - GRID_W / 2; }
-
-    static int customY() { return CUSTOM_Y; }
-
-    /** Left edge of the custom-colour hex box, next to the "Custom" swatch. */
-    static int hexBoxX(int px, int pw) { return gridX(px, pw) + 26; }
-
     static void render(GuiGraphicsExtractor g, Font font, int mouseX, int mouseY,
-                       int px, int pw, PresetConfig.Preset preset) {
-        int cx2 = px + pw / 2;
-        g.fill(cx2 - 170, CONTENT_Y + 2, cx2 + 170, CONTENT_Y + 140, 0xBB1A1A1A);
-        int sq = SQ, gap = GAP, cols = COLS;
-        int gridX = gridX(px, pw);
-        int gridY = GRID_Y;
+                       PresetTabLayout t, PresetConfig.Preset preset) {
+        Rect box = t.colorBox();
+        g.fill(box.x(), box.y(), box.right(), box.bottom(), 0xBB1A1A1A);
 
         for (int i = 0; i < PresetConfig.PRESET_COLORS.length; i++) {
-            int col = i % cols, row = i / cols;
-            int qx = gridX + col * (sq + gap), qy = gridY + row * (sq + gap);
-            g.fill(qx, qy, qx + sq, qy + sq, PresetConfig.PRESET_COLORS[i] | 0xFF000000);
-            boolean selected = (i == preset.colorIndex);
-            boolean hov = mouseX >= qx && mouseX < qx + sq && mouseY >= qy && mouseY < qy + sq;
-            if (selected) {
-                g.fill(qx-2, qy-2, qx+sq+2, qy,       0xFFFFFFFF); g.fill(qx-2, qy+sq, qx+sq+2, qy+sq+2, 0xFFFFFFFF);
-                g.fill(qx-2, qy,   qx,       qy+sq,    0xFFFFFFFF); g.fill(qx+sq, qy,   qx+sq+2, qy+sq,   0xFFFFFFFF);
-            } else if (hov) {
-                g.fill(qx-1, qy-1, qx+sq+1, qy,       0xFF888888); g.fill(qx-1, qy+sq, qx+sq+1, qy+sq+1, 0xFF888888);
-                g.fill(qx-1, qy,   qx,       qy+sq,    0xFF888888); g.fill(qx+sq, qy,   qx+sq+1, qy+sq,   0xFF888888);
-            }
+            Rect s = t.swatch(i);
+            g.fill(s.x(), s.y(), s.right(), s.bottom(), PresetConfig.PRESET_COLORS[i] | 0xFF000000);
+            if (i == preset.colorIndex) outline(g, s, 2, 0xFFFFFFFF);
+            else if (s.contains(mouseX, mouseY)) outline(g, s, 1, 0xFF888888);
         }
-        int customY = CUSTOM_Y;
+
+        Rect custom = t.customSwatch();
         boolean customSel = (preset.colorIndex == PresetConfig.CUSTOM_COLOR_INDEX);
-        boolean customHov = mouseX >= gridX && mouseX < gridX + sq && mouseY >= customY && mouseY < customY + sq;
         if (preset.customColor != 0) {
-            g.fill(gridX, customY, gridX + sq, customY + sq, preset.customColor | 0xFF000000);
+            g.fill(custom.x(), custom.y(), custom.right(), custom.bottom(), preset.customColor | 0xFF000000);
         } else {
-            g.fill(gridX, customY, gridX + sq, customY + sq, 0xFF1A1A2E);
-            g.fill(gridX, customY, gridX+sq, customY+1, 0xFF556677); g.fill(gridX, customY+sq-1, gridX+sq, customY+sq, 0xFF556677);
-            g.fill(gridX, customY, gridX+1, customY+sq, 0xFF556677); g.fill(gridX+sq-1, customY, gridX+sq, customY+sq, 0xFF556677);
-            if (!customSel) g.centeredText(font, "+", gridX + sq / 2, customY + (sq - 8) / 2, 0xFF556677);
+            g.fill(custom.x(), custom.y(), custom.right(), custom.bottom(), 0xFF1A1A2E);
+            outline(g, custom, -1, 0xFF556677);
+            if (!customSel) g.centeredText(font, "+", custom.x() + custom.w() / 2,
+                    custom.y() + (custom.h() - 8) / 2, 0xFF556677);
         }
-        if (customSel) {
-            g.fill(gridX-2, customY-2, gridX+sq+2, customY, 0xFFFFFFFF); g.fill(gridX-2, customY+sq, gridX+sq+2, customY+sq+2, 0xFFFFFFFF);
-            g.fill(gridX-2, customY, gridX, customY+sq, 0xFFFFFFFF);      g.fill(gridX+sq, customY, gridX+sq+2, customY+sq, 0xFFFFFFFF);
-        } else if (customHov) {
-            g.fill(gridX-1, customY-1, gridX+sq+1, customY, 0xFF888888); g.fill(gridX-1, customY+sq, gridX+sq+1, customY+sq+1, 0xFF888888);
-            g.fill(gridX-1, customY, gridX, customY+sq, 0xFF888888);      g.fill(gridX+sq, customY, gridX+sq+1, customY+sq, 0xFF888888);
-        }
-        g.text(font, "Custom", gridX + sq + 6, customY + (sq - 8) / 2, customSel ? 0xFFCCCCFF : 0xFF666688);
+        if (customSel) outline(g, custom, 2, 0xFFFFFFFF);
+        else if (custom.contains(mouseX, mouseY)) outline(g, custom, 1, 0xFF888888);
+
+        Rect label = t.customLabel();
+        g.text(font, "Custom", label.x(), label.y(), customSel ? 0xFFCCCCFF : 0xFF666688);
     }
 
     /**
      * Swatch under the mouse: a palette index, {@link PresetConfig#CUSTOM_COLOR_INDEX} for the
      * custom swatch, or {@link #NO_HIT}.
      */
-    static int hit(double mx, double my, int px, int pw) {
-        int gridX = gridX(px, pw);
+    static int hit(double mx, double my, PresetTabLayout t) {
+        int px = (int) Math.floor(mx), py = (int) Math.floor(my);
         for (int i = 0; i < PresetConfig.PRESET_COLORS.length; i++) {
-            int col = i % COLS, row = i / COLS;
-            int qx = gridX + col * (SQ + GAP), qy = GRID_Y + row * (SQ + GAP);
-            if (mx >= qx && mx < qx + SQ && my >= qy && my < qy + SQ) return i;
+            if (t.swatch(i).contains(px, py)) return i;
         }
-        if (mx >= gridX && mx < gridX + SQ && my >= CUSTOM_Y && my < CUSTOM_Y + SQ)
-            return PresetConfig.CUSTOM_COLOR_INDEX;
+        if (t.customSwatch().contains(px, py)) return PresetConfig.CUSTOM_COLOR_INDEX;
         return NO_HIT;
+    }
+
+    /** Border of {@code thickness} px drawn outside {@code r}; a negative thickness draws inside. */
+    private static void outline(GuiGraphicsExtractor g, Rect r, int thickness, int argb) {
+        int t = Math.abs(thickness);
+        int o = thickness > 0 ? t : 0;
+        int in = thickness > 0 ? 0 : t;
+        int x0 = r.x() - o, y0 = r.y() - o, x1 = r.right() + o, y1 = r.bottom() + o;
+        g.fill(x0, y0, x1, y0 + t, argb);
+        g.fill(x0, y1 - t, x1, y1, argb);
+        g.fill(x0, y0 + in, x0 + t, y1 - in, argb);
+        g.fill(x1 - t, y0 + in, x1, y1 - in, argb);
     }
 
     /** Lightens a dark 0xRRGGBB colour in proportion to its darkness so text stays readable. */

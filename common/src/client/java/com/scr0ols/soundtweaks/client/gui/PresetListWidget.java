@@ -90,7 +90,7 @@ class PresetListWidget extends AbstractSelectionList<PresetListWidget.PresetRow>
             if (mx >= badgeX && mx < badgeX+22 && my >= badgeY && my < badgeY+11) {
                 PresetConfig.setActive(preset.id, !PresetConfig.isActive(preset.id)); return true;
             }
-            if (screen.editingPreset() == preset) {
+            if (screen.editingPreset() == preset && !screen.isListStep()) {
                 PresetListWidget.this.setSelected(null);
                 screen.closeDetailPanel();
             } else {
