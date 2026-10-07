@@ -7,8 +7,8 @@ import java.util.List;
  * Geometry of the main screen: header, filter bar, sound list, footer and the favourites panel
  * (sidebar, thin rail, or nothing).
  *
- * <p>Everything is absolute screen coordinates; the content is limited to {@link LayoutMode#MAX_W}
- * and centred. A rect that is not shown (title that does not fit, count, Presets button, panel parts)
+ * <p>Everything is absolute screen coordinates; the content spans the whole window width.
+ * A rect that is not shown (title that does not fit, count, Presets button, panel parts)
  * is {@link Rect#EMPTY}.
  *
  * @param content          zone left of the panel that holds the header, filters, list and footer

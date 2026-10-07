@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class MainScreenLayoutTest {
 
     private static final int[][] SIZES = {
-            {320, 240}, {427, 240}, {480, 270}, {640, 360}, {683, 384}, {960, 540}, {1280, 720}, {1920, 1080}};
+            {320, 240}, {427, 240}, {480, 270}, {640, 360}, {683, 384}, {960, 540}, {1280, 720}, {1920, 1080}, {2560, 1440}};
     private static final int[] FAVORITES = {0, 3, 12};
 
     private interface Check {
@@ -98,12 +98,13 @@ class MainScreenLayoutTest {
     }
 
     @Test
-    void wideScreensAreCappedAt960AndCentred() {
+    void wideScreensUseTheFullWidth() {
         var l = MainScreenLayout.compute(1920, 1080, true, 3);
-        assertEquals(new Rect(480, 0, 960, 1080), l.frame().bounds());
-        assertEquals(480, l.content().x());
-        assertEquals(1440, l.panelBounds().right());
-        assertEquals(480 + 4, l.mute().x());
+        assertEquals(new Rect(0, 0, 1920, 1080), l.frame().bounds());
+        assertEquals(0, l.content().x());
+        assertEquals(1700, l.content().w());
+        assertEquals(1920, l.panelBounds().right());
+        assertEquals(4, l.mute().x());
     }
 
     // ── Header ────────────────────────────────────────────────────────────────
@@ -284,7 +285,6 @@ class MainScreenLayoutTest {
                 assertTrue(r.y() >= 0 && r.bottom() <= h, where + " " + r);
                 assertTrue(frame.right() <= w, where);
             }
-            assertTrue(frame.w() <= LayoutMode.MAX_W, where);
         });
     }
 
@@ -334,7 +334,7 @@ class MainScreenLayoutTest {
     @Test
     void layoutModeFollowsTheFrameWidth() {
         forEveryCase((where, w, h, sidebar, favs, l) -> {
-            boolean compact = Math.min(w, LayoutMode.MAX_W) < LayoutMode.RAIL_BP;
+            boolean compact = w < LayoutMode.RAIL_BP;
             assertEquals(compact ? LayoutMode.COMPACT : LayoutMode.NORMAL, l.mode(), where);
         });
     }

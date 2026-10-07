@@ -45,10 +45,10 @@ class DialogLayoutTest {
     }
 
     @Test
-    void frameOverloadCentresInsideTheFrameNotTheWindow() {
+    void frameOverloadCentresInsideTheFrame() {
         Rect r = DialogLayout.panel(ScreenFrame.of(1920, 1080), 2000, 100);
-        assertEquals(944, r.w());
-        assertEquals(488, r.x());
+        assertEquals(1904, r.w());
+        assertEquals(8, r.x());
         assertEquals(490, r.y());
     }
 }

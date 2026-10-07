@@ -5,7 +5,6 @@ public enum LayoutMode {
     NORMAL,
     COMPACT;
 
-    public static final int MAX_W = 960;
     public static final int MIN_W = 320;
     public static final int MIN_H = 240;
     public static final int RAIL_W = 24;
