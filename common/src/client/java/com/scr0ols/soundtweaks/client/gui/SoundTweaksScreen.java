@@ -101,7 +101,7 @@ public class SoundTweaksScreen extends Screen {
         // ── Filter bar, one or two lines depending on the width
         this.filterBar = new FilterBar(this.font, this::onCategorySelected, this::onObjectSelected,
                 this::clearFilters, q -> { this.searchQuery = q; refreshList(); }, List.of());
-        populateCategoryDropdown();
+        SoundFilterOptions.populateCategories(this.filterBar.category());
         this.filterBar.addWidgets(this::addRenderableWidget);
         this.filterBar.setLayout(l.filterBar());
 
@@ -158,7 +158,7 @@ public class SoundTweaksScreen extends Screen {
             this.selectedCategory = savedCategory;
             this.filterBar.category().setSelectedValueSilently(savedCategory.getDropdownKey());
             if (savedCategory != SoundCategory.OTHERS && savedCategory.getPrefix() != null) {
-                populateObjectDropdown(savedCategory);
+                SoundFilterOptions.populateObjects(this.filterBar.object(), savedCategory);
                 this.filterBar.object().setActive(true);
                 if (savedObject != null) {
                     this.selectedObject = savedObject;
@@ -313,7 +313,7 @@ public class SoundTweaksScreen extends Screen {
         this.selectedCategory = SoundCategory.fromDropdownKey(key);
         this.selectedObject   = null;
         if (this.selectedCategory != null && this.selectedCategory != SoundCategory.OTHERS) {
-            populateObjectDropdown(this.selectedCategory);
+            SoundFilterOptions.populateObjects(this.filterBar.object(), this.selectedCategory);
             this.filterBar.object().clearSelection();
             this.filterBar.object().setActive(true);
         } else {
@@ -383,36 +383,6 @@ public class SoundTweaksScreen extends Screen {
     }
 
     // ── Init helpers ──────────────────────────────────────────────────────────
-
-    private void populateCategoryDropdown() {
-        List<String[]> pairs = new ArrayList<>();
-        for (SoundCategory cat : SoundCategory.visibleCategories()) {
-            pairs.add(new String[]{ cat.getDropdownKey(), I18n.get(cat.getLabelKey()) });
-        }
-        pairs.sort((a, b) -> a[1].compareToIgnoreCase(b[1]));
-        List<String> options = new ArrayList<>(), labels = new ArrayList<>();
-        for (String[] p : pairs) { options.add(p[0]); labels.add(p[1]); }
-        this.filterBar.category().setOptions(options, labels);
-    }
-
-    private void populateObjectDropdown(SoundCategory category) {
-        List<String> raw    = new ArrayList<>(SoundRegistry.getObjectsByCategory(category));
-        List<String> labels = new ArrayList<>();
-        for (String obj : raw)
-            labels.add(SoundDisplayHelper.getObjectName("minecraft:" + category.getPrefix() + "." + obj));
-        // Sort by label — digits after Z (char '~' > 'Z' in ASCII)
-        List<int[]> order = new ArrayList<>();
-        for (int i = 0; i < labels.size(); i++) order.add(new int[]{i});
-        order.sort((a, b) -> {
-            String la = labels.get(a[0]), lb = labels.get(b[0]);
-            String ka = (!la.isEmpty() && Character.isDigit(la.charAt(0))) ? "~" + la : la;
-            String kb = (!lb.isEmpty() && Character.isDigit(lb.charAt(0))) ? "~" + lb : lb;
-            return ka.compareToIgnoreCase(kb);
-        });
-        List<String> sortedRaw = new ArrayList<>(), sortedLabels = new ArrayList<>();
-        for (int[] idx : order) { sortedRaw.add(raw.get(idx[0])); sortedLabels.add(labels.get(idx[0])); }
-        this.filterBar.object().setOptions(sortedRaw, sortedLabels);
-    }
 
     private void toggleMuteVisible() {
         muteSoundsActive = !muteSoundsActive;

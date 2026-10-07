@@ -2,17 +2,11 @@ package com.scr0ols.soundtweaks.client.gui;
 
 import com.scr0ols.soundtweaks.PresetConfig;
 import com.scr0ols.soundtweaks.SoundCategory;
-import com.scr0ols.soundtweaks.SoundRegistry;
 import com.scr0ols.soundtweaks.VolumeConfig;
-import com.scr0ols.soundtweaks.client.SoundDisplayHelper;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import org.lwjgl.sdl.SDLScancode;
-import net.minecraft.client.gui.components.AbstractSelectionList;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -21,8 +15,6 @@ import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 import com.mojang.blaze3d.platform.InputConstants;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -39,7 +31,6 @@ public class PresetsScreen extends Screen {
     private static final int LIST_W          = 330;
     private static final int LIST_W_CENTERED = 400;
     private static final int PANEL_HDR_H     = 28;
-    private static final int TAB_H           = 20;
     private static final int CONTENT_Y       = 56;
 
     // Sounds panel filters — positioned immediately below the tabs
@@ -53,9 +44,7 @@ public class PresetsScreen extends Screen {
     private Button newPresetBtn, doneBtn, importPresetsBtn, exportPresetsBtn, openConfigBtn;
 
     // ── Footer feedback (import/export result) ────────────────────────────────
-    private String footerMsg       = "";
-    private int    footerMsgColor  = 0xFFAAAAAA;
-    private long   footerMsgExpiry = 0L;
+    private final FooterMessage footerMessage = new FooterMessage();
 
     // ── Create overlay ─────────────────────────────────────────────────────────
     private boolean creating = false;
@@ -67,9 +56,7 @@ public class PresetsScreen extends Screen {
     private EditMode editMode = EditMode.NONE;
     @Nullable private PresetConfig.Preset editingPreset = null;
 
-    // Tabs: Color | Rename | Shortcut | Edit Sounds | Delete
-    private static final String[] TAB_LABELS = {"Color", "Rename", "Shortcut", "Edit Sounds", "Delete"};
-    private static final int[]    TAB_W      = {64,       64,       72,          88,             60};
+    // Modes opened by the tabs in PresetTabs.LABELS order (null: Delete has no mode)
     private static final EditMode[] TAB_MODES = {EditMode.COLOR, EditMode.RENAME, EditMode.SHORTCUT, EditMode.SOUNDS, null};
 
     // Widgets de rename
@@ -80,9 +67,7 @@ public class PresetsScreen extends Screen {
     private EditBox colorHexBox;
 
     // Captura de atalho
-    private final LinkedHashSet<Integer> captureHeldKeys   = new LinkedHashSet<>();
-    private final List<Integer>          lastHeldAtTrigger = new ArrayList<>();
-    private int lastCapturedTrigger = 0;
+    private final ShortcutCapture shortcutCapture = new ShortcutCapture();
 
     // Painel de sons (SOUNDS mode)
     @Nullable private PresetSoundList soundsWidget = null;
@@ -187,11 +172,8 @@ public class PresetsScreen extends Screen {
         this.addRenderableWidget(this.renameCancelBtn);
 
         // ── Color hex EditBox ─────────────────────────────────────────────────
-        int cgridW = 6 * 22 + 5 * 3;
-        int cgridX = panelX() + panelW() / 2 - cgridW / 2;
-        int gridY   = CONTENT_Y + 20;
-        int customY = gridY + 3 * (22 + 3) + 12;
-        this.colorHexBox = new EditBox(this.font, cgridX + 26, customY, 110, 18, Component.empty());
+        this.colorHexBox = new EditBox(this.font, PresetColorPicker.hexBoxX(panelX(), panelW()),
+                PresetColorPicker.customY(), 110, 18, Component.empty());
         this.colorHexBox.setMaxLength(6);
         this.colorHexBox.setTextColor(0xFFFFFFFF);
         this.colorHexBox.visible = false;
@@ -216,7 +198,7 @@ public class PresetsScreen extends Screen {
 
         this.soundsCatDrop = new FilterDropdown(px + 4, fy, 100,
                 I18n.get("soundtweaks.gui.category"), this::onSoundsCategorySelected);
-        populateSoundsCategoryDropdown();
+        SoundFilterOptions.populateCategories(this.soundsCatDrop);
 
         this.soundsObjDrop = new FilterDropdown(px + 108, fy, 100,
                 I18n.get("soundtweaks.gui.object"), this::onSoundsObjectSelected);
@@ -285,7 +267,7 @@ public class PresetsScreen extends Screen {
         if (centered) {
             int lw = Math.min(LIST_W_CENTERED, this.width - 40);
             int lx = (this.width - lw) / 2;
-            presetList = new PresetListWidget(this.minecraft, lw, listHeight, listTop, 24);
+            presetList = new PresetListWidget(this, this.minecraft, lw, listHeight, listTop, 24);
             presetList.setX(lx);
             // Row 1: Import | Export | Open Config
             // Left half (Import+Export) and right half (Open Config) align with Row 2 split
@@ -304,7 +286,7 @@ public class PresetsScreen extends Screen {
             doneBtn.setX(lx + lw / 2 + 2);        doneBtn.setWidth(halfW);
             newPresetBtn.setY(this.height - 26);   doneBtn.setY(this.height - 26);
         } else {
-            presetList = new PresetListWidget(this.minecraft, LIST_W, listHeight, listTop, 24);
+            presetList = new PresetListWidget(this, this.minecraft, LIST_W, listHeight, listTop, 24);
             // Row 1: Import | Export | Open Config — ratio 1:1:2
             int gap = 4, available = LIST_W - 8 - gap * 2;
             int bwSmall = available / 4;
@@ -370,10 +352,8 @@ public class PresetsScreen extends Screen {
         g.fill(footerSepX, this.height - 57, this.width - 8, this.height - 56, 0xFF555555);
 
         // ── Import/Export feedback (timed) ────────────────────────────────────
-        if (!footerMsg.isEmpty() && System.currentTimeMillis() < footerMsgExpiry) {
-            int msgCx = (editingPreset != null) ? (LIST_W + 1 + this.width) / 2 : this.width / 2;
-            g.centeredText(this.font, footerMsg, msgCx, this.height - 70, footerMsgColor);
-        }
+        int msgCx = (editingPreset != null) ? (LIST_W + 1 + this.width) / 2 : this.width / 2;
+        footerMessage.render(g, this.font, msgCx, this.height - 70);
 
         // ── Title ─────────────────────────────────────────────────────────────
         if (editingPreset != null) {
@@ -430,22 +410,13 @@ public class PresetsScreen extends Screen {
         while (titleText.length() > 1 && this.font.width(titleText) > maxTitleW)
             titleText = titleText.substring(0, titleText.length() - 1);
         if (!titleText.equals(editingPreset.name)) titleText += "..";
-        int r = (pc >> 16) & 0xFF, gc = (pc >> 8) & 0xFF, bc = pc & 0xFF;
-        int lum = (r * 299 + gc * 587 + bc * 114) / 1000;
-        if (lum < 100) {
-            // lighten the text colour proportionally to its darkness
-            float boost = (1f - lum / 100f) * 0.6f;
-            r  = (int)(r  + (255 - r)  * boost);
-            gc = (int)(gc + (255 - gc) * boost);
-            bc = (int)(bc + (255 - bc) * boost);
-            pc = (r << 16) | (gc << 8) | bc;
-        }
+        pc = PresetColorPicker.readableOnDark(pc);
         g.centeredText(this.font, titleText, cx2 + 1, 11, 0xCC000000);
         g.centeredText(this.font, titleText, cx2,     10, pc | 0xFF000000);
         g.fill(px, PANEL_HDR_H - 2, this.width, PANEL_HDR_H - 1, 0xFF444466); // azul/cinza
         g.fill(px, PANEL_HDR_H - 1, this.width, PANEL_HDR_H,     0xFF111111); // preto
 
-        renderTabs(g, mouseX, mouseY, px, pc);
+        PresetTabs.render(g, this.font, mouseX, mouseY, px, PANEL_HDR_H, pc, activeTabIndex());
 
         switch (editMode) {
             case COLOR    -> renderColorContent(g, mouseX, mouseY, px, pw, editingPreset, a);
@@ -456,76 +427,16 @@ public class PresetsScreen extends Screen {
         }
     }
 
-    private void renderTabs(GuiGraphicsExtractor g, int mouseX, int mouseY, int px, int pc) {
-        int tabX = px + 4, tabY = PANEL_HDR_H;
-
-        for (int i = 0; i < TAB_LABELS.length; i++) {
-            boolean isDelete = (i == TAB_LABELS.length - 1);
-            boolean active   = !isDelete && (editMode == TAB_MODES[i]);
-            boolean hov      = mouseX >= tabX && mouseX < tabX + TAB_W[i]
-                    && mouseY >= tabY && mouseY < tabY + TAB_H;
-
-            int bg, accent, textCol;
-            if (isDelete) {
-                bg      = hov ? 0xFF331111 : 0xFF221111;
-                accent  = 0xFF664444;
-                textCol = hov ? 0xFFFF6666 : 0xFFAA4444;
-            } else {
-                bg      = active ? 0xFF2A2A3A : hov ? 0xFF2A2A44 : 0xFF222233;
-                accent  = active ? (pc | 0xFF000000) : 0xFF444466;
-                textCol = active ? 0xFFFFFFFF : hov ? 0xFFCCCCCC : 0xFF888899;
-            }
-
-            g.fill(tabX, tabY, tabX + TAB_W[i], tabY + TAB_H, bg);
-            g.fill(tabX, tabY, tabX + TAB_W[i], tabY + 1, accent);
-            g.centeredText(this.font, TAB_LABELS[i], tabX + TAB_W[i] / 2, tabY + 6, textCol);
-            tabX += TAB_W[i] + 4;
-        }
+    private int activeTabIndex() {
+        for (int i = 0; i < TAB_MODES.length; i++)
+            if (TAB_MODES[i] != null && TAB_MODES[i] == editMode) return i;
+        return -1;
     }
 
     private void renderColorContent(GuiGraphicsExtractor g, int mouseX, int mouseY,
                                     int px, int pw, PresetConfig.Preset preset, float a) {
-        int cx2 = px + pw / 2;
-        g.fill(cx2 - 170, CONTENT_Y + 2, cx2 + 170, CONTENT_Y + 140, 0xBB1A1A1A);
-        int sq = 22, gap = 3, cols = 6;
-        int gridW = cols * sq + (cols - 1) * gap;
-        int gridX = px + pw / 2 - gridW / 2;
-        int gridY = CONTENT_Y + 20;
-
-        for (int i = 0; i < PresetConfig.PRESET_COLORS.length; i++) {
-            int col = i % cols, row = i / cols;
-            int qx = gridX + col * (sq + gap), qy = gridY + row * (sq + gap);
-            g.fill(qx, qy, qx + sq, qy + sq, PresetConfig.PRESET_COLORS[i] | 0xFF000000);
-            boolean selected = (i == preset.colorIndex);
-            boolean hov = mouseX >= qx && mouseX < qx + sq && mouseY >= qy && mouseY < qy + sq;
-            if (selected) {
-                g.fill(qx-2, qy-2, qx+sq+2, qy,       0xFFFFFFFF); g.fill(qx-2, qy+sq, qx+sq+2, qy+sq+2, 0xFFFFFFFF);
-                g.fill(qx-2, qy,   qx,       qy+sq,    0xFFFFFFFF); g.fill(qx+sq, qy,   qx+sq+2, qy+sq,   0xFFFFFFFF);
-            } else if (hov) {
-                g.fill(qx-1, qy-1, qx+sq+1, qy,       0xFF888888); g.fill(qx-1, qy+sq, qx+sq+1, qy+sq+1, 0xFF888888);
-                g.fill(qx-1, qy,   qx,       qy+sq,    0xFF888888); g.fill(qx+sq, qy,   qx+sq+1, qy+sq,   0xFF888888);
-            }
-        }
-        int customY = gridY + 3 * (sq + gap) + 12;
-        boolean customSel = (preset.colorIndex == PresetConfig.CUSTOM_COLOR_INDEX);
-        boolean customHov = mouseX >= gridX && mouseX < gridX + sq && mouseY >= customY && mouseY < customY + sq;
-        if (preset.customColor != 0) {
-            g.fill(gridX, customY, gridX + sq, customY + sq, preset.customColor | 0xFF000000);
-        } else {
-            g.fill(gridX, customY, gridX + sq, customY + sq, 0xFF1A1A2E);
-            g.fill(gridX, customY, gridX+sq, customY+1, 0xFF556677); g.fill(gridX, customY+sq-1, gridX+sq, customY+sq, 0xFF556677);
-            g.fill(gridX, customY, gridX+1, customY+sq, 0xFF556677); g.fill(gridX+sq-1, customY, gridX+sq, customY+sq, 0xFF556677);
-            if (!customSel) g.centeredText(this.font, "+", gridX + sq / 2, customY + (sq - 8) / 2, 0xFF556677);
-        }
-        if (customSel) {
-            g.fill(gridX-2, customY-2, gridX+sq+2, customY, 0xFFFFFFFF); g.fill(gridX-2, customY+sq, gridX+sq+2, customY+sq+2, 0xFFFFFFFF);
-            g.fill(gridX-2, customY, gridX, customY+sq, 0xFFFFFFFF);      g.fill(gridX+sq, customY, gridX+sq+2, customY+sq, 0xFFFFFFFF);
-        } else if (customHov) {
-            g.fill(gridX-1, customY-1, gridX+sq+1, customY, 0xFF888888); g.fill(gridX-1, customY+sq, gridX+sq+1, customY+sq+1, 0xFF888888);
-            g.fill(gridX-1, customY, gridX, customY+sq, 0xFF888888);      g.fill(gridX+sq, customY, gridX+sq+1, customY+sq, 0xFF888888);
-        }
-        g.text(this.font, "Custom", gridX + sq + 6, customY + (sq - 8) / 2, customSel ? 0xFFCCCCFF : 0xFF666688);
-        if (customSel) colorHexBox.extractRenderState(g, mouseX, mouseY, a);
+        PresetColorPicker.render(g, this.font, mouseX, mouseY, px, pw, preset);
+        if (preset.colorIndex == PresetConfig.CUSTOM_COLOR_INDEX) colorHexBox.extractRenderState(g, mouseX, mouseY, a);
     }
 
     private void renderRenameContent(GuiGraphicsExtractor g, int mouseX, int mouseY, float a) {
@@ -537,16 +448,9 @@ public class PresetsScreen extends Screen {
     private void renderShortcutContent(GuiGraphicsExtractor g, int cx) {
         g.fill(cx - 170, CONTENT_Y + 2, cx + 170, CONTENT_Y + 66, 0xBB1A1A1A);
 
-        String captureLabel;
-        if (lastCapturedTrigger != 0) {
-            StringBuilder sb = new StringBuilder();
-            for (int k : lastHeldAtTrigger) sb.append(rawKeyName(k)).append(" + ");
-            sb.append(rawKeyName(lastCapturedTrigger));
-            captureLabel = sb.toString();
-        } else { captureLabel = "---"; }
-        g.centeredText(this.font, captureLabel, cx, CONTENT_Y + 14, lastCapturedTrigger != 0 ? 0xFF88FF88 : 0xFF666677);
-        String savedLabel = (editingPreset != null) ? keyDisplayLabel(editingPreset) : "---";
-        boolean hasSaved = !savedLabel.equals("---");
+        g.centeredText(this.font, shortcutCapture.label(), cx, CONTENT_Y + 14, shortcutCapture.hasCapture() ? 0xFF88FF88 : 0xFF666677);
+        String savedLabel = (editingPreset != null) ? PresetKeyNames.displayLabel(editingPreset) : PresetKeyNames.NONE;
+        boolean hasSaved = !savedLabel.equals(PresetKeyNames.NONE);
         g.centeredText(this.font, hasSaved ? "[" + savedLabel + "]" : "[blank]", cx, CONTENT_Y + 34, hasSaved ? 0xFFCCCCFF : 0xFF888899);
         g.centeredText(this.font, "ENTER to confirm  ·  BACKSPACE to clear  ·  ESC to cancel", cx, CONTENT_Y + 50, 0xFF888899);
     }
@@ -569,39 +473,11 @@ public class PresetsScreen extends Screen {
 
     // ── Sounds — filters and list ─────────────────────────────────────────────
 
-    private void populateSoundsCategoryDropdown() {
-        List<String[]> pairs = new ArrayList<>();
-        for (SoundCategory cat : SoundCategory.visibleCategories())
-            pairs.add(new String[]{ cat.getDropdownKey(), I18n.get(cat.getLabelKey()) });
-        pairs.sort((a, b) -> a[1].compareToIgnoreCase(b[1]));
-        List<String> opts = new ArrayList<>(), labels = new ArrayList<>();
-        for (String[] p : pairs) { opts.add(p[0]); labels.add(p[1]); }
-        this.soundsCatDrop.setOptions(opts, labels);
-    }
-
-    private void populateSoundsObjectDropdown(SoundCategory category) {
-        List<String> raw = new ArrayList<>(SoundRegistry.getObjectsByCategory(category));
-        List<String> labels = new ArrayList<>();
-        for (String obj : raw)
-            labels.add(SoundDisplayHelper.getObjectName("minecraft:" + category.getPrefix() + "." + obj));
-        List<int[]> order = new ArrayList<>();
-        for (int i = 0; i < labels.size(); i++) order.add(new int[]{i});
-        order.sort((a, b) -> {
-            String la = labels.get(a[0]), lb = labels.get(b[0]);
-            String ka = (!la.isEmpty() && Character.isDigit(la.charAt(0))) ? "~" + la : la;
-            String kb = (!lb.isEmpty() && Character.isDigit(lb.charAt(0))) ? "~" + lb : lb;
-            return ka.compareToIgnoreCase(kb);
-        });
-        List<String> sortedRaw = new ArrayList<>(), sortedLabels = new ArrayList<>();
-        for (int[] idx : order) { sortedRaw.add(raw.get(idx[0])); sortedLabels.add(labels.get(idx[0])); }
-        this.soundsObjDrop.setOptions(sortedRaw, sortedLabels);
-    }
-
     private void onSoundsCategorySelected(@Nullable String key) {
         this.soundsCat = SoundCategory.fromDropdownKey(key);
         this.soundsObj = null;
         if (this.soundsCat != null && this.soundsCat != SoundCategory.OTHERS) {
-            populateSoundsObjectDropdown(this.soundsCat);
+            SoundFilterOptions.populateObjects(this.soundsObjDrop, this.soundsCat);
             this.soundsObjDrop.clearSelection(); this.soundsObjDrop.setActive(true);
         } else {
             this.soundsObjDrop.clearSelection(); this.soundsObjDrop.setActive(false);
@@ -670,39 +546,29 @@ public class PresetsScreen extends Screen {
     @Override
     public boolean keyReleased(KeyEvent event) {
         if (editingPreset != null && editMode == EditMode.SHORTCUT) {
-            captureHeldKeys.remove(event.key()); return true;
+            shortcutCapture.onKeyReleased(event.key()); return true;
         }
         return super.keyReleased(event);
     }
 
     private void handleShortcutKey(int key) {
-        if (key == InputConstants.KEY_ESCAPE) { resetShortcutCapture(); setEditMode(EditMode.COLOR); return; }
+        if (key == InputConstants.KEY_ESCAPE) { shortcutCapture.reset(); setEditMode(EditMode.COLOR); return; }
         if (key == InputConstants.KEY_BACKSPACE) {
-            resetShortcutCapture();
+            shortcutCapture.reset();
             if (editingPreset != null) {
                 editingPreset.shortcutKey = 0; editingPreset.shortcutHeldKey = 0; editingPreset.shortcutHeldKey2 = 0;
                 PresetConfig.markDirty();
             }
             presetList.refresh(); return;
         }
-        if (key == InputConstants.KEY_RETURN || key == InputConstants.KEY_NUMPADENTER) { if (lastCapturedTrigger != 0) confirmShortcut(); return; }
-        lastHeldAtTrigger.clear(); lastHeldAtTrigger.addAll(captureHeldKeys);
-        while (lastHeldAtTrigger.size() > 2) lastHeldAtTrigger.remove(0);
-        lastCapturedTrigger = key; captureHeldKeys.add(key);
+        if (key == InputConstants.KEY_RETURN || key == InputConstants.KEY_NUMPADENTER) { if (shortcutCapture.hasCapture()) confirmShortcut(); return; }
+        shortcutCapture.onKeyPressed(key);
     }
 
     private void confirmShortcut() {
         if (editingPreset == null) return;
-        int h1 = 0, h2 = 0;
-        if (lastHeldAtTrigger.size() == 1) h1 = lastHeldAtTrigger.get(0);
-        else if (lastHeldAtTrigger.size() >= 2) { h1 = lastHeldAtTrigger.get(lastHeldAtTrigger.size() - 2); h2 = lastHeldAtTrigger.get(lastHeldAtTrigger.size() - 1); }
-        editingPreset.shortcutKey = lastCapturedTrigger & 0xFFFF;
-        editingPreset.shortcutHeldKey = h1; editingPreset.shortcutHeldKey2 = h2;
-        PresetConfig.markDirty(); resetShortcutCapture(); presetList.refresh();
-    }
-
-    private void resetShortcutCapture() {
-        captureHeldKeys.clear(); lastHeldAtTrigger.clear(); lastCapturedTrigger = 0;
+        shortcutCapture.commitTo(editingPreset);
+        shortcutCapture.reset(); presetList.refresh();
     }
 
     // ── Mouse ─────────────────────────────────────────────────────────────────
@@ -734,13 +600,8 @@ public class PresetsScreen extends Screen {
             int px = panelX();
 
             // Tabs
-            int tabX = px + 4, tabY = PANEL_HDR_H;
-            for (int i = 0; i < TAB_LABELS.length; i++) {
-                if (mx >= tabX && mx < tabX + TAB_W[i] && my >= tabY && my < tabY + TAB_H) {
-                    handleTabClick(i); return true;
-                }
-                tabX += TAB_W[i] + 4;
-            }
+            int tabHit = PresetTabs.hit(mx, my, px, PANEL_HDR_H);
+            if (tabHit >= 0) { handleTabClick(tabHit); return true; }
 
             // Content by mode
             if (editMode == EditMode.COLOR) {
@@ -792,7 +653,7 @@ public class PresetsScreen extends Screen {
     }
 
     private void handleTabClick(int tabIndex) {
-        if (tabIndex == TAB_LABELS.length - 1) {
+        if (tabIndex == PresetTabs.DELETE_INDEX) {
             openDeleteConfirm();
         } else {
             setEditMode(TAB_MODES[tabIndex]);
@@ -803,43 +664,21 @@ public class PresetsScreen extends Screen {
         if (editingPreset == null) return;
         PresetConfig.Preset toDelete = editingPreset;
         setEditMode(EditMode.COLOR); // reset before opening overlay — ensures clean state on return
-        this.minecraft.gui.setScreen(new ConfirmScreen(
-            confirmed -> {
-                if (confirmed) {
-                    PresetConfig.deletePreset(toDelete.id);
-                    closeDetailPanel();
-                }
-                this.minecraft.gui.setScreen(PresetsScreen.this);
-            },
-            Component.translatable("soundtweaks.presets.delete_title"),
-            Component.empty()
-                .append(Component.literal("\"" + toDelete.name + "\"").withStyle(s ->
-                    s.withColor(net.minecraft.network.chat.TextColor.fromRgb(toDelete.argbColor() & 0x00FFFFFF))))
-                .append(Component.literal(" — "))
-                .append(Component.translatable("soundtweaks.presets.delete_warning"))
-        ));
+        this.minecraft.gui.setScreen(DeletePresetDialog.create(this.minecraft, this, toDelete, this::closeDetailPanel));
     }
 
     private void handleColorGridClick(double mx, double my, int px, int pw, PresetConfig.Preset preset) {
         if (preset == null) return;
-        int sq = 22, gap = 3, cols = 6;
-        int gridW = cols * sq + (cols - 1) * gap;
-        int gridX = px + pw / 2 - gridW / 2;
-        int gridY = CONTENT_Y + 20;
-        for (int i = 0; i < PresetConfig.PRESET_COLORS.length; i++) {
-            int col = i % cols, row = i / cols;
-            int qx = gridX + col * (sq + gap), qy = gridY + row * (sq + gap);
-            if (mx >= qx && mx < qx + sq && my >= qy && my < qy + sq) {
-                preset.colorIndex = i; PresetConfig.markDirty(); this.setFocused(null); return;
-            }
-        }
-        int customY = gridY + 3 * (sq + gap) + 12;
-        if (mx >= gridX && mx < gridX + sq && my >= customY && my < customY + sq) {
+        int hit = PresetColorPicker.hit(mx, my, px, pw);
+        if (hit == PresetColorPicker.NO_HIT) return;
+        if (hit == PresetConfig.CUSTOM_COLOR_INDEX) {
             preset.colorIndex = PresetConfig.CUSTOM_COLOR_INDEX;
             if (preset.customColor == 0) preset.customColor = 0xFF888888;
             PresetConfig.markDirty();
             colorHexBox.setValue(String.format("%06X", preset.customColor & 0xFFFFFF));
             colorHexBox.visible = true; this.setFocused(colorHexBox); colorHexBox.setFocused(true);
+        } else {
+            preset.colorIndex = hit; PresetConfig.markDirty(); this.setFocused(null);
         }
     }
 
@@ -870,10 +709,13 @@ public class PresetsScreen extends Screen {
             this.setFocused(null);
         }
 
-        if (mode == EditMode.SHORTCUT) resetShortcutCapture();
+        if (mode == EditMode.SHORTCUT) shortcutCapture.reset();
     }
 
-    private void closeDetailPanel() {
+    @Nullable PresetConfig.Preset editingPreset() { return editingPreset; }
+    boolean isCreating() { return creating; }
+
+    void closeDetailPanel() {
         if (soundsWidget != null) { this.removeWidget(soundsWidget); soundsWidget = null; }
         this.editingPreset = null; this.editMode = EditMode.NONE;
         setRenameWidgetsVisible(false); this.setFocused(null);
@@ -914,22 +756,22 @@ public class PresetsScreen extends Screen {
     private void importPresetsFrom(java.nio.file.Path file) {
         PresetConfig.ImportResult result = PresetConfig.importFrom(file);
         if (result == null) {
-            showFooterMsg("Import failed. Check logs for details.", 0xFFFF6666);
+            footerMessage.show("Import failed. Check logs for details.", 0xFFFF6666);
         } else if (result.imported() == 0) {
-            showFooterMsg("No presets found in this file.", 0xFFFFAA44);
+            footerMessage.show("No presets found in this file.", 0xFFFFAA44);
         } else if (result.conflictsReassigned() > 0) {
             presetList.refresh();
             showImportConflictWarning(result.conflictsReassigned());
         } else {
-            showFooterMsg("Imported " + result.imported() + " presets.", 0xFF88FF88);
+            footerMessage.show("Imported " + result.imported() + " presets.", 0xFF88FF88);
             presetList.refresh();
         }
     }
 
     private void exportPresetsTo(java.nio.file.Path file) {
         int exported = PresetConfig.exportTo(file);
-        if (exported < 0) showFooterMsg("Export failed. Check logs for details.", 0xFFFF6666);
-        else showFooterMsg("Exported " + exported + " presets.", 0xFF88FF88);
+        if (exported < 0) footerMessage.show("Export failed. Check logs for details.", 0xFFFF6666);
+        else footerMessage.show("Exported " + exported + " presets.", 0xFF88FF88);
     }
 
     /** The system file dialog could not be shown: fall back to typing the path in-game. */
@@ -947,160 +789,6 @@ public class PresetsScreen extends Screen {
         ));
     }
 
-    private void showFooterMsg(String msg, int color) {
-        footerMsg      = msg;
-        footerMsgColor = color;
-        footerMsgExpiry = System.currentTimeMillis() + 4000L;
-    }
-
     @Override
     public void onClose() { this.minecraft.gui.setScreen(parent); }
-
-    // =========================================================================
-    // Preset list (left panel)
-    // =========================================================================
-
-    class PresetListWidget extends AbstractSelectionList<PresetListWidget.PresetRow> {
-
-        public PresetListWidget(net.minecraft.client.Minecraft mc,
-                                int width, int height, int y, int itemHeight) {
-            super(mc, width, height, y, itemHeight);
-        }
-
-        public void refresh() {
-            this.clearEntries();
-            for (PresetConfig.Preset preset : PresetConfig.getPresets())
-                this.addEntry(new PresetRow(preset));
-        }
-
-        @Override public int getRowWidth() { return this.width - 20; }
-        @Override protected int scrollBarX() { return this.getX() + this.width - 6; }
-        @Override public void updateWidgetNarration(NarrationElementOutput o) {}
-
-        class PresetRow extends AbstractSelectionList.Entry<PresetRow> {
-
-            private final PresetConfig.Preset preset;
-            PresetRow(PresetConfig.Preset preset) { this.preset = preset; }
-
-            private int rowW()  { return PresetListWidget.this.getRowWidth(); }
-            private int starX() { return getX() + rowW() - 22; }
-
-            @Override
-            public void extractContent(GuiGraphicsExtractor g, int mouseX, int mouseY, boolean hovered, float a) {
-                boolean active   = PresetConfig.isActive(preset.id);
-                boolean fav      = PresetConfig.isFavorite(preset.id);
-                boolean selected = (PresetsScreen.this.editingPreset == preset);
-                int rW = rowW(), pc = preset.argbColor();
-
-                int rowBg = selected ? 0xFF383838 : hovered ? 0xFF282828 : 0xFF222222;
-                g.fill(getX(), getY(), getX() + rW, getY() + 24, rowBg);
-                g.fill(getX(), getY() + 23, getX() + rW, getY() + 24, 0xFF111111);
-                g.fill(getX(), getY(), getX() + (selected || active ? 6 : 4), getY() + 23, pc | 0xFF000000);
-
-                int badgeX = getX() + 10, badgeY = getY() + 6;
-                g.fill(badgeX-1, badgeY-1, badgeX+23, badgeY+12, active ? 0xFF336633 : 0xFF444444);
-                g.fill(badgeX, badgeY, badgeX+22, badgeY+11, active ? 0xFF1A3A1A : 0xFF2A2A2A);
-                g.centeredText(PresetListWidget.this.minecraft.font, active ? "ON" : "OFF", badgeX+11, badgeY+2, active ? 0xFF55FF55 : 0xFF888888);
-
-                int nameCol = selected ? 0xFFFFFFFF : active ? 0xFFDDDDDD : 0xFF999999;
-                g.text(PresetListWidget.this.minecraft.font, preset.name, getX()+38, getY()+8, nameCol);
-                String sc = keyDisplayLabel(preset);
-                if (!sc.equals("---"))
-                    g.text(PresetListWidget.this.minecraft.font, " [" + sc + "]",
-                            getX()+38+PresetListWidget.this.minecraft.font.width(preset.name), getY()+8, 0xFF556655);
-
-                int sx = starX();
-                boolean hovStar = mouseX >= sx && mouseX < sx+18 && mouseY >= getY()+4 && mouseY < getY()+20;
-                // Favourite button: filled with preset colour (no inner margin)
-                g.fill(sx-1, getY()+3, sx+19, getY()+21, fav ? 0xFFFFFFFF : 0xFF111111); // borda
-                if (fav) {
-                    g.fill(sx, getY()+4, sx+18, getY()+20, pc | 0xFF000000);
-                } else {
-                    g.fill(sx, getY()+4, sx+18, getY()+20, hovStar ? 0xFF4A4A4A : 0xFF2A2A2A);
-                }
-                // Hover label
-                if (hovStar) {
-                    String tip = fav ? "Remove favourite" : "Add to favourites";
-                    g.text(PresetListWidget.this.minecraft.font, tip,
-                           sx - PresetListWidget.this.minecraft.font.width(tip) - 4, getY() + 8, 0xFFAAAAAA);
-                }
-            }
-
-            @Override
-            public boolean mouseClicked(MouseButtonEvent event, boolean consumed) {
-                if (consumed) return false;
-                if (PresetsScreen.this.creating) return false;
-                double mx = event.x(), my = event.y();
-
-                int sx = starX();
-                if (mx >= sx && mx < sx+18 && my >= getY()+4 && my < getY()+20) {
-                    PresetConfig.setFavorite(preset.id, !PresetConfig.isFavorite(preset.id)); return true;
-                }
-                int badgeX = getX()+10, badgeY = getY()+6;
-                if (mx >= badgeX && mx < badgeX+22 && my >= badgeY && my < badgeY+11) {
-                    PresetConfig.setActive(preset.id, !PresetConfig.isActive(preset.id)); return true;
-                }
-                if (PresetsScreen.this.editingPreset == preset) {
-                    PresetListWidget.this.setSelected(null);
-                    PresetsScreen.this.closeDetailPanel();
-                } else {
-                    PresetListWidget.this.setSelected(this);
-                    PresetsScreen.this.openEditOverlay(preset);
-                }
-                return true;
-            }
-
-            @Override public boolean mouseDragged(MouseButtonEvent e, double dX, double dY) { return false; }
-            @Override public boolean mouseReleased(MouseButtonEvent e) { return false; }
-            public void updateNarration(NarrationElementOutput o) {}
-        }
-    }
-
-    // ── Key utilities ─────────────────────────────────────────────────────────
-
-    static String keyDisplayLabel(PresetConfig.Preset preset) {
-        if (preset.shortcutKey <= 0 && preset.shortcutHeldKey <= 0) return "---";
-        if (preset.shortcutHeldKey != 0) {
-            String s = rawKeyName(preset.shortcutHeldKey);
-            if (preset.shortcutHeldKey2 != 0) s += "+" + rawKeyName(preset.shortcutHeldKey2);
-            return s + "+" + rawKeyName(preset.shortcutKey & 0xFFFF);
-        }
-        return rawKeyName(preset.shortcutKey & 0xFFFF);
-    }
-
-    static String rawKeyName(int keyCode) {
-        if (keyCode <= 0) return "---";
-        return switch (keyCode) {
-            case InputConstants.KEY_F1  -> "F1";   case InputConstants.KEY_F2  -> "F2";
-            case InputConstants.KEY_F3  -> "F3";   case InputConstants.KEY_F4  -> "F4";
-            case InputConstants.KEY_F5  -> "F5";   case InputConstants.KEY_F6  -> "F6";
-            case InputConstants.KEY_F7  -> "F7";   case InputConstants.KEY_F8  -> "F8";
-            case InputConstants.KEY_F9  -> "F9";   case InputConstants.KEY_F10 -> "F10";
-            case InputConstants.KEY_F11 -> "F11";  case InputConstants.KEY_F12 -> "F12";
-            case InputConstants.KEY_UP    -> "UP";    case InputConstants.KEY_DOWN  -> "DOWN";
-            case InputConstants.KEY_LEFT  -> "LEFT";  case InputConstants.KEY_RIGHT -> "RIGHT";
-            case InputConstants.KEY_INSERT -> "INS";  case InputConstants.KEY_DELETE -> "DEL";
-            case InputConstants.KEY_HOME   -> "HOME"; case InputConstants.KEY_END    -> "END";
-            case InputConstants.KEY_PAGEUP -> "PgUp"; case InputConstants.KEY_PAGEDOWN -> "PgDn";
-            case InputConstants.KEY_SPACE      -> "Space"; case InputConstants.KEY_RETURN -> "Enter";
-            case InputConstants.KEY_NUMPADENTER   -> "Num Enter";
-            case InputConstants.KEY_TAB        -> "Tab";  case InputConstants.KEY_CAPSLOCK -> "Caps";
-            case InputConstants.KEY_ESCAPE     -> "Esc";  case InputConstants.KEY_BACKSPACE -> "Bksp";
-            case InputConstants.KEY_PRINTSCREEN -> "Print"; case InputConstants.KEY_PAUSE -> "Pause";
-            case InputConstants.KEY_NUMLOCK -> "Num Lock"; case InputConstants.KEY_SCROLLLOCK -> "Scroll";
-            case InputConstants.KEY_LSHIFT,  InputConstants.KEY_RSHIFT   -> "Shift";
-            case InputConstants.KEY_LCONTROL, InputConstants.KEY_RCONTROL -> "Ctrl";
-            case InputConstants.KEY_LALT,    InputConstants.KEY_RALT     -> "Alt";
-            case InputConstants.KEY_LGUI,  InputConstants.KEY_RGUI   -> "Super";
-            case InputConstants.KEY_NUMPAD0 -> "Num0"; case InputConstants.KEY_NUMPAD1 -> "Num1";
-            case InputConstants.KEY_NUMPAD2 -> "Num2"; case InputConstants.KEY_NUMPAD3 -> "Num3";
-            case InputConstants.KEY_NUMPAD4 -> "Num4"; case InputConstants.KEY_NUMPAD5 -> "Num5";
-            case InputConstants.KEY_NUMPAD6 -> "Num6"; case InputConstants.KEY_NUMPAD7 -> "Num7";
-            case InputConstants.KEY_NUMPAD8 -> "Num8"; case InputConstants.KEY_NUMPAD9 -> "Num9";
-            case InputConstants.KEY_ADD -> "Num+"; case SDLScancode.SDL_SCANCODE_KP_MINUS -> "Num-";
-            case InputConstants.KEY_MULTIPLY -> "Num*"; case SDLScancode.SDL_SCANCODE_KP_DIVIDE -> "Num/";
-            case SDLScancode.SDL_SCANCODE_KP_PERIOD  -> "Num.";
-            default -> InputConstants.Type.KEYBOARD.getOrCreate(keyCode).getDisplayName().getString().toUpperCase();
-        };
-    }
 }
