@@ -10,6 +10,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FilterBarLayoutTest {
+    /** Widest window width the invariants are checked up to (a 2560 px wide screen at GUI scale 1). */
+    private static final int WIDEST = 2560;
 
     private static final int[] SOUNDS_TRAILING = {20, 78};
 
@@ -49,7 +51,7 @@ class FilterBarLayoutTest {
 
     @Test
     void searchNeverShrinksBelowSixtyWhenOnOneLine() {
-        for (int w = 340; w <= LayoutMode.MAX_W; w++) {
+        for (int w = 340; w <= WIDEST; w++) {
             var l = FilterBarLayout.compute(area(w), 0);
             assertEquals(1, l.lines(), "width " + w);
             assertTrue(l.search().w() >= 60, "width " + w + " search " + l.search().w());
@@ -114,7 +116,7 @@ class FilterBarLayoutTest {
 
     @Test
     void everyRectIsInsideTheAreaHorizontallyAndVerticallyForAllSizes() {
-        for (int w = 320; w <= LayoutMode.MAX_W; w += 7) {
+        for (int w = 320; w <= WIDEST; w += 7) {
             for (int[] trailing : new int[][] {{}, {20}, SOUNDS_TRAILING}) {
                 var a = new Rect(12, 30, w, 24);
                 var l = FilterBarLayout.compute(a, trailing);
@@ -128,7 +130,7 @@ class FilterBarLayoutTest {
 
     @Test
     void rectsNeverOverlapForAllSizes() {
-        for (int w = 320; w <= LayoutMode.MAX_W; w++) {
+        for (int w = 320; w <= WIDEST; w++) {
             for (int[] trailing : new int[][] {{}, SOUNDS_TRAILING}) {
                 var rects = all(FilterBarLayout.compute(area(w), trailing));
                 for (int i = 0; i < rects.size(); i++) {
@@ -143,7 +145,7 @@ class FilterBarLayoutTest {
 
     @Test
     void controlsAreAtLeastButtonHeightTall() {
-        for (int w = 320; w <= LayoutMode.MAX_W; w += 11) {
+        for (int w = 320; w <= WIDEST; w += 11) {
             for (Rect r : all(FilterBarLayout.compute(area(w), SOUNDS_TRAILING))) {
                 assertTrue(r.h() >= LayoutMode.BUTTON_H, "width " + w);
             }

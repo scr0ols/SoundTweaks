@@ -15,19 +15,9 @@ class ScreenFrameTest {
     }
 
     @Test
-    void wideScreensAreCappedAndCentred() {
-        ScreenFrame f = ScreenFrame.of(1280, 720);
-        assertEquals(new Rect(160, 0, 960, 720), f.bounds());
-    }
-
-    @Test
-    void exactlyMaxWidthIsNotShifted() {
-        assertEquals(new Rect(0, 0, 960, 540), ScreenFrame.of(960, 540).bounds());
-    }
-
-    @Test
-    void oddLeftoverRoundsTheOffsetDown() {
-        assertEquals(new Rect(20, 0, 960, 540), ScreenFrame.of(1001, 540).bounds());
+    void wideScreensUseTheFullWidth() {
+        assertEquals(new Rect(0, 0, 1280, 720), ScreenFrame.of(1280, 720).bounds());
+        assertEquals(new Rect(0, 0, 1920, 1080), ScreenFrame.of(1920, 1080).bounds());
     }
 
     @Test
@@ -50,7 +40,7 @@ class ScreenFrameTest {
     }
 
     @Test
-    void widthIsLimitedBeyondMaxWidthEvenWhenWindowIsHuge() {
-        assertEquals(960, ScreenFrame.of(1920, 1080).bounds().w());
+    void hugeWindowsAreNotLimited() {
+        assertEquals(new Rect(0, 0, 5120, 1440), ScreenFrame.of(5120, 1440).bounds());
     }
 }
