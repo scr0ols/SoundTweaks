@@ -77,10 +77,11 @@ final class FavoritesPanel {
             if (r.contains(mx, my)) g.fill(r.x(), r.y(), r.right(), r.bottom(), 0x22FFFFFF);
 
             int textX = r.x() + 9;
-            int onW = active ? font.width("ON") + 6 : 4;
+            int onW = active ? font.width(I18n.get("soundtweaks.gui.on")) + 6 : 4;
             String name = GuiText.ellipsize(font, preset.name, r.right() - onW - textX);
+            String on = I18n.get("soundtweaks.gui.on");
             g.text(font, name, textX, r.y() + 7, active ? 0xFFFFFFFF : 0xFF888888);
-            if (active) g.text(font, "ON", r.right() - font.width("ON") - 3, r.y() + 7, ON_TEXT);
+            if (active) g.text(font, on, r.right() - font.width(on) - 3, r.y() + 7, ON_TEXT);
         }
     }
 
