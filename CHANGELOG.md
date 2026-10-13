@@ -10,11 +10,11 @@ Versions are `MAJOR.MINOR.PATCH+MC`, where `MC` is the Minecraft version the bui
 
 ## [1.3.0+26.3] - 2026-10-13
 
-Multi-loader build: the project is split into `common`, `fabric` and `neoforge` modules, adds a NeoForge 26.3 build (beta) and names jars per loader. All screens now adapt to any window size and GUI scale.
+Multi-loader build: the project is split into `common`, `fabric` and `neoforge` modules, adds a NeoForge 26.3 build and names jars per loader. All screens now adapt to any window size and GUI scale.
 
 ### Added
 
-- NeoForge 26.3 build (beta), from the same source as the Fabric build. It is named `neoforge-soundtweaks-<version>.jar` and requires NeoForge 26.3.0.51-beta or newer.
+- NeoForge 26.3 build, from the same source as the Fabric build. It is named `neoforge-soundtweaks-<version>.jar` and requires NeoForge 26.3.0.76 or newer.
 
 ### Changed
 

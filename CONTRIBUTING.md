@@ -97,7 +97,7 @@ The project is split into modules:
 | `fabric/` | Fabric entrypoints, `fabric.mod.json` and the Fabric build. |
 | `neoforge/` | NeoForge entrypoint, `neoforge.mods.toml` template, mixin config and the NeoForge build. NeoForge has one source set, so the common client code compiles together with the rest. |
 
-Put a change in `common/` unless it needs a loader API. To start the game from a loader module, run `./gradlew :fabric:runClient` or `./gradlew :neoforge:runClient`. The NeoForge module currently builds against a 26.3 beta, because NeoForge has not published a stable 26.3 release.
+Put a change in `common/` unless it needs a loader API. To start the game from a loader module, run `./gradlew :fabric:runClient` or `./gradlew :neoforge:runClient`.
 
 ---
 
