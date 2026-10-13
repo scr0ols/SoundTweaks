@@ -360,7 +360,10 @@ public class PresetsScreen extends Screen {
                     listTitle.x() + listTitle.w() / 2, listTitle.y(), 0xFFFFFFFF);
 
         Rect divider = layout.divider();
-        if (!divider.isEmpty()) g.fill(divider.x(), divider.y(), divider.right(), divider.bottom(), 0xFF111111);
+        if (!divider.isEmpty()) {
+            // Start 2 px higher so the divider meets the detail header underline without a gap.
+            g.fill(divider.x(), divider.y() - 2, divider.right(), divider.bottom(), 0xFF111111);
+        }
 
         Rect message = layout.message();
         if (!message.isEmpty())
