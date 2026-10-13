@@ -34,7 +34,7 @@ Thank you for taking the time to contribute! Please read these guidelines before
 2. After it is merged, tag the **merge commit on `main`** (`vX.Y.Z`) and create the GitHub release from that tag. Release notes come from `CHANGELOG.md`.
 3. Past releases are tags, so any old state can be checked out with `git checkout v1.2.2`.
 
-Versions are `MAJOR.MINOR.PATCH+MC`, for example `1.3.0+26.3`. This applies from the next release; earlier releases keep their plain `MAJOR.MINOR.PATCH` versions.
+Versions are `MAJOR.MINOR.PATCH+MC`, for example `1.3.0+26.3`. This applies from 1.3.0+26.3; earlier releases keep their plain `MAJOR.MINOR.PATCH` versions.
 
 ### Older Minecraft versions
 

@@ -55,7 +55,7 @@ Everything is saved per-world-session and persists across restarts.
 | NeoForge (26.3 build only) | 26.3.0.76 or newer 26.3 build |
 | Java | 25+ |
 
-Versions are `MAJOR.MINOR.PATCH+MC`, where `MC` is the Minecraft version the build targets (for example `1.3.0+26.3`). This applies from the next release. See the [changelog](CHANGELOG.md).
+Versions are `MAJOR.MINOR.PATCH+MC`, where `MC` is the Minecraft version the build targets (for example `1.3.0+26.3`). This applies from 1.3.0+26.3. See the [changelog](CHANGELOG.md).
 
 ---
 

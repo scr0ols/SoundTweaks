@@ -4,7 +4,7 @@ All notable changes to SoundTweaks are documented here. The format follows [Keep
 
 ## Versioning
 
-Versions are `MAJOR.MINOR.PATCH+MC`, where `MC` is the Minecraft version the build targets (for example `1.3.0+26.3`). This applies from the next release. Releases up to 1.2.3 use plain `MAJOR.MINOR.PATCH`.
+Versions are `MAJOR.MINOR.PATCH+MC`, where `MC` is the Minecraft version the build targets (for example `1.3.0+26.3`). This applies from 1.3.0+26.3. Releases up to 1.2.3 use plain `MAJOR.MINOR.PATCH`.
 
 ## [Unreleased]
 
@@ -18,7 +18,7 @@ Multi-loader build: the project is split into `common`, `fabric` and `neoforge` 
 
 ### Changed
 
-- The project is split into `common` and `fabric` modules, with the shared code in `common`, to prepare for a NeoForge build from the same source. The Fabric jar is now named `fabric-soundtweaks-<version>.jar`.
+- The project is split into `common`, `fabric` and `neoforge` modules, with the shared code in `common`, so both loaders build from the same source. The Fabric jar is now named `fabric-soundtweaks-<version>.jar`.
 - Loom is pinned to the 1.17.20 release.
 - On narrow screens the favorites sidebar becomes a thin 24 px bar with one square per favorite, scrollable with the mouse wheel, and the Presets screen shows the list and the detail in two steps with a Back button.
 
