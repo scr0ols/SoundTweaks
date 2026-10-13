@@ -13,6 +13,7 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.AbstractSelectionList;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
 import org.jetbrains.annotations.Nullable;
@@ -350,7 +351,7 @@ class PresetSoundList extends AbstractSelectionList<PresetSoundList.BaseRow> {
             slider.syncDisplay();
             float vol = preset.blocks.getOrDefault(blockId, 1.0f);
             int col = vol <= 0f ? 0xFFFF4444 : hasOverride() ? 0xFFFFCC88 : 0xFFCCCCCC;
-            String name = MissingBlockRegistry.getDisplayName(blockId) + " [block]";
+            String name = I18n.get("soundtweaks.gui.block_entry", MissingBlockRegistry.getDisplayName(blockId));
             drawNameAndSlider(g, mx, my, a, getX(), getY(), rowW, name, col, slider);
         }
 

@@ -9,6 +9,7 @@
   "soundtweaks.gui.sounds":           "%d sounds",
   "soundtweaks.gui.sounds_filtered":  "%d / %d sounds",
   "soundtweaks.gui.blocks":            "%d blocks",
+  "soundtweaks.gui.block_entry":       "%s [block]",
 
   "soundtweaks.category.block":       "Blocks",
   "soundtweaks.category.entity":      "Entities",
