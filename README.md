@@ -4,7 +4,7 @@
 
 [![Minecraft](https://img.shields.io/badge/Minecraft-26.3-62B47A?logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAeFBMVEWcy2yXxmeTwmOSwWKQv2CNvF2KuVp/v1V+vlSDslOBsFF2tkx1tUt0tEpzs0lxsUdwsEa5hVxvr0VtrUNsrEJrq0FqqkBpqT9oqD5npz2Hh4dmpjxkpDpiojhhoTdgoDZfnzVXly2WbEpQkCZsbGx0WER5VTpZPSnN78OwAAAAnElEQVR42jWNCw7CMAxDw/8/CBuMbTBGGPb9b4hbQRtZT3Gfaodd0XXnoVrvrk3dv0vbV8vthrfHMJ0XfdVcbEG71zzxsJpN+HrSOJJHkgNLgoQFwhkQc0QQBkYISEADN1e2Ak+jyhKHlGDOsJS6FCNZhkg2oZMlLbIfdJfUwrKoZpRCjSnzBj8pKfgg1U6ZYYlAheP/ratuocjvvsNMH5BFYTKgAAAAAElFTkSuQmCC&logoColor=white)](https://www.minecraft.net/)
 [![Fabric](https://img.shields.io/badge/Fabric-0.19.5%2B-C8A87A)](https://fabricmc.net/)
-[![NeoForge](https://img.shields.io/badge/NeoForge-26.3%20beta-D7722C)](https://neoforged.net/)
+[![NeoForge](https://img.shields.io/badge/NeoForge-26.3-D7722C)](https://neoforged.net/)
 [![Java](https://img.shields.io/badge/Java-25%2B-ED8B00?logo=openjdk&logoColor=white)](https://adoptium.net/)
 [![License](https://img.shields.io/badge/License-GPL--3.0-blue)](LICENSE)
 [![Modrinth](https://img.shields.io/modrinth/dt/sound-tweaks?logo=modrinth&label=Modrinth&color=00AF5C)](https://modrinth.com/mod/sound-tweaks)
@@ -52,10 +52,10 @@ Everything is saved per-world-session and persists across restarts.
 | Minecraft | 26.3 |
 | Fabric Loader | ≥ 0.19.5 |
 | Fabric API | any |
-| NeoForge (26.3 build only) | 26.3.0.51-beta or newer 26.3 build |
+| NeoForge (26.3 build only) | 26.3.0.76 or newer 26.3 build |
 | Java | 25+ |
 
-Versions are `MAJOR.MINOR.PATCH+MC`, where `MC` is the Minecraft version the build targets (for example `1.3.0+26.3`). This applies from the next release. See the [changelog](CHANGELOG.md).
+Versions are `MAJOR.MINOR.PATCH+MC`, where `MC` is the Minecraft version the build targets (for example `1.3.0+26.3`). This applies from 1.3.0+26.3. See the [changelog](CHANGELOG.md).
 
 ---
 

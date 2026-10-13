@@ -2,13 +2,17 @@ package com.scr0ols.soundtweaks.client.gui;
 
 import com.scr0ols.soundtweaks.PresetConfig;
 import com.scr0ols.soundtweaks.VolumeConfig;
+import com.scr0ols.soundtweaks.layout.ImportDialogLayout;
+import com.scr0ols.soundtweaks.layout.Rect;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
 import com.mojang.blaze3d.platform.InputConstants;
 
 import java.nio.file.Path;
@@ -21,16 +25,16 @@ public class ImportConfigScreen extends Screen {
 
     public enum ImportType {
         PRESETS("soundtweaks.import.presets.title",
-                "Import: adds presets from a JSON file.",
-                "Export: saves all current presets to a JSON file.",
+                "soundtweaks.import.presets.line1",
+                "soundtweaks.import.presets.line2",
                 "soundtweaks_presets_export.json"),
         SOUNDS("soundtweaks.import.sounds.title",
-                "Import: replaces all current sound volumes.",
-                "Export: saves current sound volumes to a JSON file.",
+                "soundtweaks.import.sounds.line1",
+                "soundtweaks.import.sounds.line2",
                 "soundtweaks_export.json"),
         BLOCKS("soundtweaks.import.blocks.title",
-                "Import: replaces all current block volumes.",
-                "Export: saves current block volumes to a JSON file.",
+                "soundtweaks.import.blocks.line1",
+                "soundtweaks.import.blocks.line2",
                 "soundtweaks_blocks_export.json");
 
         final String titleKey, line1, line2, defaultExportName;
@@ -44,6 +48,7 @@ public class ImportConfigScreen extends Screen {
     private final ImportType type;
     private final Runnable onSuccess;
 
+    private ImportDialogLayout layout;
     private EditBox pathBox;
     private Button  confirmBtn, exportBtn, cancelBtn;
 
@@ -60,76 +65,76 @@ public class ImportConfigScreen extends Screen {
 
     @Override
     protected void init() {
-        int pw = 420, ph = 180;
-        int px = this.width  / 2 - pw / 2;
-        int py = this.height / 2 - ph / 2;
+        String draft = pathBox != null ? pathBox.getValue() : "";
+        this.layout = ImportDialogLayout.compute(this.width, this.height);
+        ImportDialogLayout l = layout;
 
-        int inputY = py + 80;
-
-        this.pathBox = new EditBox(this.font, px + 10, inputY, pw - 20, 20, Component.empty());
+        this.pathBox = new EditBox(this.font, l.pathBox().x(), l.pathBox().y(), l.pathBox().w(), l.pathBox().h(),
+                Component.empty());
         this.pathBox.setMaxLength(512);
         this.pathBox.setTextColor(0xFFFFFFFF);
         this.pathBox.setHint(Component.translatable("soundtweaks.gui.path_hint"));
+        this.pathBox.setValue(draft);
         this.addRenderableWidget(this.pathBox);
         this.setFocused(pathBox);
         this.pathBox.setFocused(true);
 
-        // three centred buttons: [ Import ] [ Export ] [ Cancel ]
-        int btnW = 90, btnGap = 6;
-        int totalBtns = btnW * 3 + btnGap * 2;
-        int btnStartX = px + pw / 2 - totalBtns / 2;
-        int btnY = py + ph - 30;
+        this.confirmBtn = dialogButton("soundtweaks.gui.import", l.importButton(), btn -> doImport());
+        this.exportBtn  = dialogButton("soundtweaks.gui.export", l.exportButton(), btn -> doExport());
+        this.cancelBtn  = dialogButton("soundtweaks.gui.cancel", l.cancelButton(),
+                btn -> this.minecraft.gui.setScreen(parent));
+    }
 
-        this.confirmBtn = Button.builder(Component.translatable("soundtweaks.gui.import"),
-                btn -> doImport()
-        ).bounds(btnStartX, btnY, btnW, 20).build();
-        this.addRenderableWidget(confirmBtn);
+    private Button dialogButton(String key, Rect r, Button.OnPress action) {
+        Button b = Button.builder(Component.translatable(key), action).bounds(r.x(), r.y(), r.w(), r.h()).build();
+        this.addRenderableWidget(b);
+        return b;
+    }
 
-        this.exportBtn = Button.builder(Component.translatable("soundtweaks.gui.export"),
-                btn -> doExport()
-        ).bounds(btnStartX + btnW + btnGap, btnY, btnW, 20).build();
-        this.addRenderableWidget(exportBtn);
-
-        this.cancelBtn = Button.builder(Component.translatable("soundtweaks.gui.cancel"),
-                btn -> this.minecraft.gui.setScreen(parent)
-        ).bounds(btnStartX + (btnW + btnGap) * 2, btnY, btnW, 20).build();
-        this.addRenderableWidget(cancelBtn);
+    /** Dim + panel are drawn here, before the widgets, so they can never cover them. */
+    @Override
+    public void extractBackground(GuiGraphicsExtractor g, int mouseX, int mouseY, float a) {
+        super.extractBackground(g, mouseX, mouseY, a);
+        Rect p = layout.panel();
+        g.fill(0, 0, this.width, this.height, 0xBB000000);
+        g.fill(p.x(), p.y(), p.right(), p.bottom(), 0xFF1A1A2E);
+        g.fill(p.x(), p.y(), p.right(), p.y() + 1, 0xFF444466);
+        g.fill(p.x(), p.bottom() - 1, p.right(), p.bottom(), 0xFF444466);
+        g.fill(p.x(), p.y(), p.x() + 1, p.bottom(), 0xFF444466);
+        g.fill(p.right() - 1, p.y(), p.right(), p.bottom(), 0xFF444466);
+        g.fill(p.x() + 8, p.y() + 22, p.right() - 8, p.y() + 23, 0xFF333355);
     }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float a) {
         super.extractRenderState(g, mouseX, mouseY, a);
+        ImportDialogLayout l = layout;
+        int cx = l.panel().x() + l.panel().w() / 2;
 
-        int pw = 420, ph = 180;
-        int px = this.width  / 2 - pw / 2;
-        int py = this.height / 2 - ph / 2;
+        g.centeredText(this.font, GuiText.ellipsize(this.font, I18n.get(type.titleKey), l.title().w()),
+                cx, l.title().y() + 2, 0xFFCCCCFF);
+        g.centeredText(this.font, GuiText.ellipsize(this.font, I18n.get(type.line1), l.description().w()),
+                cx, l.description().y() + 2, 0xFFAAAAAA);
+        g.centeredText(this.font, GuiText.ellipsize(this.font, I18n.get(type.line2), l.description().w()),
+                cx, l.description().y() + 16, 0xFF777788);
+        g.text(this.font, I18n.get("soundtweaks.import.file_path"), l.pathLabel().x(), l.pathLabel().y(), 0xFF888899);
 
-        // Fundo + borda
-        g.fill(0, 0, this.width, this.height, 0xBB000000);
-        g.fill(px, py, px + pw, py + ph, 0xFF1A1A2E);
-        g.fill(px, py, px + pw, py + 1,  0xFF444466);
-        g.fill(px, py + ph - 1, px + pw, py + ph, 0xFF444466);
-        g.fill(px, py, px + 1, py + ph,  0xFF444466);
-        g.fill(px + pw - 1, py, px + pw, py + ph, 0xFF444466);
+        // Config folder: cut to the dialog width, full path in a tooltip
+        String folder = I18n.get("soundtweaks.import.config_folder", ConfigFileUtil.getConfigDirString());
+        String shown = GuiText.ellipsize(this.font, folder, l.folderLine().w());
+        g.text(this.font, shown, l.folderLine().x(), l.folderLine().y(), 0xFF555566);
+        if (!shown.equals(folder) && l.folderLine().contains(mouseX, mouseY)) {
+            g.setTooltipForNextFrame(Component.literal(folder), mouseX, mouseY);
+        }
 
-        // Title
-        g.centeredText(this.font, net.minecraft.client.resources.language.I18n.get(type.titleKey), this.width / 2, py + 10, 0xFFCCCCFF);
-        g.fill(px + 8, py + 22, px + pw - 8, py + 23, 0xFF333355);
-
-        // Description
-        g.centeredText(this.font, type.line1, this.width / 2, py + 32, 0xFFAAAAAA);
-        g.centeredText(this.font, type.line2, this.width / 2, py + 46, 0xFF777788);
-
-        // Label do campo
-        g.text(this.font, "File path:", px + 10, py + 68, 0xFF888899);
-
-        // Current config folder (hint for the user)
-        String cfgDir = ConfigFileUtil.getConfigDirString();
-        g.text(this.font, "Config folder: " + cfgDir, px + 10, py + 112, 0xFF555566);
-
-        // Feedback
         if (!feedbackMsg.isEmpty()) {
-            g.centeredText(this.font, feedbackMsg, this.width / 2, py + 130, feedbackColor);
+            int lineY = l.feedback().y();
+            int shownLines = 0;
+            for (FormattedCharSequence line : this.font.split(Component.literal(feedbackMsg), l.feedback().w())) {
+                if (shownLines++ == 2) break;
+                g.centeredText(this.font, line, cx, lineY, feedbackColor);
+                lineY += 12;
+            }
         }
     }
 
@@ -146,7 +151,7 @@ public class ImportConfigScreen extends Screen {
                     ? Path.of(ConfigFileUtil.getConfigDirString(), type.defaultExportName)
                     : Path.of(ConfigFileUtil.getConfigDirString()).resolve(input);
         } catch (java.nio.file.InvalidPathException e) {
-            feedbackMsg   = "Invalid file path: " + input;
+            feedbackMsg   = I18n.get("soundtweaks.import.invalid_path", input);
             feedbackColor = 0xFFFF6666;
             return;
         }
@@ -163,10 +168,10 @@ public class ImportConfigScreen extends Screen {
         }
 
         if (result < 0) {
-            feedbackMsg   = "Export failed. Check logs for details.";
+            feedbackMsg   = I18n.get("soundtweaks.import.export_failed");
             feedbackColor = 0xFFFF6666;
         } else {
-            feedbackMsg   = "Exported " + result + " entries to file.";
+            feedbackMsg   = I18n.get("soundtweaks.import.exported", result);
             feedbackColor = 0xFF88FF88;
         }
     }
@@ -176,7 +181,7 @@ public class ImportConfigScreen extends Screen {
         Path path = ConfigFileUtil.resolvePath(input);
 
         if (path == null) {
-            feedbackMsg   = "File not found: " + (input.isBlank() ? "(empty)" : input);
+            feedbackMsg   = I18n.get("soundtweaks.import.not_found", input.isBlank() ? I18n.get("soundtweaks.import.empty") : input);
             feedbackColor = 0xFFFF6666;
             return;
         }
@@ -184,19 +189,18 @@ public class ImportConfigScreen extends Screen {
         if (type == ImportType.PRESETS) {
             PresetConfig.ImportResult ir = PresetConfig.importFrom(path);
             if (ir == null) {
-                feedbackMsg   = "Error reading file. Is it a valid JSON config?";
+                feedbackMsg   = I18n.get("soundtweaks.import.read_error");
                 feedbackColor = 0xFFFF6666;
             } else if (ir.imported() == 0) {
-                feedbackMsg   = "No presets found in this file.";
+                feedbackMsg   = I18n.get("soundtweaks.import.no_presets");
                 feedbackColor = 0xFFFFAA44;
             } else if (ir.conflictsReassigned() > 0) {
-                feedbackMsg   = "Imported " + ir.imported() + " presets. "
-                        + ir.conflictsReassigned() + " ID conflict(s) — IDs were reassigned. See logs.";
+                feedbackMsg   = I18n.get("soundtweaks.import.imported_conflicts", ir.imported(), ir.conflictsReassigned());
                 feedbackColor = 0xFFFFAA44;
                 if (onSuccess != null) onSuccess.run();
                 // Stay open so the user sees the conflict warning
             } else {
-                feedbackMsg   = "Success! Imported " + ir.imported() + " presets.";
+                feedbackMsg   = I18n.get("soundtweaks.import.imported_presets", ir.imported());
                 feedbackColor = 0xFF88FF88;
                 if (onSuccess != null) onSuccess.run();
                 this.minecraft.gui.setScreen(parent);
@@ -212,13 +216,13 @@ public class ImportConfigScreen extends Screen {
         }
 
         if (result < 0) {
-            feedbackMsg   = "Error reading file. Is it a valid JSON config?";
+            feedbackMsg   = I18n.get("soundtweaks.import.read_error");
             feedbackColor = 0xFFFF6666;
         } else if (result == 0) {
-            feedbackMsg   = "No entries found in this file.";
+            feedbackMsg   = I18n.get("soundtweaks.import.no_entries");
             feedbackColor = 0xFFFFAA44;
         } else {
-            feedbackMsg   = "Success! Imported " + result + " entries.";
+            feedbackMsg   = I18n.get("soundtweaks.import.imported_entries", result);
             feedbackColor = 0xFF88FF88;
             if (onSuccess != null) onSuccess.run();
             this.minecraft.gui.setScreen(parent);

@@ -34,7 +34,7 @@ Thank you for taking the time to contribute! Please read these guidelines before
 2. After it is merged, tag the **merge commit on `main`** (`vX.Y.Z`) and create the GitHub release from that tag. Release notes come from `CHANGELOG.md`.
 3. Past releases are tags, so any old state can be checked out with `git checkout v1.2.2`.
 
-Versions are `MAJOR.MINOR.PATCH+MC`, for example `1.3.0+26.3`. This applies from the next release; earlier releases keep their plain `MAJOR.MINOR.PATCH` versions.
+Versions are `MAJOR.MINOR.PATCH+MC`, for example `1.3.0+26.3`. This applies from 1.3.0+26.3; earlier releases keep their plain `MAJOR.MINOR.PATCH` versions.
 
 ### Older Minecraft versions
 
@@ -97,7 +97,7 @@ The project is split into modules:
 | `fabric/` | Fabric entrypoints, `fabric.mod.json` and the Fabric build. |
 | `neoforge/` | NeoForge entrypoint, `neoforge.mods.toml` template, mixin config and the NeoForge build. NeoForge has one source set, so the common client code compiles together with the rest. |
 
-Put a change in `common/` unless it needs a loader API. To start the game from a loader module, run `./gradlew :fabric:runClient` or `./gradlew :neoforge:runClient`. The NeoForge module currently builds against a 26.3 beta, because NeoForge has not published a stable 26.3 release.
+Put a change in `common/` unless it needs a loader API. To start the game from a loader module, run `./gradlew :fabric:runClient` or `./gradlew :neoforge:runClient`.
 
 ---
 

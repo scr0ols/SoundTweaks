@@ -4,22 +4,27 @@ All notable changes to SoundTweaks are documented here. The format follows [Keep
 
 ## Versioning
 
-Versions are `MAJOR.MINOR.PATCH+MC`, where `MC` is the Minecraft version the build targets (for example `1.3.0+26.3`). This applies from the next release. Releases up to 1.2.3 use plain `MAJOR.MINOR.PATCH`.
+Versions are `MAJOR.MINOR.PATCH+MC`, where `MC` is the Minecraft version the build targets (for example `1.3.0+26.3`). This applies from 1.3.0+26.3. Releases up to 1.2.3 use plain `MAJOR.MINOR.PATCH`.
 
 ## [Unreleased]
 
-## [1.3.0+26.3] - 2026-10-06
+## [1.3.0+26.3] - 2026-10-13
 
-Multi-loader build: the project is split into `common`, `fabric` and `neoforge` modules, adds a NeoForge 26.3 build (beta) and names jars per loader.
+Multi-loader build: the project is split into `common`, `fabric` and `neoforge` modules, adds a NeoForge 26.3 build and names jars per loader. All screens now adapt to any window size and GUI scale.
 
 ### Added
 
-- NeoForge 26.3 build (beta), from the same source as the Fabric build. It is named `neoforge-soundtweaks-<version>.jar` and requires NeoForge 26.3.0.51-beta or newer.
+- NeoForge 26.3 build, from the same source as the Fabric build. It is named `neoforge-soundtweaks-<version>.jar` and requires NeoForge 26.3.0.76 or newer.
 
 ### Changed
 
-- The project is split into `common` and `fabric` modules, with the shared code in `common`, to prepare for a NeoForge build from the same source. The Fabric jar is now named `fabric-soundtweaks-<version>.jar`.
+- The project is split into `common`, `fabric` and `neoforge` modules, with the shared code in `common`, so both loaders build from the same source. The Fabric jar is now named `fabric-soundtweaks-<version>.jar`.
 - Loom is pinned to the 1.17.20 release.
+- On narrow screens the favorites sidebar becomes a thin 24 px bar with one square per favorite, scrollable with the mouse wheel, and the Presets screen shows the list and the detail in two steps with a Back button.
+
+### Fixed
+
+- All screens (main, Presets, import and create dialogs) adapt to any window size and GUI scale, down to 320×240, instead of overlapping or running off screen. Filters, footers, tabs and lists reflow, long names are cut with a tooltip, and filters, typed text and scroll position are kept when the window is resized.
 
 ## [1.2.3] - 2026-10-05
 

@@ -26,10 +26,10 @@ public class FilterDropdown {
 
     // --- Dimensions and position ---
     private int x, y;
-    private final int width;
+    private int width;
     private static final int BUTTON_HEIGHT  = 20;
     private static final int ITEM_HEIGHT    = 14; // altura de cada linha na popup
-    private static final int MAX_VISIBLE    = 8;  // maximum visible rows without scrolling
+    private static final int MAX_VISIBLE_ROWS = 8; // maximum visible rows without scrolling
     private static final int POPUP_PADDING  = 2;  // padding interior da popup
 
     // --- State ---
@@ -117,6 +117,14 @@ public class FilterDropdown {
 
     public void setX(int x) { this.x = x; }
     public void setY(int y) { this.y = y; }
+    public void setWidth(int width) { this.width = width; }
+
+    /** Moves and resizes the button; the popup follows it. */
+    public void setBounds(int x, int y, int width) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+    }
 
     public String getSelectedValue() { return selectedValue; }
     public boolean isOpen()          { return isOpen; }
@@ -164,7 +172,7 @@ public class FilterDropdown {
         int textColor = active ? 0xFFFFFFFF : 0xFF777777;
 
         // Truncate label if it does not fit (leave space for "▾")
-        String truncated = truncateToWidth(label, width - 18);
+        String truncated = GuiText.ellipsize(font, label, width - 18);
         graphics.text(font, truncated, x + 5, y + 6, textColor);
 
         // Arrow ▾ (or ▴ if open)
@@ -174,7 +182,7 @@ public class FilterDropdown {
 
     private void renderPopup(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         int popupHeight = getPopupHeight();
-        int popupY      = y + BUTTON_HEIGHT; // immediately below the button
+        int popupY      = popupY();
 
         // Popup background — slightly darker than the screen
         graphics.fill(x, popupY, x + width, popupY + popupHeight, 0xFF222222);
@@ -186,7 +194,7 @@ public class FilterDropdown {
         graphics.fill(x + width - 1, popupY,                  x + width, popupY + popupHeight, 0xFF888888);
 
         // Visible rows
-        int visibleCount = Math.min(MAX_VISIBLE, options.size() + 1); // +1 for I18n.get("soundtweaks.gui.all")
+        int visibleCount = visibleRows();
         hoveredIndex = -1;
 
         for (int i = 0; i < visibleCount; i++) {
@@ -221,18 +229,18 @@ public class FilterDropdown {
 
             // Row text — extra right margin when a scrollbar is present (9px bar + 3px gap)
             int totalOpts = options.size() + 1;
-            int textMaxWidth = totalOpts > MAX_VISIBLE ? width - 18 : width - 10;
-            String truncated = truncateToWidth(lineLabel, textMaxWidth);
+            int textMaxWidth = totalOpts > visibleRows() ? width - 18 : width - 10;
+            String truncated = GuiText.ellipsize(font, lineLabel, textMaxWidth);
             graphics.text(font, truncated, x + 5, itemY + 3, 0xFFFFFFFF);
         }
 
         // Scrollbar (when there are more options than visible space)
         // SCROLLBAR_W = 6px — wide enough to be clickable
         int totalOptions = options.size() + 1;
-        if (totalOptions > MAX_VISIBLE) {
+        if (totalOptions > visibleRows()) {
             int scrollTrackH = popupHeight - 4;
-            int scrollThumbH = Math.max(12, scrollTrackH * MAX_VISIBLE / totalOptions);
-            int scrollThumbY = popupY + 2 + (scrollTrackH - scrollThumbH) * scrollOffset / Math.max(1, totalOptions - MAX_VISIBLE);
+            int scrollThumbH = Math.max(12, scrollTrackH * visibleRows() / totalOptions);
+            int scrollThumbY = popupY + 2 + (scrollTrackH - scrollThumbH) * scrollOffset / Math.max(1, totalOptions - visibleRows());
 
             // Track (dark grey background)
             graphics.fill(x + width - 7, popupY + 2, x + width - 1, popupY + popupHeight - 2, 0xFF333333);
@@ -269,12 +277,12 @@ public class FilterDropdown {
 
         // Clique dentro da popup
         if (isOpen && isMouseOverPopup(mouseX, mouseY)) {
-            int popupY      = y + BUTTON_HEIGHT;
+            int popupY      = popupY();
             int popupHeight = getPopupHeight();
             int totalOptions = options.size() + 1;
 
             // Click on the scrollbar (right column, 6px wide) — start drag
-            if (totalOptions > MAX_VISIBLE && mouseX >= x + width - 7 && mouseX < x + width - 1) {
+            if (totalOptions > visibleRows() && mouseX >= x + width - 7 && mouseX < x + width - 1) {
                 isDragging      = true;
                 dragStartY      = mouseY;
                 dragStartOffset = scrollOffset;
@@ -282,7 +290,7 @@ public class FilterDropdown {
                 int trackTop  = popupY + 2;
                 int trackH    = popupHeight - 4;
                 double ratio  = (double)(mouseY - trackTop) / trackH;
-                int maxOffset = totalOptions - MAX_VISIBLE;
+                int maxOffset = totalOptions - visibleRows();
                 scrollOffset  = (int) Math.max(0, Math.min(maxOffset, Math.round(ratio * maxOffset)));
                 dragStartOffset = scrollOffset; // update drag base to the jumped position
                 return true;
@@ -323,7 +331,7 @@ public class FilterDropdown {
         if (!isDragging) return false;
 
         int totalOptions = options.size() + 1;
-        int maxOffset    = Math.max(0, totalOptions - MAX_VISIBLE);
+        int maxOffset    = Math.max(0, totalOptions - visibleRows());
         if (maxOffset == 0) return true;
 
         int popupHeight  = getPopupHeight();
@@ -379,7 +387,7 @@ public class FilterDropdown {
         // Calculate scrollOffset to place the option at the top of the visible popup.
         // When scrollOffset=S, row 0 shows optionIndex = S-1.
         // To show options[targetIndex] in row 0: S = targetIndex + 1.
-        int maxOffset = Math.max(0, options.size() + 1 - MAX_VISIBLE);
+        int maxOffset = Math.max(0, options.size() + 1 - visibleRows());
         scrollOffset  = Math.min(targetIndex + 1, maxOffset);
         return true;
     }
@@ -393,7 +401,7 @@ public class FilterDropdown {
         if (!isMouseOverPopup((int) mouseX, (int) mouseY)) return false;
 
         int totalOptions = options.size() + 1; // +1 for I18n.get("soundtweaks.gui.all")
-        int maxOffset = Math.max(0, totalOptions - MAX_VISIBLE);
+        int maxOffset = Math.max(0, totalOptions - visibleRows());
 
         scrollOffset = (int) Math.max(0, Math.min(maxOffset, scrollOffset - scrollY));
         return true;
@@ -410,16 +418,40 @@ public class FilterDropdown {
 
     private boolean isMouseOverPopup(int mouseX, int mouseY) {
         if (!isOpen) return false;
-        int popupY = y + BUTTON_HEIGHT;
+        int popupY = popupY();
         return mouseX >= x && mouseX < x + width
                 && mouseY >= popupY && mouseY < popupY + getPopupHeight();
     }
 
     /** Total popup height in pixels. */
     private int getPopupHeight() {
-        int totalOptions = options.size() + 1; // +1 for I18n.get("soundtweaks.gui.all")
-        int visibleCount = Math.min(MAX_VISIBLE, totalOptions);
-        return visibleCount * ITEM_HEIGHT + POPUP_PADDING * 2;
+        return visibleRows() * ITEM_HEIGHT + POPUP_PADDING * 2;
+    }
+
+    /** Rows that fit on the side of the button with more room (below by default). */
+    private int visibleRows() {
+        int wanted = Math.min(MAX_VISIBLE_ROWS, options.size() + 1); // +1 for the "All" row
+        int fitting = opensUpwards() ? rowsFitting(y) : rowsFitting(screenHeight() - (y + BUTTON_HEIGHT));
+        return Math.max(1, Math.min(wanted, fitting));
+    }
+
+    /** Opens upwards only when the rows do not fit below the button and there is more room above. */
+    private boolean opensUpwards() {
+        int wanted = Math.min(MAX_VISIBLE_ROWS, options.size() + 1);
+        int below = rowsFitting(screenHeight() - (y + BUTTON_HEIGHT));
+        return below < wanted && rowsFitting(y) > below;
+    }
+
+    private static int rowsFitting(int space) {
+        return Math.max(0, space - POPUP_PADDING * 2) / ITEM_HEIGHT;
+    }
+
+    private int popupY() {
+        return opensUpwards() ? y - getPopupHeight() : y + BUTTON_HEIGHT;
+    }
+
+    private static int screenHeight() {
+        return Minecraft.getInstance().getWindow().getGuiScaledHeight();
     }
 
     /** Returns the display label for an internal value. */
@@ -428,16 +460,5 @@ public class FilterDropdown {
             if (options.get(i).equals(value)) return labels.get(i);
         }
         return value; // fallback: show the raw value
-    }
-
-    /** Truncates text to fit within a maximum pixel width, appending "..." if needed. */
-    private String truncateToWidth(String text, int maxWidth) {
-        if (font.width(text) <= maxWidth) return text;
-        String ellipsis = "...";
-        int ellipsisWidth = font.width(ellipsis);
-        while (!text.isEmpty() && font.width(text) + ellipsisWidth > maxWidth) {
-            text = text.substring(0, text.length() - 1);
-        }
-        return text + ellipsis;
     }
 }
