@@ -8,6 +8,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class RowLayoutTest {
 
     @Test
+    void rowHeightEqualsButtonHeight() {
+        assertEquals(LayoutMode.BUTTON_H, RowLayout.ROW_H);
+    }
+
+    @Test
     void sliderWidthIsThirtyPercentOfRow() {
         assertEquals(75, RowLayout.compute(0, 250, 0).sliderW());
     }

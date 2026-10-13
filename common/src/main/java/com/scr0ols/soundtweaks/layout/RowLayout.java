@@ -3,6 +3,9 @@ package com.scr0ols.soundtweaks.layout;
 /** Horizontal geometry of one list row: where the name goes and where the slider sits. */
 public record RowLayout(int nameX, int nameMaxW, int sliderX, int sliderW) {
 
+    /** Height of a list row; matches the 20 px buttons. */
+    public static final int ROW_H = 20;
+
     private static final int PAD = 4;
     private static final int SLIDER_MIN = 60;
     private static final int SLIDER_MAX = 90;
