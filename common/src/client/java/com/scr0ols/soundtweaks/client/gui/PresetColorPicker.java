@@ -5,6 +5,7 @@ import com.scr0ols.soundtweaks.layout.PresetTabLayout;
 import com.scr0ols.soundtweaks.layout.Rect;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.resources.language.I18n;
 
 /** Colour swatch grid of the Color tab: the preset colours plus the "Custom" swatch. */
 final class PresetColorPicker {
@@ -40,7 +41,7 @@ final class PresetColorPicker {
         else if (custom.contains(mouseX, mouseY)) outline(g, custom, 1, 0xFF888888);
 
         Rect label = t.customLabel();
-        g.text(font, "Custom", label.x(), label.y(), customSel ? 0xFFCCCCFF : 0xFF666688);
+        g.text(font, I18n.get("soundtweaks.presets.custom"), label.x(), label.y(), customSel ? 0xFFCCCCFF : 0xFF666688);
     }
 
     /**

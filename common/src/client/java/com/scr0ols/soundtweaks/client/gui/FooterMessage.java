@@ -1,5 +1,6 @@
 package com.scr0ols.soundtweaks.client.gui;
 
+import com.scr0ols.soundtweaks.layout.Rect;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
@@ -18,8 +19,9 @@ final class FooterMessage {
         expiry = System.currentTimeMillis() + DURATION_MS;
     }
 
-    void render(GuiGraphicsExtractor g, Font font, int centerX, int y) {
-        if (!text.isEmpty() && System.currentTimeMillis() < expiry)
-            g.centeredText(font, text, centerX, y, color);
+    /** Draws the message centred in {@code area}, cut with "..." when it is wider. */
+    void render(GuiGraphicsExtractor g, Font font, Rect area) {
+        if (text.isEmpty() || System.currentTimeMillis() >= expiry) return;
+        g.centeredText(font, GuiText.ellipsize(font, text, area.w()), area.x() + area.w() / 2, area.y(), color);
     }
 }

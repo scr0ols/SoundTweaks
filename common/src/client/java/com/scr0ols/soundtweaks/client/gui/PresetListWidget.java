@@ -1,11 +1,16 @@
 package com.scr0ols.soundtweaks.client.gui;
 
 import com.scr0ols.soundtweaks.PresetConfig;
+import com.scr0ols.soundtweaks.layout.PresetRowLayout;
+import com.scr0ols.soundtweaks.layout.Rect;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSelectionList;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.network.chat.Component;
 
 /** Preset list (left panel of {@link PresetsScreen}). */
 class PresetListWidget extends AbstractSelectionList<PresetListWidget.PresetRow> {
@@ -32,47 +37,52 @@ class PresetListWidget extends AbstractSelectionList<PresetListWidget.PresetRow>
         private final PresetConfig.Preset preset;
         PresetRow(PresetConfig.Preset preset) { this.preset = preset; }
 
-        private int rowW()  { return PresetListWidget.this.getRowWidth(); }
-        private int starX() { return getX() + rowW() - 22; }
+        private int rowW() { return PresetListWidget.this.getRowWidth(); }
+
+        private PresetRowLayout rowLayout() {
+            Font font = PresetListWidget.this.minecraft.font;
+            String sc = PresetKeyNames.displayLabel(preset);
+            int scW = sc.equals(PresetKeyNames.NONE) ? 0 : font.width(" [" + sc + "]");
+            return PresetRowLayout.compute(getX(), getY(), rowW(), font.width(preset.name), scW);
+        }
 
         @Override
         public void extractContent(GuiGraphicsExtractor g, int mouseX, int mouseY, boolean hovered, float a) {
+            Font font = PresetListWidget.this.minecraft.font;
             boolean active   = PresetConfig.isActive(preset.id);
             boolean fav      = PresetConfig.isFavorite(preset.id);
             boolean selected = (screen.editingPreset() == preset);
             int rW = rowW(), pc = preset.argbColor();
+            PresetRowLayout l = rowLayout();
 
             int rowBg = selected ? 0xFF383838 : hovered ? 0xFF282828 : 0xFF222222;
-            g.fill(getX(), getY(), getX() + rW, getY() + 24, rowBg);
-            g.fill(getX(), getY() + 23, getX() + rW, getY() + 24, 0xFF111111);
+            g.fill(getX(), getY(), getX() + rW, getY() + PresetRowLayout.ROW_H, rowBg);
+            g.fill(getX(), getY() + 23, getX() + rW, getY() + PresetRowLayout.ROW_H, 0xFF111111);
             g.fill(getX(), getY(), getX() + (selected || active ? 6 : 4), getY() + 23, pc | 0xFF000000);
 
-            int badgeX = getX() + 10, badgeY = getY() + 6;
-            g.fill(badgeX-1, badgeY-1, badgeX+23, badgeY+12, active ? 0xFF336633 : 0xFF444444);
-            g.fill(badgeX, badgeY, badgeX+22, badgeY+11, active ? 0xFF1A3A1A : 0xFF2A2A2A);
-            g.centeredText(PresetListWidget.this.minecraft.font, active ? "ON" : "OFF", badgeX+11, badgeY+2, active ? 0xFF55FF55 : 0xFF888888);
+            Rect b = l.badge();
+            g.fill(b.x() - 1, b.y() - 1, b.right() + 1, b.bottom() + 1, active ? 0xFF336633 : 0xFF444444);
+            g.fill(b.x(), b.y(), b.right(), b.bottom(), active ? 0xFF1A3A1A : 0xFF2A2A2A);
+            g.centeredText(font, I18n.get(active ? "soundtweaks.gui.on" : "soundtweaks.gui.off"),
+                    b.x() + b.w() / 2, b.y() + 2, active ? 0xFF55FF55 : 0xFF888888);
 
             int nameCol = selected ? 0xFFFFFFFF : active ? 0xFFDDDDDD : 0xFF999999;
-            g.text(PresetListWidget.this.minecraft.font, preset.name, getX()+38, getY()+8, nameCol);
-            String sc = PresetKeyNames.displayLabel(preset);
-            if (!sc.equals(PresetKeyNames.NONE))
-                g.text(PresetListWidget.this.minecraft.font, " [" + sc + "]",
-                        getX()+38+PresetListWidget.this.minecraft.font.width(preset.name), getY()+8, 0xFF556655);
+            String shown = GuiText.ellipsize(font, preset.name, l.nameMaxW());
+            g.text(font, shown, l.nameX(), getY() + 8, nameCol);
+            if (l.hasShortcut())
+                g.text(font, " [" + PresetKeyNames.displayLabel(preset) + "]", l.shortcutX(), getY() + 8, 0xFF556655);
 
-            int sx = starX();
-            boolean hovStar = mouseX >= sx && mouseX < sx+18 && mouseY >= getY()+4 && mouseY < getY()+20;
+            Rect s = l.star();
+            boolean hovStar = s.contains(mouseX, mouseY);
             // Favourite button: filled with preset colour (no inner margin)
-            g.fill(sx-1, getY()+3, sx+19, getY()+21, fav ? 0xFFFFFFFF : 0xFF111111); // borda
-            if (fav) {
-                g.fill(sx, getY()+4, sx+18, getY()+20, pc | 0xFF000000);
-            } else {
-                g.fill(sx, getY()+4, sx+18, getY()+20, hovStar ? 0xFF4A4A4A : 0xFF2A2A2A);
-            }
-            // Hover label
+            g.fill(s.x() - 1, s.y() - 1, s.right() + 1, s.bottom() + 1, fav ? 0xFFFFFFFF : 0xFF111111); // borda
+            g.fill(s.x(), s.y(), s.right(), s.bottom(), fav ? pc | 0xFF000000 : hovStar ? 0xFF4A4A4A : 0xFF2A2A2A);
+
             if (hovStar) {
-                String tip = fav ? "Remove favourite" : "Add to favourites";
-                g.text(PresetListWidget.this.minecraft.font, tip,
-                       sx - PresetListWidget.this.minecraft.font.width(tip) - 4, getY() + 8, 0xFFAAAAAA);
+                g.setTooltipForNextFrame(Component.translatable(
+                        fav ? "soundtweaks.presets.favourite_remove" : "soundtweaks.presets.favourite_add"), mouseX, mouseY);
+            } else if (hovered && !shown.equals(preset.name) && mouseX >= l.nameX() && mouseX < l.nameX() + l.nameMaxW()) {
+                g.setTooltipForNextFrame(Component.literal(preset.name), mouseX, mouseY);
             }
         }
 
@@ -80,14 +90,13 @@ class PresetListWidget extends AbstractSelectionList<PresetListWidget.PresetRow>
         public boolean mouseClicked(MouseButtonEvent event, boolean consumed) {
             if (consumed) return false;
             if (screen.isCreating()) return false;
-            double mx = event.x(), my = event.y();
+            int mx = (int) event.x(), my = (int) event.y();
+            PresetRowLayout l = rowLayout();
 
-            int sx = starX();
-            if (mx >= sx && mx < sx+18 && my >= getY()+4 && my < getY()+20) {
+            if (l.star().contains(mx, my)) {
                 PresetConfig.setFavorite(preset.id, !PresetConfig.isFavorite(preset.id)); return true;
             }
-            int badgeX = getX()+10, badgeY = getY()+6;
-            if (mx >= badgeX && mx < badgeX+22 && my >= badgeY && my < badgeY+11) {
+            if (l.badge().contains(mx, my)) {
                 PresetConfig.setActive(preset.id, !PresetConfig.isActive(preset.id)); return true;
             }
             if (screen.editingPreset() == preset && !screen.isListStep()) {

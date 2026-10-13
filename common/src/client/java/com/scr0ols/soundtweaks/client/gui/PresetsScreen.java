@@ -4,9 +4,12 @@ import com.scr0ols.soundtweaks.PresetConfig;
 import com.scr0ols.soundtweaks.SoundCategory;
 import com.scr0ols.soundtweaks.VolumeConfig;
 import com.scr0ols.soundtweaks.layout.FilterBarLayout;
+import com.scr0ols.soundtweaks.layout.LayoutMode;
+import com.scr0ols.soundtweaks.layout.PresetRowLayout;
 import com.scr0ols.soundtweaks.layout.PresetTabLayout;
 import com.scr0ols.soundtweaks.layout.PresetsScreenLayout;
 import com.scr0ols.soundtweaks.layout.Rect;
+import com.scr0ols.soundtweaks.layout.RowLayout;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -32,7 +35,6 @@ import java.util.List;
  */
 public class PresetsScreen extends Screen {
 
-    private static final String SHORTCUT_HINT = "ENTER to confirm  ·  BACKSPACE to clear  ·  ESC to cancel";
     private static final int LINE_H = 10;
 
     private final Screen parent;
@@ -58,7 +60,7 @@ public class PresetsScreen extends Screen {
     private EditMode editMode = EditMode.NONE;
     @Nullable private PresetConfig.Preset editingPreset = null;
 
-    // Modes opened by the tabs in PresetTabs.LABELS order (null: Delete has no mode)
+    // Modes opened by the tabs in tab order in PresetTabs (null: Delete has no mode)
     private static final EditMode[] TAB_MODES = {EditMode.COLOR, EditMode.RENAME, EditMode.SHORTCUT, EditMode.SOUNDS, null};
 
     // Widgets de rename
@@ -73,10 +75,8 @@ public class PresetsScreen extends Screen {
 
     // Painel de sons (SOUNDS mode)
     @Nullable private PresetSoundList soundsWidget = null;
-    private FilterDropdown soundsCatDrop;
-    private FilterDropdown soundsObjDrop;
-    private EditBox        soundsSearch;
-    private Button         soundsClear, soundsViewToggle, soundsImport, soundsMute;
+    private FilterBar      soundsFilter;
+    private Button         soundsViewToggle, soundsImport, soundsMute;
     @Nullable private SoundCategory soundsCat = null;
     @Nullable private String        soundsObj = null;
     private           String        soundsQuery = "";
@@ -92,6 +92,12 @@ public class PresetsScreen extends Screen {
 
     @Override
     protected void init() {
+        // init runs again on every resize and the text boxes are new each time: carry their text and focus over
+        String createDraft = createBox != null ? createBox.getValue() : "";
+        String renameDraft = renameBox != null ? renameBox.getValue() : "";
+        String hexDraft = colorHexBox != null ? colorHexBox.getValue() : "";
+        boolean renameFocused = renameBox != null && renameBox.isFocused();
+        boolean hexFocused = colorHexBox != null && colorHexBox.isFocused();
         // The old widgets were cleared with the screen; applyLayout() creates the list again.
         this.presetList = null;
         this.listRect = null;
@@ -113,6 +119,7 @@ public class PresetsScreen extends Screen {
         this.createBox = new EditBox(this.font, cx, cy, 220, 20, Component.empty());
         this.createBox.setHint(Component.translatable("soundtweaks.presets.name_hint"));
         this.createBox.setMaxLength(64);
+        this.createBox.setValue(createDraft);
         this.createBox.visible = false;
         this.addRenderableWidget(this.createBox);
 
@@ -131,6 +138,7 @@ public class PresetsScreen extends Screen {
         // ── Rename widgets (painel direito) ──────────────────────────────────
         this.renameBox = new EditBox(this.font, 0, 0, 20, 20, Component.empty());
         this.renameBox.setMaxLength(64);
+        this.renameBox.setValue(renameDraft);
         this.renameBox.visible = false;
         this.addRenderableWidget(this.renameBox);
 
@@ -149,6 +157,7 @@ public class PresetsScreen extends Screen {
         this.colorHexBox = new EditBox(this.font, 0, 0, 20, 18, Component.empty());
         this.colorHexBox.setMaxLength(6);
         this.colorHexBox.setTextColor(0xFFFFFFFF);
+        this.colorHexBox.setValue(hexDraft);
         this.colorHexBox.visible = false;
         this.colorHexBox.setResponder(hex -> {
             if (editingPreset == null) return;
@@ -162,6 +171,13 @@ public class PresetsScreen extends Screen {
 
         initSoundsWidgets();
         applyLayout();
+        restoreFocus(renameFocused, hexFocused);
+    }
+
+    private void restoreFocus(boolean renameFocused, boolean hexFocused) {
+        if (creating) { this.setFocused(createBox); createBox.setFocused(true); }
+        else if (renameFocused && editMode == EditMode.RENAME) { this.setFocused(renameBox); renameBox.setFocused(true); }
+        else if (hexFocused && editMode == EditMode.COLOR) { this.setFocused(colorHexBox); colorHexBox.setFocused(true); }
     }
 
     private Button footerButton(String labelKey, @Nullable String tooltipKey, Button.OnPress onPress) {
@@ -172,29 +188,13 @@ public class PresetsScreen extends Screen {
     }
 
     private void initSoundsWidgets() {
-        this.soundsCatDrop = new FilterDropdown(0, 0, 100,
-                I18n.get("soundtweaks.gui.category"), this::onSoundsCategorySelected);
-        SoundFilterOptions.populateCategories(this.soundsCatDrop);
-
-        this.soundsObjDrop = new FilterDropdown(0, 0, 100,
-                I18n.get("soundtweaks.gui.object"), this::onSoundsObjectSelected);
-        this.soundsObjDrop.setActive(false);
-
-        this.soundsClear = Button.builder(Component.literal("x"), btn -> clearSoundsFilters())
-                .bounds(0, 0, FilterBarLayout.CLEAR_W, 20).build();
-        this.soundsClear.setTooltip(Tooltip.create(Component.translatable("soundtweaks.gui.clear_filters")));
-        this.soundsClear.visible = false;
-        this.addRenderableWidget(this.soundsClear);
-
         this.soundsMute = Button.builder(Component.empty(), btn -> {
             if (soundsWidget != null) {
                 soundsWidget.toggleMute();
                 refreshSoundsList();
             }
-        }).bounds(0, 0, PresetsScreenLayout.MUTE_W, 20).build();
+        }).bounds(0, 0, PresetsScreenLayout.MUTE_W, LayoutMode.BUTTON_H).build();
         this.soundsMute.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.mute_preset")));
-        this.soundsMute.visible = false;
-        this.addRenderableWidget(this.soundsMute);
 
         this.soundsViewToggle = Button.builder(
                 PresetSoundList.detailedView ? Component.translatable("soundtweaks.gui.view_detail") : Component.translatable("soundtweaks.gui.view_simple"),
@@ -203,17 +203,15 @@ public class PresetsScreen extends Screen {
                     btn.setMessage(PresetSoundList.detailedView ? Component.translatable("soundtweaks.gui.view_detail") : Component.translatable("soundtweaks.gui.view_simple"));
                     refreshSoundsList();
                 }
-        ).bounds(0, 0, PresetsScreenLayout.VIEW_TOGGLE_W, 20).build();
+        ).bounds(0, 0, PresetsScreenLayout.VIEW_TOGGLE_W, LayoutMode.BUTTON_H).build();
         this.soundsViewToggle.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.view_toggle")));
-        this.soundsViewToggle.visible = false;
-        this.addRenderableWidget(this.soundsViewToggle);
 
-        this.soundsSearch = new EditBox(this.font, 0, 0, FilterBarLayout.MIN_SEARCH_W, 20,
-                Component.translatable("soundtweaks.gui.search_hint"));
-        this.soundsSearch.setHint(Component.translatable("soundtweaks.gui.search_hint"));
-        this.soundsSearch.setResponder(q -> { this.soundsQuery = q; refreshSoundsList(); });
-        this.soundsSearch.visible = false;
-        this.addRenderableWidget(this.soundsSearch);
+        this.soundsFilter = new FilterBar(this.font, this::onSoundsCategorySelected, this::onSoundsObjectSelected,
+                this::clearSoundsFilters, q -> { this.soundsQuery = q; refreshSoundsList(); },
+                List.of(soundsMute, soundsViewToggle));
+        SoundFilterOptions.populateCategories(this.soundsFilter.category());
+        this.soundsFilter.addWidgets(this::addRenderableWidget);
+        restoreSoundsFilter();
 
         this.soundsImport = Button.builder(Component.translatable("soundtweaks.gui.import_from_config"), btn -> {
             if (editingPreset == null) return;
@@ -221,10 +219,24 @@ public class PresetsScreen extends Screen {
             VolumeConfig.BLOCKS.getAll().forEach((id, vol) -> { if (vol != 1.0f) editingPreset.blocks.put(id, vol); });
             PresetConfig.markDirty();
             refreshSoundsList();
-        }).bounds(0, 0, PresetsScreenLayout.SOUNDS_IMPORT_W, 20).build();
+        }).bounds(0, 0, PresetsScreenLayout.SOUNDS_IMPORT_W, LayoutMode.BUTTON_H).build();
         this.soundsImport.setTooltip(Tooltip.create(Component.translatable("soundtweaks.tooltip.import_from_config")));
         this.soundsImport.visible = false;
         this.addRenderableWidget(this.soundsImport);
+        showSoundsWidgets(false);
+    }
+
+    /** The widgets are recreated on every resize; the choices live in the fields, so put them back. */
+    private void restoreSoundsFilter() {
+        if (soundsCat != null) {
+            soundsFilter.category().setSelectedValueSilently(soundsCat.getDropdownKey());
+            if (soundsCat != SoundCategory.OTHERS && soundsCat.getPrefix() != null) {
+                SoundFilterOptions.populateObjects(soundsFilter.object(), soundsCat);
+                soundsFilter.object().setActive(true);
+                if (soundsObj != null) soundsFilter.object().setSelectedValueSilently(soundsObj);
+            }
+        }
+        if (!soundsQuery.isEmpty()) soundsFilter.searchBox().setValue(soundsQuery);
     }
 
     // ── Layout ────────────────────────────────────────────────────────────────
@@ -265,7 +277,7 @@ public class PresetsScreen extends Screen {
         }
         if (presetList != null && r.equals(listRect)) return;
         if (presetList != null) this.removeWidget(presetList);
-        presetList = new PresetListWidget(this, this.minecraft, r.w(), r.h(), r.y(), 24);
+        presetList = new PresetListWidget(this, this.minecraft, r.w(), r.h(), r.y(), PresetRowLayout.ROW_H);
         presetList.setX(r.x());
         this.addRenderableWidget(presetList);
         presetList.refresh();
@@ -273,12 +285,7 @@ public class PresetsScreen extends Screen {
     }
 
     private void placeSoundsFilter(FilterBarLayout f) {
-        soundsCatDrop.setBounds(f.category().x(), f.category().y(), f.category().w());
-        soundsObjDrop.setBounds(f.object().x(), f.object().y(), f.object().w());
-        WidgetBounds.place(soundsClear, f.clear());
-        WidgetBounds.place(soundsSearch, f.search());
-        WidgetBounds.place(soundsMute, f.trailing().get(0));
-        WidgetBounds.place(soundsViewToggle, f.trailing().get(1));
+        soundsFilter.setLayout(f);
     }
 
     private void refreshPresets() {
@@ -304,21 +311,23 @@ public class PresetsScreen extends Screen {
     }
 
     private void showSoundsWidgets(boolean visible) {
-        soundsClear.visible      = visible;
-        soundsViewToggle.visible = visible;
-        soundsSearch.visible     = visible;
-        soundsMute.visible       = visible;
+        soundsFilter.setVisible(visible);
         soundsImport.visible     = visible;
         if (soundsWidget != null) soundsWidget.visible = visible;
     }
 
     private void rebuildSoundsWidget() {
         if (editingPreset == null) return;
-        if (soundsWidget != null) this.removeWidget(soundsWidget);
+        PresetSoundList old = soundsWidget;
+        if (old != null) this.removeWidget(old);
         Rect r = layout.soundsList();
-        soundsWidget = new PresetSoundList(this.minecraft, editingPreset, r.w(), r.h(), r.y(), 22);
+        soundsWidget = new PresetSoundList(this.minecraft, editingPreset, r.w(), r.h(), r.y(), RowLayout.ROW_H);
         soundsWidget.setX(r.x());
         soundsWidget.refresh(soundsCat, soundsObj, soundsQuery);
+        if (old != null && old.preset == editingPreset) {
+            soundsWidget.setMuteActive(old.isMuteActive());
+            soundsWidget.setScrollAmount(old.getScrollAmount());
+        }
         this.addRenderableWidget(soundsWidget);
         soundsWidget.visible = true;
     }
@@ -350,14 +359,13 @@ public class PresetsScreen extends Screen {
 
         Rect message = layout.message();
         if (!message.isEmpty())
-            footerMessage.render(g, this.font, message.x() + message.w() / 2, message.y());
+            footerMessage.render(g, this.font, message);
 
         if (detailVisible()) renderDetailPanel(g, mouseX, mouseY, a);
 
         // Dropdowns de sons por cima de tudo
         if (soundsVisible()) {
-            soundsCatDrop.render(g, mouseX, mouseY);
-            soundsObjDrop.render(g, mouseX, mouseY);
+            soundsFilter.render(g, mouseX, mouseY);
         }
 
         // ── Create overlay ────────────────────────────────────────────────────
@@ -372,7 +380,7 @@ public class PresetsScreen extends Screen {
             g.fill(cx - 10, cy + 45, cx + 232, cy + 46, 0xFF444466); // baixo
             g.fill(cx - 10, cy - 26, cx - 9,   cy + 46, 0xFF444466); // esquerda
             g.fill(cx + 231, cy - 26, cx + 232, cy + 46, 0xFF444466); // direita
-            g.text(this.font, "New preset name:", cx, cy - 18, 0xFFCCCCFF);
+            g.text(this.font, I18n.get("soundtweaks.presets.new_name"), cx, cy - 18, 0xFFCCCCFF);
             createBox.extractRenderState(g, mouseX, mouseY, a);
             createConfirmBtn.extractRenderState(g, mouseX, mouseY, a);
             createCancelBtn.extractRenderState(g, mouseX, mouseY, a);
@@ -434,11 +442,11 @@ public class PresetsScreen extends Screen {
                 shortcutCapture.hasCapture() ? 0xFF88FF88 : 0xFF666677);
         String savedLabel = PresetKeyNames.displayLabel(editingPreset);
         boolean hasSaved = !savedLabel.equals(PresetKeyNames.NONE);
-        g.centeredText(this.font, hasSaved ? "[" + savedLabel + "]" : "[blank]", cx, tabLayout.shortcutSavedY(),
+        g.centeredText(this.font, hasSaved ? "[" + savedLabel + "]" : I18n.get("soundtweaks.presets.shortcut_blank"), cx, tabLayout.shortcutSavedY(),
                 hasSaved ? 0xFFCCCCFF : 0xFF888899);
 
         Rect hint = tabLayout.shortcutHint();
-        List<FormattedCharSequence> lines = this.font.split(Component.literal(SHORTCUT_HINT), hint.w());
+        List<FormattedCharSequence> lines = this.font.split(Component.translatable("soundtweaks.presets.shortcut_hint"), hint.w());
         for (int i = 0; i < lines.size() && (i + 1) * LINE_H <= hint.h(); i++)
             g.centeredText(this.font, lines.get(i), cx, hint.y() + i * LINE_H, 0xFF888899);
     }
@@ -465,10 +473,10 @@ public class PresetsScreen extends Screen {
         this.soundsCat = SoundCategory.fromDropdownKey(key);
         this.soundsObj = null;
         if (this.soundsCat != null && this.soundsCat != SoundCategory.OTHERS) {
-            SoundFilterOptions.populateObjects(this.soundsObjDrop, this.soundsCat);
-            this.soundsObjDrop.clearSelection(); this.soundsObjDrop.setActive(true);
+            SoundFilterOptions.populateObjects(soundsFilter.object(), this.soundsCat);
+            soundsFilter.object().clearSelection(); soundsFilter.object().setActive(true);
         } else {
-            this.soundsObjDrop.clearSelection(); this.soundsObjDrop.setActive(false);
+            soundsFilter.object().clearSelection(); soundsFilter.object().setActive(false);
         }
         refreshSoundsList();
     }
@@ -479,9 +487,9 @@ public class PresetsScreen extends Screen {
 
     private void clearSoundsFilters() {
         soundsCat = null; soundsObj = null; soundsQuery = "";
-        soundsSearch.setValue("");
-        soundsCatDrop.clearSelection();
-        soundsObjDrop.clearSelection(); soundsObjDrop.setActive(false);
+        soundsFilter.searchBox().setValue("");
+        soundsFilter.category().clearSelection();
+        soundsFilter.object().clearSelection(); soundsFilter.object().setActive(false);
         refreshSoundsList();
     }
 
@@ -519,8 +527,7 @@ public class PresetsScreen extends Screen {
             }
             if (editMode == EditMode.SOUNDS) {
                 if (key == InputConstants.KEY_ESCAPE) {
-                    if (soundsCatDrop.isOpen()) { soundsCatDrop.close(); return true; }
-                    if (soundsObjDrop.isOpen()) { soundsObjDrop.close(); return true; }
+                    if (soundsFilter.closeDropdowns()) return true;
                 }
                 return super.keyPressed(event);
             }
@@ -584,8 +591,7 @@ public class PresetsScreen extends Screen {
 
         // Sounds dropdowns — priority when in SOUNDS mode
         if (soundsVisible()) {
-            if (soundsCatDrop.mouseClicked(event)) { if (soundsCatDrop.isOpen()) soundsObjDrop.close(); return true; }
-            if (soundsObjDrop.mouseClicked(event)) { if (soundsObjDrop.isOpen()) soundsCatDrop.close(); return true; }
+            if (soundsFilter.mouseClicked(event)) return true;
         }
 
         if (super.mouseClicked(event, consumed)) return true;
@@ -621,8 +627,7 @@ public class PresetsScreen extends Screen {
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
         if (soundsVisible()) {
-            if (soundsCatDrop.mouseDragged(event.y())) return true;
-            if (soundsObjDrop.mouseDragged(event.y())) return true;
+            if (soundsFilter.mouseDragged(event.y())) return true;
         }
         return super.mouseDragged(event, dx, dy);
     }
@@ -630,7 +635,7 @@ public class PresetsScreen extends Screen {
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
         if (soundsVisible()) {
-            soundsCatDrop.mouseReleased(); soundsObjDrop.mouseReleased();
+            soundsFilter.mouseReleased();
         }
         return super.mouseReleased(event);
     }
@@ -638,8 +643,7 @@ public class PresetsScreen extends Screen {
     @Override
     public boolean mouseScrolled(double mx, double my, double sx, double sy) {
         if (soundsVisible()) {
-            if (soundsCatDrop.mouseScrolled(mx, my, sy)) return true;
-            if (soundsObjDrop.mouseScrolled(mx, my, sy)) return true;
+            if (soundsFilter.mouseScrolled(mx, my, sy)) return true;
         }
         return super.mouseScrolled(mx, my, sx, sy);
     }
@@ -743,22 +747,22 @@ public class PresetsScreen extends Screen {
     private void importPresetsFrom(java.nio.file.Path file) {
         PresetConfig.ImportResult result = PresetConfig.importFrom(file);
         if (result == null) {
-            footerMessage.show("Import failed. Check logs for details.", 0xFFFF6666);
+            footerMessage.show(I18n.get("soundtweaks.presets.import_failed"), 0xFFFF6666);
         } else if (result.imported() == 0) {
-            footerMessage.show("No presets found in this file.", 0xFFFFAA44);
+            footerMessage.show(I18n.get("soundtweaks.presets.import_none"), 0xFFFFAA44);
         } else if (result.conflictsReassigned() > 0) {
             refreshPresets();
             showImportConflictWarning(result.conflictsReassigned());
         } else {
-            footerMessage.show("Imported " + result.imported() + " presets.", 0xFF88FF88);
+            footerMessage.show(I18n.get("soundtweaks.presets.imported", result.imported()), 0xFF88FF88);
             refreshPresets();
         }
     }
 
     private void exportPresetsTo(java.nio.file.Path file) {
         int exported = PresetConfig.exportTo(file);
-        if (exported < 0) footerMessage.show("Export failed. Check logs for details.", 0xFFFF6666);
-        else footerMessage.show("Exported " + exported + " presets.", 0xFF88FF88);
+        if (exported < 0) footerMessage.show(I18n.get("soundtweaks.presets.export_failed"), 0xFFFF6666);
+        else footerMessage.show(I18n.get("soundtweaks.presets.exported", exported), 0xFF88FF88);
     }
 
     /** The system file dialog could not be shown: fall back to typing the path in-game. */

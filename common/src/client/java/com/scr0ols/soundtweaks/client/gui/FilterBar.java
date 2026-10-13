@@ -67,6 +67,13 @@ public class FilterBar {
         trailing.forEach(add);
     }
 
+    /** Shows or hides the bar's widgets (the dropdowns are drawn by the owner, which skips them when hidden). */
+    public void setVisible(boolean visible) {
+        clear.visible = visible;
+        search.visible = visible;
+        trailing.forEach(w -> w.visible = visible);
+    }
+
     /** Lays the bar out inside {@code area} (the full width of its zone) and returns the layout used. */
     public FilterBarLayout layout(Rect area) {
         int[] widths = trailing.stream().mapToInt(AbstractWidget::getWidth).toArray();

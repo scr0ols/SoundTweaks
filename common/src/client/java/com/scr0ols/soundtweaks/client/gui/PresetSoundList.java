@@ -4,12 +4,16 @@ import com.scr0ols.soundtweaks.MissingBlockRegistry;
 import com.scr0ols.soundtweaks.PresetConfig;
 import com.scr0ols.soundtweaks.SoundCategory;
 import com.scr0ols.soundtweaks.SoundRegistry;
+import com.scr0ols.soundtweaks.layout.RowLayout;
 import com.scr0ols.soundtweaks.client.SoundDisplayHelper;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.AbstractSelectionList;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,6 +67,7 @@ class PresetSoundList extends AbstractSelectionList<PresetSoundList.BaseRow> {
     }
 
     public boolean isMuteActive() { return muteActive; }
+    void setMuteActive(boolean active) { muteActive = active; }
 
     // ── Jump to letter ────────────────────────────────────────────────────────
 
@@ -184,6 +189,21 @@ class PresetSoundList extends AbstractSelectionList<PresetSoundList.BaseRow> {
     @Override protected int scrollBarX()    { return this.getX() + this.width - 6; }
     @Override public void updateWidgetNarration(NarrationElementOutput o) {}
 
+    /** Draws a row's name (cut with "..." and shown in full as a tooltip) and its slider, positioned by {@link RowLayout}. */
+    private void drawNameAndSlider(GuiGraphicsExtractor g, int mx, int my, float a, int rowX, int y, int rowW,
+                                   String text, int color, AbstractWidget slider) {
+        RowLayout row = RowLayout.compute(rowX, rowW, 0);
+        Font font = this.minecraft.font;
+        String shown = GuiText.ellipsize(font, text, row.nameMaxW());
+        g.text(font, shown, row.nameX(), y + 6, color);
+        boolean overName = mx >= row.nameX() && mx < row.nameX() + row.nameMaxW() && my >= y && my < y + rowItemHeight;
+        if (overName && !shown.equals(text)) g.setTooltipForNextFrame(Component.literal(text), mx, my);
+        slider.setX(row.sliderX());
+        slider.setY(y + 3);
+        slider.setWidth(row.sliderW());
+        slider.extractRenderState(g, mx, my, a);
+    }
+
     // ── Divisor ───────────────────────────────────────────────────────────────
 
     class DividerRow extends BaseRow {
@@ -238,9 +258,7 @@ class PresetSoundList extends AbstractSelectionList<PresetSoundList.BaseRow> {
             slider.syncDisplay();
             float vol = minChildVol();
             int col = vol <= 0f ? 0xFFFF4444 : hasOverride() ? 0xFFFFCC88 : 0xFFCCCCCC;
-            g.text(PresetSoundList.this.minecraft.font, "* " + groupName, getX() + 4, getY() + 5, col);
-            slider.setX(getX() + rowW - 94); slider.setY(getY() + 3);
-            slider.extractRenderState(g, mx, my, a);
+            drawNameAndSlider(g, mx, my, a, getX(), getY(), rowW, "* " + groupName, col, slider);
         }
 
         @Override
@@ -286,10 +304,7 @@ class PresetSoundList extends AbstractSelectionList<PresetSoundList.BaseRow> {
             slider.syncDisplay();
             float vol = preset.sounds.getOrDefault(soundId, 1.0f);
             int col = vol <= 0f ? 0xFFFF4444 : hasOverride() ? 0xFFFFCC88 : 0xFFCCCCCC;
-            g.text(PresetSoundList.this.minecraft.font,
-                    SoundDisplayHelper.getDisplayName(soundId), getX() + 4, getY() + 5, col);
-            slider.setX(getX() + rowW - 94); slider.setY(getY() + 3);
-            slider.extractRenderState(g, mx, my, a);
+            drawNameAndSlider(g, mx, my, a, getX(), getY(), rowW, SoundDisplayHelper.getDisplayName(soundId), col, slider);
         }
 
         @Override
@@ -336,9 +351,7 @@ class PresetSoundList extends AbstractSelectionList<PresetSoundList.BaseRow> {
             float vol = preset.blocks.getOrDefault(blockId, 1.0f);
             int col = vol <= 0f ? 0xFFFF4444 : hasOverride() ? 0xFFFFCC88 : 0xFFCCCCCC;
             String name = MissingBlockRegistry.getDisplayName(blockId) + " [block]";
-            g.text(PresetSoundList.this.minecraft.font, name, getX() + 4, getY() + 5, col);
-            slider.setX(getX() + rowW - 94); slider.setY(getY() + 3);
-            slider.extractRenderState(g, mx, my, a);
+            drawNameAndSlider(g, mx, my, a, getX(), getY(), rowW, name, col, slider);
         }
 
         @Override

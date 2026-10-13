@@ -10,6 +10,7 @@ import com.scr0ols.soundtweaks.VolumeResolver;
 import com.scr0ols.soundtweaks.client.SoundDisplayHelper;
 import com.scr0ols.soundtweaks.layout.MainScreenLayout;
 import com.scr0ols.soundtweaks.layout.Rect;
+import com.scr0ols.soundtweaks.layout.RowLayout;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -106,7 +107,7 @@ public class SoundTweaksScreen extends Screen {
         this.filterBar.setLayout(l.filterBar());
 
         // ── Sound list (starts immediately below the filters)
-        this.soundList = new SoundListWidget(this.minecraft, l.list().w(), l.list().h(), l.list().y(), 20);
+        this.soundList = new SoundListWidget(this.minecraft, l.list().w(), l.list().h(), l.list().y(), RowLayout.ROW_H);
         this.soundList.setX(l.list().x());
         refreshList();
         this.addRenderableWidget(this.soundList);

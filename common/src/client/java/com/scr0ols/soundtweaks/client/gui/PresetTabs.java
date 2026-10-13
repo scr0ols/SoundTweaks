@@ -4,21 +4,25 @@ import com.scr0ols.soundtweaks.layout.PresetsScreenLayout;
 import com.scr0ols.soundtweaks.layout.Rect;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.resources.language.I18n;
 
 import java.util.List;
 
 /** Tab strip of the preset detail panel: Color | Rename | Shortcut | Edit Sounds | Delete. */
 final class PresetTabs {
 
-    static final String[] LABELS = {"Color", "Rename", "Shortcut", "Edit Sounds", "Delete"};
-    static final int DELETE_INDEX = LABELS.length - 1;
+    private static final String[] LABEL_KEYS = {"soundtweaks.presets.tab.color", "soundtweaks.presets.tab.rename",
+            "soundtweaks.presets.tab.shortcut", "soundtweaks.presets.tab.sounds", "soundtweaks.presets.tab.delete"};
+    static final int DELETE_INDEX = LABEL_KEYS.length - 1;
 
     private PresetTabs() {}
 
+    private static String label(int index) { return I18n.get(LABEL_KEYS[index]); }
+
     /** Measured width of each label, as {@link PresetsScreenLayout#compute} expects. */
     static int[] textWidths(Font font) {
-        int[] widths = new int[LABELS.length];
-        for (int i = 0; i < LABELS.length; i++) widths[i] = font.width(LABELS[i]);
+        int[] widths = new int[LABEL_KEYS.length];
+        for (int i = 0; i < LABEL_KEYS.length; i++) widths[i] = font.width(label(i));
         return widths;
     }
 
@@ -47,7 +51,7 @@ final class PresetTabs {
 
             g.fill(r.x(), r.y(), r.right(), r.bottom(), bg);
             g.fill(r.x(), r.y(), r.right(), r.y() + 1, accent);
-            g.centeredText(font, LABELS[i], r.x() + r.w() / 2, r.y() + 6, textCol);
+            g.centeredText(font, label(i), r.x() + r.w() / 2, r.y() + 6, textCol);
         }
     }
 
