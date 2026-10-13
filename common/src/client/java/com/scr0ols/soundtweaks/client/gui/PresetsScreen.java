@@ -3,6 +3,7 @@ package com.scr0ols.soundtweaks.client.gui;
 import com.scr0ols.soundtweaks.PresetConfig;
 import com.scr0ols.soundtweaks.SoundCategory;
 import com.scr0ols.soundtweaks.VolumeConfig;
+import com.scr0ols.soundtweaks.layout.CreateDialogLayout;
 import com.scr0ols.soundtweaks.layout.FilterBarLayout;
 import com.scr0ols.soundtweaks.layout.LayoutMode;
 import com.scr0ols.soundtweaks.layout.PresetRowLayout;
@@ -53,6 +54,7 @@ public class PresetsScreen extends Screen {
     // ── Create overlay ─────────────────────────────────────────────────────────
     private boolean creating = false;
     private EditBox createBox;
+    private CreateDialogLayout createLayout;
     private Button  createConfirmBtn, createCancelBtn;
 
     // ── Detail panel ──────────────────────────────────────────────────────────
@@ -115,8 +117,9 @@ public class PresetsScreen extends Screen {
         this.backBtn = footerButton("soundtweaks.gui.back", null, btn -> showList());
 
         // ── Create overlay ────────────────────────────────────────────────────
-        int cx = this.width / 2 - 130, cy = this.height / 2 - 22;
-        this.createBox = new EditBox(this.font, cx, cy, 220, 20, Component.empty());
+        this.createLayout = CreateDialogLayout.compute(this.width, this.height);
+        Rect nb = createLayout.nameBox();
+        this.createBox = new EditBox(this.font, nb.x(), nb.y(), nb.w(), nb.h(), Component.empty());
         this.createBox.setHint(Component.translatable("soundtweaks.presets.name_hint"));
         this.createBox.setMaxLength(64);
         this.createBox.setValue(createDraft);
@@ -125,13 +128,15 @@ public class PresetsScreen extends Screen {
 
         this.createConfirmBtn = Button.builder(
                 Component.translatable("soundtweaks.presets.confirm"), btn -> confirmCreate()
-        ).bounds(cx, cy + 24, 106, 18).build();
+        ).bounds(createLayout.confirmButton().x(), createLayout.confirmButton().y(),
+                createLayout.confirmButton().w(), createLayout.confirmButton().h()).build();
         this.createConfirmBtn.visible = false;
         this.addRenderableWidget(this.createConfirmBtn);
 
         this.createCancelBtn = Button.builder(Component.translatable("soundtweaks.gui.cancel"),
                 btn -> exitCreateMode()
-        ).bounds(cx + 110, cy + 24, 106, 18).build();
+        ).bounds(createLayout.cancelButton().x(), createLayout.cancelButton().y(),
+                createLayout.cancelButton().w(), createLayout.cancelButton().h()).build();
         this.createCancelBtn.visible = false;
         this.addRenderableWidget(this.createCancelBtn);
 
@@ -371,16 +376,16 @@ public class PresetsScreen extends Screen {
         // ── Create overlay ────────────────────────────────────────────────────
         if (creating) {
             g.fill(0, 0, this.width, this.height, 0xBB000000);
-            int cx = this.width / 2 - 130, cy = this.height / 2 - 22;
+            Rect cp = createLayout.panel();
             String draft = createBox.getValue().trim();
-            boolean nameEmpty  = draft.isEmpty();
-            createConfirmBtn.active = !nameEmpty;
-            g.fill(cx - 10, cy - 26, cx + 232, cy + 46, 0xFF1A1A2E);
-            g.fill(cx - 10, cy - 26, cx + 232, cy - 25, 0xFF444466); // topo
-            g.fill(cx - 10, cy + 45, cx + 232, cy + 46, 0xFF444466); // baixo
-            g.fill(cx - 10, cy - 26, cx - 9,   cy + 46, 0xFF444466); // esquerda
-            g.fill(cx + 231, cy - 26, cx + 232, cy + 46, 0xFF444466); // direita
-            g.text(this.font, I18n.get("soundtweaks.presets.new_name"), cx, cy - 18, 0xFFCCCCFF);
+            createConfirmBtn.active = !draft.isEmpty();
+            g.fill(cp.x(), cp.y(), cp.right(), cp.bottom(), 0xFF1A1A2E);
+            g.fill(cp.x(), cp.y(), cp.right(), cp.y() + 1, 0xFF444466);
+            g.fill(cp.x(), cp.bottom() - 1, cp.right(), cp.bottom(), 0xFF444466);
+            g.fill(cp.x(), cp.y(), cp.x() + 1, cp.bottom(), 0xFF444466);
+            g.fill(cp.right() - 1, cp.y(), cp.right(), cp.bottom(), 0xFF444466);
+            Rect lb = createLayout.label();
+            g.text(this.font, GuiText.ellipsize(this.font, I18n.get("soundtweaks.presets.new_name"), lb.w()), lb.x(), lb.y(), 0xFFCCCCFF);
             createBox.extractRenderState(g, mouseX, mouseY, a);
             createConfirmBtn.extractRenderState(g, mouseX, mouseY, a);
             createCancelBtn.extractRenderState(g, mouseX, mouseY, a);
