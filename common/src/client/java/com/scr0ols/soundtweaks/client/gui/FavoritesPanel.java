@@ -77,10 +77,8 @@ final class FavoritesPanel {
             if (r.contains(mx, my)) g.fill(r.x(), r.y(), r.right(), r.bottom(), 0x22FFFFFF);
 
             int textX = r.x() + 9;
-            int onW = active ? PowerIcon.SIZE + 6 : 4;
-            String name = GuiText.ellipsize(font, preset.name, r.right() - onW - textX);
+            String name = GuiText.ellipsize(font, preset.name, r.right() - 4 - textX);
             g.text(font, name, textX, r.y() + 7, active ? 0xFFFFFFFF : 0xFF888888);
-            if (active) PowerIcon.draw(g, r.right() - PowerIcon.SIZE - 3, r.y() + 5, ON_TEXT);
         }
     }
 

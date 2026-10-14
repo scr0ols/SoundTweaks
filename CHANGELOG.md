@@ -14,7 +14,7 @@ Translations for the new 1.3.0 text in all 18 other languages, a language-indepe
 
 ### Changed
 
-- Presets show a power icon instead of ON/OFF text, in the preset list and in the favorites panel. The icon looks the same in every language, so the text no longer overflows its box in languages with longer words.
+- Presets show a power icon instead of ON/OFF text in the preset list. The favorites panel no longer shows the ON text; an active favorite is marked by its stronger color and side bar. The icon looks the same in every language, so the text no longer overflows its box in languages with longer words.
 
 ### Fixed
 
