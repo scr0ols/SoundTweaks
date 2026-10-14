@@ -60,8 +60,8 @@ class PresetListWidget extends AbstractSelectionList<PresetListWidget.PresetRow>
             g.fill(getX(), getY(), getX() + (selected || active ? 6 : 4), getY() + 23, pc | 0xFF000000);
 
             Rect b = l.badge();
-            PowerIcon.draw(g, b.x() + (b.w() - PowerIcon.SIZE) / 2, b.y() + (b.h() - PowerIcon.SIZE) / 2 + 1,
-                    active ? 0xFF55FF55 : 0xFF666666);
+            PowerIcon.draw(g, b.x() + (b.w() - PowerIcon.SIZE) / 2, b.y() + (b.h() - PowerIcon.SIZE) / 2,
+                    active ? 0xFF55FF55 : 0xFF777777);
 
             int nameCol = selected ? 0xFFFFFFFF : active ? 0xFFDDDDDD : 0xFF999999;
             String shown = GuiText.ellipsize(font, preset.name, l.nameMaxW());

@@ -5,18 +5,21 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 /** Language-independent on/off indicator: the standard power symbol, drawn pixel by pixel. */
 final class PowerIcon {
 
-    static final int SIZE = 9;
+    static final int SIZE = 12;
 
     private static final String[] PIXELS = {
-            "....#....",
-            ".##.#.##.",
-            ".#..#..#.",
-            "#...#...#",
-            "#.......#",
-            "#.......#",
-            ".#.....#.",
-            "..#...#..",
-            "...###...",
+            ".....##.....",
+            "..#..##..#..",
+            ".##..##..##.",
+            "##...##...##",
+            "#....##....#",
+            "#..........#",
+            "#..........#",
+            "##........##",
+            ".##......##.",
+            "..##....##..",
+            "...######...",
+            "....####....",
     };
 
     private PowerIcon() {}
