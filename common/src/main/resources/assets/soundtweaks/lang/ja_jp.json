@@ -103,8 +103,8 @@
   "soundtweaks.presets.exported":       "%d 件のプリセットをエクスポートしました。",
   "soundtweaks.presets.favourite_add":    "お気に入りに追加",
   "soundtweaks.presets.favourite_remove": "お気に入りから削除",
-  "soundtweaks.gui.on":  "オン",
-  "soundtweaks.gui.off": "オフ",
+  "soundtweaks.gui.on":  "ON",
+  "soundtweaks.gui.off": "OFF",
 
   "key.category.soundtweaks.soundtweaks": "Sound Tweaks",
   "key.soundtweaks.open_menu":    "Sound Tweaks を開く",

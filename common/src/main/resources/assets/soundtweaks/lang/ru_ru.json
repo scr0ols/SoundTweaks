@@ -103,8 +103,8 @@
   "soundtweaks.presets.exported":       "Экспортировано пресетов: %d",
   "soundtweaks.presets.favourite_add":    "Добавить в избранное",
   "soundtweaks.presets.favourite_remove": "Убрать из избранного",
-  "soundtweaks.gui.on":  "ВКЛ",
-  "soundtweaks.gui.off": "ВЫКЛ",
+  "soundtweaks.gui.on":  "ON",
+  "soundtweaks.gui.off": "OFF",
 
   "key.category.soundtweaks.soundtweaks": "Sound Tweaks",
   "key.soundtweaks.open_menu":    "Открыть Sound Tweaks",
