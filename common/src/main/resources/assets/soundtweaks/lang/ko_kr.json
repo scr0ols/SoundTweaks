@@ -103,8 +103,6 @@
   "soundtweaks.presets.exported":       "프리셋 %d개를 내보냈습니다.",
   "soundtweaks.presets.favourite_add":    "즐겨찾기에 추가",
   "soundtweaks.presets.favourite_remove": "즐겨찾기에서 제거",
-  "soundtweaks.gui.on":  "ON",
-  "soundtweaks.gui.off": "OFF",
 
   "key.category.soundtweaks.soundtweaks": "Sound Tweaks",
   "key.soundtweaks.open_menu":    "Sound Tweaks 열기",

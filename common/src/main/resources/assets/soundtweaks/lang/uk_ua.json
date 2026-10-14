@@ -103,8 +103,6 @@
   "soundtweaks.presets.exported":       "Експортовано пресетів: %d",
   "soundtweaks.presets.favourite_add":    "Додати до обраного",
   "soundtweaks.presets.favourite_remove": "Прибрати з обраного",
-  "soundtweaks.gui.on":  "ON",
-  "soundtweaks.gui.off": "OFF",
 
   "key.category.soundtweaks.soundtweaks": "Sound Tweaks",
   "key.soundtweaks.open_menu":    "Відкрити Sound Tweaks",

@@ -103,8 +103,6 @@
   "soundtweaks.presets.exported":       "%d presets geëxporteerd.",
   "soundtweaks.presets.favourite_add":    "Toevoegen aan favorieten",
   "soundtweaks.presets.favourite_remove": "Verwijderen uit favorieten",
-  "soundtweaks.gui.on":  "ON",
-  "soundtweaks.gui.off": "OFF",
 
   "key.category.soundtweaks.soundtweaks": "Sound Tweaks",
   "key.soundtweaks.open_menu":    "Sound Tweaks openen",

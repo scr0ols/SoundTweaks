@@ -103,8 +103,6 @@
   "soundtweaks.presets.exported":       "%d preset diekspor.",
   "soundtweaks.presets.favourite_add":    "Tambahkan ke favorit",
   "soundtweaks.presets.favourite_remove": "Hapus dari favorit",
-  "soundtweaks.gui.on":  "ON",
-  "soundtweaks.gui.off": "OFF",
 
   "key.category.soundtweaks.soundtweaks": "Sound Tweaks",
   "key.soundtweaks.open_menu":    "Buka Sound Tweaks",

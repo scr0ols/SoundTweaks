@@ -9,7 +9,6 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSelectionList;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 
 /** Preset list (left panel of {@link PresetsScreen}). */
@@ -61,10 +60,8 @@ class PresetListWidget extends AbstractSelectionList<PresetListWidget.PresetRow>
             g.fill(getX(), getY(), getX() + (selected || active ? 6 : 4), getY() + 23, pc | 0xFF000000);
 
             Rect b = l.badge();
-            g.fill(b.x() - 1, b.y() - 1, b.right() + 1, b.bottom() + 1, active ? 0xFF336633 : 0xFF444444);
-            g.fill(b.x(), b.y(), b.right(), b.bottom(), active ? 0xFF1A3A1A : 0xFF2A2A2A);
-            g.centeredText(font, I18n.get(active ? "soundtweaks.gui.on" : "soundtweaks.gui.off"),
-                    b.x() + b.w() / 2, b.y() + 2, active ? 0xFF55FF55 : 0xFF888888);
+            PowerIcon.draw(g, b.x() + (b.w() - PowerIcon.SIZE) / 2, b.y() + (b.h() - PowerIcon.SIZE) / 2 + 1,
+                    active ? 0xFF55FF55 : 0xFF666666);
 
             int nameCol = selected ? 0xFFFFFFFF : active ? 0xFFDDDDDD : 0xFF999999;
             String shown = GuiText.ellipsize(font, preset.name, l.nameMaxW());

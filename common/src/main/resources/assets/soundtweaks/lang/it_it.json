@@ -103,8 +103,6 @@
   "soundtweaks.presets.exported":       "%d preset esportati.",
   "soundtweaks.presets.favourite_add":    "Aggiungi ai preferiti",
   "soundtweaks.presets.favourite_remove": "Rimuovi dai preferiti",
-  "soundtweaks.gui.on":  "ON",
-  "soundtweaks.gui.off": "OFF",
 
   "key.category.soundtweaks.soundtweaks": "Sound Tweaks",
   "key.soundtweaks.open_menu":    "Apri Sound Tweaks",
