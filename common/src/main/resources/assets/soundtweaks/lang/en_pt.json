@@ -103,8 +103,6 @@
   "soundtweaks.presets.exported":       "Set sail with %d presets stowed.",
   "soundtweaks.presets.favourite_add":    "Add to favourites",
   "soundtweaks.presets.favourite_remove": "Remove favourite",
-  "soundtweaks.gui.on":  "ON",
-  "soundtweaks.gui.off": "OFF",
 
   "key.category.soundtweaks.soundtweaks": "Sound Tweaks",
   "key.soundtweaks.open_menu":    "Hoist Sound Tweaks",

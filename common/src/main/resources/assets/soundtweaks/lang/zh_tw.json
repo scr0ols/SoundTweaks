@@ -103,8 +103,6 @@
   "soundtweaks.presets.exported":       "已匯出 %d 個預設。",
   "soundtweaks.presets.favourite_add":    "加入收藏",
   "soundtweaks.presets.favourite_remove": "移除收藏",
-  "soundtweaks.gui.on":  "ON",
-  "soundtweaks.gui.off": "OFF",
 
   "key.category.soundtweaks.soundtweaks": "Sound Tweaks",
   "key.soundtweaks.open_menu":    "開啟 Sound Tweaks",

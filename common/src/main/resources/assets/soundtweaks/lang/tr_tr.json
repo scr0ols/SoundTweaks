@@ -103,8 +103,6 @@
   "soundtweaks.presets.exported":       "%d preset dışa aktarıldı.",
   "soundtweaks.presets.favourite_add":    "Favorilere ekle",
   "soundtweaks.presets.favourite_remove": "Favorilerden çıkar",
-  "soundtweaks.gui.on":  "ON",
-  "soundtweaks.gui.off": "OFF",
 
   "key.category.soundtweaks.soundtweaks": "Sound Tweaks",
   "key.soundtweaks.open_menu":    "Sound Tweaks'i Aç",
