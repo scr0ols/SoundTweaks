@@ -8,6 +8,23 @@ Versions are `MAJOR.MINOR.PATCH+MC`, where `MC` is the Minecraft version the bui
 
 ## [Unreleased]
 
+## [1.3.1+26.3] - 2026-10-15
+
+Translations for the new 1.3.0 text in all 18 other languages, a language-independent power icon for presets, and a fix for the import conflict warning.
+
+### Changed
+
+- Presets show a power icon instead of ON/OFF text, in the preset list and in the favorites panel. The icon looks the same in every language, so the text no longer overflows its box in languages with longer words.
+
+### Fixed
+
+- The preset import conflict warning shows the number of conflicting presets instead of the raw `%d` placeholder.
+
+### Translations
+
+- The text added in 1.3.0+26.3 is translated in all 18 other languages (es_es, es_mx, pt_br, pt_pt, fr_fr, de_de, it_it, nl_nl, pl_pl, tr_tr, id_id, ru_ru, uk_ua, ja_jp, ko_kr, zh_cn, zh_tw, and the en_pt pirate speak), each checked by a native-speaker review. Some existing strings were corrected along the way, for example the Preset wording and the performance report label.
+- The unused `soundtweaks.gui.on` and `soundtweaks.gui.off` keys are removed.
+
 ## [1.3.0+26.3] - 2026-10-13
 
 Multi-loader build: the project is split into `common`, `fabric` and `neoforge` modules, adds a NeoForge 26.3 build and names jars per loader. All screens now adapt to any window size and GUI scale.
@@ -70,7 +87,8 @@ Version bump only; no GitHub release was published for this version.
 - Import detects preset ID conflicts and reassigns IDs automatically, with a warning shown to the user.
 - Export and import preserve preset order and settings reliably.
 
-[Unreleased]: https://github.com/scr0ols/SoundTweaks/compare/v1.3.0+26.3...HEAD
+[Unreleased]: https://github.com/scr0ols/SoundTweaks/compare/v1.3.1+26.3...HEAD
+[1.3.1+26.3]: https://github.com/scr0ols/SoundTweaks/compare/v1.3.0+26.3...v1.3.1+26.3
 [1.3.0+26.3]: https://github.com/scr0ols/SoundTweaks/compare/v1.2.3...v1.3.0+26.3
 [1.2.3]: https://github.com/scr0ols/SoundTweaks/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/scr0ols/SoundTweaks/compare/v1.2.0...v1.2.2
